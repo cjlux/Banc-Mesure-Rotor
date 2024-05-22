@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-05-22T21:39:01.470Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0" etag="o6Oj8SHvYhC4WhSvmv9G" version="24.4.2" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2024-05-22T21:40:36.126Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0" etag="9e6jett02AKajT56WoaB" version="24.4.2" type="github" pages="2">
   <diagram name="Page-1" id="AIUWVVYqq_lwZCqEAJ2z" />
   <diagram id="d5aZngXSX7vcz7FWKPvq" name="Synoptic">
     <mxGraphModel dx="1816" dy="528" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
@@ -8,8 +8,8 @@
         <mxCell id="MXdcKwibAUk7aoDQRohG-1" value="" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=13;align=center;spacing=3.8;rounded=1;absoluteArcSize=1;arcSize=9;dashed=1;fixDash=1;strokeWidth=NaN;lucidId=neJCQycIsMct;" vertex="1" parent="1">
           <mxGeometry x="298" y="215" width="518" height="228" as="geometry" />
         </mxCell>
-        <mxCell id="MXdcKwibAUk7aoDQRohG-2" value="" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=13;align=center;spacing=0;strokeColor=#5e5e5e;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;rotation=90;fillColor=#f2f3f5;strokeWidth=1.5;lucidId=NzICSKtsHby3;" vertex="1" parent="1">
-          <mxGeometry x="54" y="278" width="52" height="124" as="geometry" />
+        <mxCell id="MXdcKwibAUk7aoDQRohG-2" value="" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=13;align=center;spacing=0;strokeColor=#5e5e5e;strokeOpacity=100;fillOpacity=100;rounded=0;absoluteArcSize=1;arcSize=9;rotation=90;fillColor=#f2f3f5;strokeWidth=1.5;lucidId=NzICSKtsHby3;glass=0;" vertex="1" parent="1">
+          <mxGeometry x="92" y="314" width="49" height="51" as="geometry" />
         </mxCell>
         <mxCell id="MXdcKwibAUk7aoDQRohG-3" value="" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=13;align=center;spacing=3.8;strokeColor=#008a0e;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#e3fae3;strokeWidth=NaN;lucidId=vAICVZjkXimj;" vertex="1" parent="1">
           <mxGeometry x="537" y="298" width="147" height="83" as="geometry" />
@@ -111,7 +111,7 @@
           <mxGeometry x="679" y="231" width="126" height="54" as="geometry" />
         </mxCell>
         <mxCell id="MXdcKwibAUk7aoDQRohG-26" value="Rotation&#xa;Stepper motor" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;fontColor=#282c33;align=center;spacing=0;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=rgJCZE1M0kU5;" vertex="1" parent="1">
-          <mxGeometry x="-9" y="264" width="180" height="45" as="geometry" />
+          <mxGeometry x="26.5" y="264" width="180" height="45" as="geometry" />
         </mxCell>
         <mxCell id="MXdcKwibAUk7aoDQRohG-27" value="Computing system" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=15;fontColor=#282c33;align=left;spacing=0;verticalAlign=top;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=7gJCHd.mq3Zo;" vertex="1" parent="1">
           <mxGeometry x="309" y="425" width="137" height="18" as="geometry" />
@@ -139,6 +139,9 @@
         </mxCell>
         <mxCell id="MXdcKwibAUk7aoDQRohG-33" value="X/Y/Z magnetic field &#xa;sensor" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;fontColor=#282c33;align=center;spacing=0;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=stJCteFD6GQX;" vertex="1" parent="1">
           <mxGeometry x="-9" y="482" width="180" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="MXdcKwibAUk7aoDQRohG-34" value="&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;align=center;spacing=9;strokeColor=#unset;fillOpacity=100;rounded=0;absoluteArcSize=1;arcSize=9;fillColor=#979ea8;strokeWidth=NaN;lucidId=gqJCTAgLAOx5;" vertex="1" parent="1">
+          <mxGeometry x="60" y="333" width="32" height="11" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
