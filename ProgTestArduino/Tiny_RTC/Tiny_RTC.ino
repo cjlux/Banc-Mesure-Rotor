@@ -18,7 +18,7 @@ void setup ()
   
   // Start the TRC module:
   RTC.begin();
-
+  
   if (! RTC.isrunning()) 
   {
     Serial.println("RTC is NOT running!");
@@ -30,7 +30,7 @@ void setup ()
 void loop () 
 {
     DateTime now = RTC.now(); 
-    sprintf(time_buff, "%4u/%02u/%02u %02u:%02u:%02u", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+    sprintf(time_buff, "%2u/%02u/%02u %02u:%02u:%02u", now.year()-2000, now.month(), now.day(), now.hour(), now.minute(), now.second());
     Serial.println(time_buff); 
     delay(1000);
 }
