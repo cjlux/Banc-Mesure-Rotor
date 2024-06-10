@@ -289,9 +289,6 @@ void loop()
       sprintf(buff16, "X%sY%s", X_buff, Y_buff);
       LCD_display(buff16, 1, false);
 
-      /*Serial.println(mag_field_Z);
-      Serial.println(Z_buff);
-      Serial.println(line);*/
     }
     dataFile.println(line.c_str());
     Serial.println(line.c_str());
