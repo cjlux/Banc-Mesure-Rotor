@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-06-10T14:03:34.434Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="EhXlR8cDFNKclwNc6oKD" version="24.4.14" type="github" pages="3">
+<mxfile host="app.diagrams.net" modified="2024-06-10T14:04:11.278Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="it4qI8JtuPXAzEGiic6z" version="24.4.14" type="github" pages="3">
   <diagram id="VGt8NKjKaY3T89ASlulM" name="PBS">
     <mxGraphModel dx="1687" dy="901" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -399,7 +399,7 @@
         </mxCell>
         <mxCell id="seLuKdgiRzoSCshMdlrV-21" value="&lt;b&gt;&amp;nbsp;USB&amp;nbsp; &lt;/b&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#007FFF;" vertex="1" connectable="0" parent="seLuKdgiRzoSCshMdlrV-19">
           <mxGeometry x="0.5796" y="-3" relative="1" as="geometry">
-            <mxPoint y="-3" as="offset" />
+            <mxPoint x="75" y="-3" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="seLuKdgiRzoSCshMdlrV-20" value="Dedicated PC" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;fontColor=#282c33;align=center;spacing=0;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=stJCteFD6GQX;" vertex="1" parent="1">
