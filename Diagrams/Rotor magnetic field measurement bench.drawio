@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-06-11T05:43:03.488Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="IqPppRJ8QnoTiF5nytQ-" version="24.4.14" type="github" pages="3">
+<mxfile host="app.diagrams.net" modified="2024-06-11T20:09:30.401Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="Az-5vwB0d3x-9YkauJJu" version="24.4.14" type="github" pages="3">
   <diagram id="VGt8NKjKaY3T89ASlulM" name="PBS">
     <mxGraphModel dx="1195" dy="663" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -264,7 +264,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="d5aZngXSX7vcz7FWKPvq" name="Synoptic">
-    <mxGraphModel dx="1834" dy="795" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1834" dy="766" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -496,7 +496,7 @@
             <mxPoint x="145" y="481" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="seLuKdgiRzoSCshMdlrV-39" value="Limit switch sensor" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;fontColor=#282c33;align=center;spacing=0;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=rgJCZE1M0kU5;" vertex="1" parent="1">
+        <mxCell id="seLuKdgiRzoSCshMdlrV-39" value="&lt;div&gt;Limit switch sensor&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;i&gt;(NC: normally Closed)&lt;/i&gt;&lt;/font&gt;&lt;br&gt;&lt;/div&gt;" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=16.7;fontColor=#282c33;align=center;spacing=0;strokeColor=none;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=rgJCZE1M0kU5;" vertex="1" parent="1">
           <mxGeometry x="8.5" y="681" width="163.5" height="26" as="geometry" />
         </mxCell>
       </root>
