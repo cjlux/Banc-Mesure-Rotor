@@ -21,7 +21,7 @@
 #define MIN_NB_ZPOS   1         // The min number of vertical position for the magnetic field sensor
 #define MAX_NB_ZPOS   5         // The max number of vertical position for the magnetic field sensor
 #define ZPOS_MIN      0         // The minimum value of Zpos [mm] for the sensor
-#define ZPOS_MAX      300       // The maximum value of Zpos [mm] for the sensor
+#define ZPOS_MAX      130       // The maximum value of Zpos [mm] for the sensor
 
 ///////////////////////////////////////////////
 // pins for the stepper motor driver A4988   //
@@ -145,7 +145,7 @@ void loop()
     Serial.println(mess);
 
     // make the displacement:
-    Zmove_sensor(dir, dist, hold_stepper_torque);
+    Zmove_sensor(dir, Z_velocity, hold_stepper_torque);
     curr_pos = Zpos_mm[n];
     
     delay(500);
@@ -164,7 +164,7 @@ void loop()
     Serial.println(mess);
 
     // make the displacement:
-    Zmove_sensor(dir, dist, hold_stepper_torque);
+    Zmove_sensor(dist, Z_velocity, hold_stepper_torque);
     curr_pos = Zpos_mm[n];
     
     delay(500);
@@ -195,8 +195,10 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   }
 
   // the required revolution speed [revol/sec] and corresponding period:
-  const float N_Hz = float(speed_mm_per_sec) / (M_PI * DIAM2);
+  const float N_Hz = 2. * speed_mm_per_sec / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1.e3 / (N_Hz * NBSTEP_PER_REVOL2));
+
+  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
 
   // the required number of steps: 
   const int nb_step = int(2. * 180 * dist_mm / (STEPPER_ANGLE2 * M_PI * DIAM2));
@@ -233,7 +235,7 @@ int Zref_sensor(bool hold_torque)
   Serial.print("Stepper motor Z referencing...");
 
   // move upward:
-  digitalWrite(pinDIR2, HIGH);
+  digitalWrite(pinDIR2, LOW);
 
   // apply the motor holding torque:
   digitalWrite(pinENA2, LOW);
@@ -241,9 +243,11 @@ int Zref_sensor(bool hold_torque)
   // the required revolution speed [revol/sec] and corresponding period:
   float N_Hz = 2 * Zref_velocity / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1e3 / (N_Hz * NBSTEP_PER_REVOL2));
+  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
+  Serial.print("T_ms: "); Serial.println(T_ms); Serial.flush();
 
   int limit_state = digitalRead(pinLimitSwitch);
-  while (limit_state != LOW)
+  while (limit_state != HIGH)
   {
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
