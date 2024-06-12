@@ -41,11 +41,12 @@
 // NB_REVOL_PER_SEC: the rotation speed of the stepper motor when making NBSTEP steps:
 #define NB_REVOL_PER_SEC1 0.5     
 
-#define Zref_velocity 10        // the velocity [mm/s] for reaching the limit switch sensor
+#define Zref_velocity 5         // the velocity [mm/s] for reaching the limit switch sensor
+#define Z_velocity    10        // the velocity [mm/s] for reaching the limit switch sensor
 #define MIN_NB_ZPOS   1         // The min number of vertical position for the magnetic field sensor
 #define MAX_NB_ZPOS   5         // The max number of vertical position for the magnetic field sensor
 #define ZPOS_MIN      0         // The minimum value of Zpos [mm] for the sensor
-#define ZPOS_MAX      300       // The maximum value of Zpos [mm] for the sensor
+#define ZPOS_MAX      130       // The maximum value of Zpos [mm] for the sensor
 
 ///////////////////////////////////////////////////
 
@@ -108,7 +109,11 @@ char buff16[16], a_buff[5], X_buff[8], Y_buff[8], Z_buff[8];
 String mess;
 const String semicol(";");
 unsigned long t0, t1;
-int Zpos_mm[MAX_NB_ZPOS];
+
+// Global bariables for Z position:
+int Zpos_mm[MAX_NB_ZPOS+1];
+int curr_pos, next_pos;
+bool hold_stepper_torque = false;
 
 /**********************************************************************
 /  Declaration of functions functions used in the program
@@ -186,6 +191,9 @@ void setup()
   // Initialize SD car reader/writer:
   init_SD_card();
 
+// Set the first pos to zero:
+  Zpos_mm[0] = 0.;
+  
   while (true)
   {
     String question("# of vertical positions for the sensor in range [1,5] ? ");
@@ -194,27 +202,40 @@ void setup()
     for (int n=1; n <= nb_sensor_pos; n++)
     {
       question = "position #" + String(n) + " from top in mm ? ";
-      Zpos_mm[n-1] = get_param_from_user(question, ZPOS_MIN, ZPOS_MAX, false);
+      Zpos_mm[n] = get_param_from_user(question, ZPOS_MIN, ZPOS_MAX, false);
     }
 
     clearSerialBuffer(); 
 
-    Serial.print(nb_sensor_pos);Serial.println("Positions along Z (from top):"); 
+    Serial.println("Positions along Z (from top):"); 
     for (int n=1; n <= nb_sensor_pos; n++)
     {
-      sprintf(buff, "   pos #%1d: %03u mm", n, Zpos_mm[n-1]);
+      sprintf(buff, "   pos #%1d: %03u mm", n, Zpos_mm[n]);
       Serial.println(buff);
     }
+    
     Serial.println("Do you confirm these values ? y/n ?");
+    clearSerialBuffer();     
     while (Serial.available() <= 0) {;}  // wait until user press a key...    
     String input = Serial.readStringUntil('\n');
     if (input == String('y') || input == String('Y'))
     {
       break;
     }
-    clearSerialBuffer();     
   }
+  hold_stepper_torque = false;
+  Serial.println("Do you want to hold stepper motor torque ? y/n ?");
   clearSerialBuffer();     
+  while (Serial.available() <= 0) {;}  // wait until user press a key...    
+  String input = Serial.readStringUntil('\n');
+  if (input == String('y') || input == String('Y'))
+  {
+    hold_stepper_torque = true;
+  }
+
+  // Move the sensor to the ref position:
+  curr_pos = Zref_sensor(hold_stepper_torque);  
+
 }
 
 
@@ -262,9 +283,20 @@ void loop()
     String line = buff + semicol + a_buff;
     for (int n=1; n<= nb_sensor_pos; n++)
     {
-      int dir = 1;
-      // move the sensor at the desired position:
-      Zmove_sensor(dir, Zpos_mm[n-1]);
+      String mess = "Current pos is " + String(curr_pos) + "mm, moving to pos#" + String(n) + " at " + String(Zpos_mm[n]) + " mm";
+      Serial.print(mess);
+      
+      // compute the distance of the move:
+      int dist = Zpos_mm[n] - curr_pos;
+  
+      mess = " - dist: " + String(dist) + " mm";
+      if (dist == 0) mess += " SKIPPING";
+      Serial.println(mess);
+  
+      // make the displacement:
+      Zmove_sensor(dist, Z_velocity, hold_stepper_torque);
+      curr_pos = Zpos_mm[n];
+  
       delay(500);
 
       // make tke measure (simulations only for now):
@@ -296,9 +328,9 @@ void loop()
     // Make the stepper motor do the steps:
     for(int i=0; i < NBSTEP1; i++) 
     {
-      CLR(PORTD, pinPUL1);
-      delayMicroseconds(20);
-      SET(PORTD, pinPUL1);
+      digitalWrite(pinPUL1, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(pinPUL1, LOW);
       delay(time_delay_ms);
     }
 
@@ -362,6 +394,8 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   /* To make the sensor cart move of 'dist_mm' upward if 'dist_mm' < 0, 
      downward if it is > 0. 
   */
+
+  Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
   
   // nothing to do if dist is null:
   if (dist_mm == 0) return;
@@ -370,17 +404,20 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   if (dist_mm > 0)
   {
     // direction of move is downward:
-    digitalWrite(pinDIR2, LOW);
+    digitalWrite(pinDIR2, HIGH);
   }
   else if (dist_mm < 0)
   {
     // direction of move is upward:
-    digitalWrite(pinDIR2, HIGH);
+    digitalWrite(pinDIR2, LOW);
+    dist_mm = -dist_mm;
   }
 
   // the required revolution speed [revol/sec] and corresponding period:
-  const float N_Hz = float(speed_mm_per_sec) / (M_PI * DIAM2);
+  const float N_Hz = 2. * speed_mm_per_sec / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1.e3 / (N_Hz * NBSTEP_PER_REVOL2));
+
+  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
 
   // the required number of steps: 
   const int nb_step = int(2. * 180 * dist_mm / (STEPPER_ANGLE2 * M_PI * DIAM2));
@@ -396,7 +433,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
     
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
-    delayMicroseconds(5);
+    delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
     delay(T_ms);
   }
@@ -417,7 +454,7 @@ int Zref_sensor(bool hold_torque)
   Serial.print("Stepper motor Z referencing...");
 
   // move upward:
-  digitalWrite(pinDIR2, HIGH);
+  digitalWrite(pinDIR2, LOW);
 
   // apply the motor holding torque:
   digitalWrite(pinENA2, LOW);
@@ -425,13 +462,15 @@ int Zref_sensor(bool hold_torque)
   // the required revolution speed [revol/sec] and corresponding period:
   float N_Hz = 2 * Zref_velocity / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1e3 / (N_Hz * NBSTEP_PER_REVOL2));
+  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
+  Serial.print("T_ms: "); Serial.println(T_ms); Serial.flush();
 
   int limit_state = digitalRead(pinLimitSwitch);
-  while (limit_state != LOW)
+  while (limit_state != HIGH)
   {
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
-    delayMicroseconds(5);
+    delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
     delay(T_ms);
 

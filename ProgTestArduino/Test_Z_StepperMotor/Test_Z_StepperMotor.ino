@@ -112,6 +112,7 @@ void setup()
       break;
     }
   }
+  
   hold_stepper_torque = false;
   Serial.println("Do you want to hold stepper motor torque ? y/n ?");
   clearSerialBuffer();     

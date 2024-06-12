@@ -25,7 +25,13 @@ SdVolume volume;
 SdFile root;
 File dataFile;
 
-#define chipSelect 10
+// micro SD card AddaFruiton Arduino MEGA2560:
+// CLK -> 52
+// DO  -> 50
+// DI  -> 51
+// CS  -> 53
+#define chipSelect 53
+
 #define STOP while(1) {;}
 
 char file_name[13];
@@ -120,7 +126,7 @@ void loop()
   delay(2000);
 
   dataFile = SD.open(file_name, FILE_WRITE);
-  dataFile.writeln("#YYMMDD hh:mm:ss;Angle[°];X_magn[mT];Y_magn[mT]");
+  dataFile.println("#YYMMDD hh:mm:ss;Angle[°];X_magn[mT];Y_magn[mT]");
 
   // scan angle from 0 to 360°:
   int count = 0;

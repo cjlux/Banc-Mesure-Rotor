@@ -25,7 +25,13 @@ SdVolume volume;
 SdFile root;
 File dataFile;
 
-#define chipSelect 10
+// micro SD card AddaFruiton Arduino MEGA2560:
+// CLK -> 52
+// DO  -> 50
+// DI  -> 51
+// CS  -> 53
+#define chipSelect 53
+
 #define STOP while(1) {;}
 
 ///////////////////////////////////////////////
@@ -180,9 +186,9 @@ void loop()
     // Make the stepper motor do the steps:
     for(int i=0; i < NBSTEP; i++) 
     {
-      CLR(PORTD, pinPUL);
+      digitalWrite(pinPUL, HIGH);
       delayMicroseconds(20);
-      SET(PORTD, pinPUL);
+      digitalWrite(pinPUL, LOW);
       delay(time_delay_ms);
     }
 
