@@ -11,12 +11,9 @@
 #define STEPPER_ANGLE2 1.8         // the angle of one step of the stepper motor
 #define DIAM2 9.                   // The diameter (mm) of the stepper motor reductor
 #define NBSTEP_PER_REVOL2 200      // number of steps for a full revolution
-
-#define UP 1                       // moves the sensor upward
-#define DOWN -1                    // moves the sensor downward
 ///////////////////////////////////////////////////
 
-#define Zref_velocity 5         // the velocity [mm/s] for reaching the limit switch sensor
+#define Zref_velocity 7         // the velocity [mm/s] for reaching the limit switch sensor
 #define Z_velocity    10        // the velocity [mm/s] for reaching the limit switch sensor
 
 ///////////////////////////////////////////////
@@ -55,22 +52,27 @@ void setup()
   // Start the serial link:
   Serial.begin(9600);
   
-  // Move the sensor to the ref position:
-  bool hold_stepper_torque = false;
-  Zref_sensor(hold_stepper_torque);
 }
 
 
 void loop() 
 {  
+  // Move the sensor to the ref position:
+  bool hold_stepper_torque = true;
+  Zref_sensor(hold_stepper_torque);
+  delay(1000);
+
+  // disable the motor holding torque:
+  digitalWrite(pinENA2, HIGH);
+
   STOP
 }
 
-int Zref_sensor(bool hold_torque)
+inline int Zref_sensor(bool hold_torque)
 {
   /* To make the stepper motor move the sensor until it reaches the limit switch sensor */
 
-  Serial.print("Stepper motor Z referencing...");
+  Serial.print("\nStepper motor Z referencing...");
 
   // move upward:
   digitalWrite(pinDIR2, LOW);
@@ -89,7 +91,7 @@ int Zref_sensor(bool hold_torque)
   {
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
-    delayMicroseconds(5);
+    delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
     delay(T_ms);
 

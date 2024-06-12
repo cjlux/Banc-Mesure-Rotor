@@ -145,7 +145,7 @@ void loop()
     Serial.println(mess);
 
     // make the displacement:
-    Zmove_sensor(dir, Z_velocity, hold_stepper_torque);
+    Zmove_sensor(dist, Z_velocity, hold_stepper_torque);
     curr_pos = Zpos_mm[n];
     
     delay(500);
@@ -178,6 +178,8 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   /* To make the sensor cart move of 'dist_mm' upward if 'dist_mm' < 0, 
      downward if it is > 0. 
   */
+
+  Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
   
   // nothing to do if dist is null:
   if (dist_mm == 0) return;
@@ -186,12 +188,13 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   if (dist_mm > 0)
   {
     // direction of move is downward:
-    digitalWrite(pinDIR2, LOW);
+    digitalWrite(pinDIR2, HIGH);
   }
   else if (dist_mm < 0)
   {
     // direction of move is upward:
-    digitalWrite(pinDIR2, HIGH);
+    digitalWrite(pinDIR2, LOW);
+    dist_mm = -dist_mm;
   }
 
   // the required revolution speed [revol/sec] and corresponding period:
@@ -214,7 +217,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
     
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
-    delayMicroseconds(5);
+    delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
     delay(T_ms);
   }
@@ -251,7 +254,7 @@ int Zref_sensor(bool hold_torque)
   {
     // Send a 5 micro-step pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
-    delayMicroseconds(5);
+    delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
     delay(T_ms);
 
