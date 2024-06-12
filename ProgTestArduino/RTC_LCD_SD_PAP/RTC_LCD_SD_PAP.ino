@@ -55,7 +55,10 @@ unsigned long t0, t1;
 #define step_mode 1                                                 // used for 1/2, 1/4, 1/8.... step mode
 
 #define STEPPER_ANGLE 1.8
-#define NBSTEP 4
+// NBSTEP defines the numbers steps of the stepper motor for one rotor rotation:
+#define NBSTEP 8              // 4 -> step angle of the ROTOR = 4*1.6/6 = 1.2°
+                                // 8 -> step angle of the ROTOR = 8*1.6/6 = 2.4°
+
 #define RATIO 6.
 
 const int nbStepPerRevol  = int(360./STEPPER_ANGLE);                // number of steps for a full revolution
@@ -108,7 +111,7 @@ void setup()
   LCD_display("", 1);
   delay(2000);
      
-  if (!SD.begin(10)) 
+  if (!SD.begin(chipSelect)) 
   {
     LCD_display("ERROR: SD card", 0);
     LCD_display("", 1);

@@ -77,7 +77,7 @@ void setup()
   LCD_display("", 1);
   delay(2000);
      
-  if (!SD.begin(10)) 
+  if (!SD.begin(chipSelect)) 
   {
     LCD_display("ERROR: SD card", 0);
     LCD_display("", 1);
