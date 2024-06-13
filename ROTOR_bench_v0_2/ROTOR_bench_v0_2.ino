@@ -27,8 +27,6 @@
 #define DIAM2 9.                   // The diameter (mm) of the stepper motor reductor
 #define NBSTEP_PER_REVOL2 200      // number of steps for a full revolution
 
-#define UP 1                       // moves the sensor upward
-#define DOWN -1                    // moves the sensor downward
 ///////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////
@@ -40,6 +38,9 @@
 
 // NB_REVOL_PER_SEC: the rotation speed of the stepper motor when making NBSTEP steps:
 #define NB_REVOL_PER_SEC1 0.5     
+
+// ZMOVE_EVERY_ROTATIONSTEP: make a Z referencing every ZMOVE_EVERY_ROTATIONSTEP rotations of the ROTOR
+#define ZREF_EVERY_ROTATIONSTEP 10
 
 #define Zref_velocity 5         // the velocity [mm/s] for reaching the limit switch sensor
 #define Z_velocity    10        // the velocity [mm/s] for reaching the limit switch sensor
@@ -105,14 +106,14 @@ int nb_sensor_pos;          // the number of vertical sensor positions
 char uniq_file_name[13];    // a uniq file name to write data on SD card
 char buff[20];              // "yymmd  hh:mm:ss" -> 16 characters
 // char buffers to store sensor values:
-char buff16[16], a_buff[5], X_buff[8], Y_buff[8], Z_buff[8];  
+char buff16[17], a_buff[6], X_buff[8], Y_buff[8], Z_buff[8];  
 String mess;
 const String semicol(";");
 unsigned long t0, t1;
 
 // Global bariables for Z position:
 int Zpos_mm[MAX_NB_ZPOS+1];
-int curr_pos, next_pos;
+int curr_Zpos_mm, next_Zpos_mm;
 bool hold_stepper_torque = false;
 
 /**********************************************************************
@@ -121,7 +122,13 @@ bool hold_stepper_torque = false;
 
 void LCD_display(const String &, int line_number, bool serialprint=true);
 
-// Zmove sensor: move evertically the magnectic sensor:
+// Do_Zmove_sensor: To move the sensor carriage along the Z axis.
+void Do_Zmove_sensor(int & curr_pos_mm, int n, bool verbose=false);
+
+// Do_sensor_measurement: make the magnetic field measurements with the sensor
+void Do_sensor_measurement(String & line);
+
+// Zmove sensor: core function to move vertically the magnectic sensor:
 void Zmove_sensor(int height_mm, int speed_mm_per_sec=10, bool hold_torque=true);
 
 // Zref_sensor: move the sensor th reach the zero reference:
@@ -234,7 +241,7 @@ void setup()
   }
 
   // Move the sensor to the ref position:
-  curr_pos = Zref_sensor(hold_stepper_torque);  
+  curr_Zpos_mm = Zref_sensor(hold_stepper_torque);  
 
 }
 
@@ -263,6 +270,7 @@ void loop()
 
   // scan angle from 0 to 360°:
   int count = 0;
+
   while(true)
   {
     t0 = millis();
@@ -281,52 +289,42 @@ void loop()
 
     // Now make the mmagnetic field measurement for all the positions of the sensor:
     String line = buff + semicol + a_buff;
-    for (int n=1; n<= nb_sensor_pos; n++)
+
+    bool Zpos_move_required = count % ZREF_EVERY_ROTATIONSTEP;
+    
+    if (Zpos_move_required == 0) curr_Zpos_mm = Zref_sensor(hold_stepper_torque);
+
+    int go = count % 2;
+    if ( go == 0)
     {
-      String mess = "Current pos is " + String(curr_pos) + "mm, moving to pos#" + String(n) + " at " + String(Zpos_mm[n]) + " mm";
-      Serial.print(mess);
-      
-      // compute the distance of the move:
-      int dist = Zpos_mm[n] - curr_pos;
-  
-      mess = " - dist: " + String(dist) + " mm";
-      if (dist == 0) mess += " SKIPPING";
-      Serial.println(mess);
-  
-      // make the displacement:
-      Zmove_sensor(dist, Z_velocity, hold_stepper_torque);
-      curr_pos = Zpos_mm[n];
-  
-      delay(500);
-
-      // make tke measure (simulations only for now):
-      float mag_field_X = random(1, 2000);
-      float mag_field_Y = random(1, 2000);
-      float mag_field_Z = random(1, 2000);
-      
-      mag_field_X /= 1.1;
-      mag_field_Y /= 1.2;
-      mag_field_Z /= 1.1;
-      
-      // write the float number in a char buffer on 7 digits with 2 digits after the decimal point:
-      dtostrf(mag_field_X, 7, 2, X_buff);
-      line += semicol + X_buff;
-
-      dtostrf(mag_field_Y, 7, 2, Y_buff);
-      line += semicol + Y_buff;
-
-      dtostrf(mag_field_Z, 7, 2, Z_buff);
-      line += semicol + Z_buff;
-      
-      sprintf(buff16, "X%sY%s", X_buff, Y_buff);
-      LCD_display(buff16, 1, false);
+      // Move the sensor donward along Z axis:
+      for (int n=1; n<= nb_sensor_pos; n++)
+      {
+        // Move the sensor to the right Z position:
+        Do_Zmove_sensor(curr_Zpos_mm, n, true);
+        // Make the sensor measuremnts:
+        Do_sensor_measurement(line);
+      }
+    }
+    else
+    {
+      // Move the sensor upward along Z axis:
+      for (int n=nb_sensor_pos; n >= 1 ; n--)
+      {
+        // Move the sensor to the right Z position:
+        Do_Zmove_sensor(curr_Zpos_mm, n, true);
+        // Make the sensor measuremnts:
+        Do_sensor_measurement(line);
+      }
 
     }
-    dataFile.println(line.c_str());
-    Serial.println(line.c_str());
-    Serial.println(time_delay_ms);
 
-    // Make the stepper motor do the steps:
+    // Write data:
+    dataFile.println(line.c_str());
+    dataFile.flush();
+    Serial.println(line.c_str());
+
+    // Make the stepper motor do the steps to turn the ROTOR of the 'rotor_step_angle' value:
     for(int i=0; i < NBSTEP1; i++) 
     {
       digitalWrite(pinPUL1, HIGH);
@@ -335,7 +333,7 @@ void loop()
       delay(time_delay_ms);
     }
 
-    // If there is only 1 position, wait 1 seconde:
+    // If there is only 1 Z position for the sensor, wait 1 seconde:
     if (nb_sensor_pos == 1)
     {
       t1 = millis();
@@ -396,7 +394,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
      downward if it is > 0. 
   */
 
-  Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
+  //Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
   
   // nothing to do if dist is null:
   if (dist_mm == 0) return;
@@ -418,7 +416,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   const float N_Hz = 2. * speed_mm_per_sec / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1.e3 / (N_Hz * NBSTEP_PER_REVOL2));
 
-  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
+  //Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
 
   // the required number of steps: 
   const int nb_step = int(2. * 180 * dist_mm / (STEPPER_ANGLE2 * M_PI * DIAM2));
@@ -597,24 +595,23 @@ void write_headers(char * file_name, int nb_pos, int * Zpos)
   // Write all the Z positions in the header file:
   for (int n=1; n<= nb_pos; n++)
   {
-    line = "#  pos " + String(n) + ": " + String(Zpos[n-1]) + " mm\n";
+    line = "#  pos " + String(n) + ": " + String(Zpos[n]) + " mm\n";
     dataFile.write(line.c_str());
     Serial.print(line.c_str());
   }
 }
 
-int Do_Zmove_sensor(int curr_pos_mm, int n, bool verbose)
+void Do_Zmove_sensor(int & curr_pos_mm, int n, bool verbose)
 {
   /* To move the sensor carriage along the Z axis.
      Parameters:
      - curr_pos_mm: the current position (in mm) of the sensor along the Z axis,
      - n: the rank of the Z position
-     Return:
-     - the new value of curr_pos_mm after moving the carriage.
+     The functions updates the value of 'curr_pos_mm'.
   */
 
   String mess = "Current pos is " + String(curr_pos_mm) + "mm, moving to pos#" + String(n) + " at " + String(Zpos_mm[n]) + " mm";
-  Serial.print(mess);
+  //Serial.print(mess);
   
   // compute the distance of the move to do:
   int dist = Zpos_mm[n] - curr_pos_mm;
@@ -630,7 +627,33 @@ int Do_Zmove_sensor(int curr_pos_mm, int n, bool verbose)
   // Update the Z position
   curr_pos_mm = Zpos_mm[n];
 
-  delay(500);
+  return ;
+}
 
-  return curr_pos_mm;
+void Do_sensor_measurement(String & line)
+{
+  // make tke measure (simulations only for now):
+  float mag_field_X = random(1, 2000);
+  float mag_field_Y = random(1, 2000);
+  float mag_field_Z = random(1, 2000);
+
+  mag_field_X /= 1.1;
+  mag_field_Y /= 1.2;
+  mag_field_Z /= 1.1;
+
+  // write the float number in a char buffer on 7 digits with 2 digits after the decimal point:
+  // (X_buff, Y_buff, Z_buff and buff16 are global variables)
+  dtostrf(mag_field_X, 7, 2, X_buff);
+  line += semicol + X_buff;
+
+  dtostrf(mag_field_Y, 7, 2, Y_buff);
+  line += semicol + Y_buff;
+
+  dtostrf(mag_field_Z, 7, 2, Z_buff);
+  line += semicol + Z_buff;
+
+  sprintf(buff16, "X%sY%s", X_buff, Y_buff);
+  LCD_display(buff16, 1, false);
+
+  return;
 }

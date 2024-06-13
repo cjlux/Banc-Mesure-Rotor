@@ -56,7 +56,7 @@ unsigned long t0, t1;
 
 #define STEPPER_ANGLE 1.8
 // NBSTEP defines the numbers steps of the stepper motor for one rotor rotation:
-#define NBSTEP 8              // 4 -> step angle of the ROTOR = 4*1.6/6 = 1.2°
+#define NBSTEP 4              // 4 -> step angle of the ROTOR = 4*1.6/6 = 1.2°
                                 // 8 -> step angle of the ROTOR = 8*1.6/6 = 2.4°
 
 #define RATIO 6.
@@ -190,9 +190,9 @@ void loop()
     for(int i=0; i < NBSTEP; i++) 
     {
       digitalWrite(pinPUL, HIGH);
-      delayMicroseconds(20);
+      delayMicroseconds(40);
       digitalWrite(pinPUL, LOW);
-      delay(time_delay_ms);
+      delay(4*time_delay_ms);
     }
 
     angle = step_angle*count;
