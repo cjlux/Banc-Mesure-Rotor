@@ -9,7 +9,7 @@ void setup()
   lcd.backlight();
   
   lcd.setCursor(0, 0);
-  lcd.print("    Hello MERI    ");
+  lcd.print("    Hello         ");
   lcd.setCursor(0, 1);
   lcd.print("nice to meet you...");
   }
