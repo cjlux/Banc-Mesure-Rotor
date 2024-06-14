@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-06-12T19:18:31.860Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="8kQIF5rmJe4wX7-9zw5m" version="24.4.14" type="github" pages="3">
+<mxfile host="app.diagrams.net" modified="2024-06-13T19:08:47.122Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:126.0) Gecko/20100101 Firefox/126.0" etag="FbLy_0w0Iw0kB9NaVTdg" version="24.4.14" type="github" pages="3">
   <diagram id="VGt8NKjKaY3T89ASlulM" name="PBS">
     <mxGraphModel dx="1195" dy="663" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -8,7 +8,7 @@
           <mxGeometry x="570" y="274" width="206" height="97" as="geometry" />
         </mxCell>
         <mxCell id="8GjarqtCZsp81MKR5A-h-43" value="&lt;div style=&quot;display: flex; justify-content: center; text-align: center; align-items: baseline; font-size: 16px; line-height: 1.25; margin-top: -2px;&quot;&gt;&lt;span style=&quot;&quot;&gt;&lt;span style=&quot;color: rgb(51, 51, 51); font-weight: bold;&quot;&gt;Arbre Produit&lt;/span&gt;&lt;span style=&quot;font-size: 14px; color: rgb(51, 51, 51); font-weight: bold;&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;display: flex; justify-content: center; text-align: center; align-items: baseline; font-size: 14px; line-height: 1.25; margin-top: -2px;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(51, 51, 51);&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(51, 51, 51);&quot;&gt;(PBS: Product Breakdown Structure)&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=14;spacing=3.8;strokeOpacity=0;fillOpacity=0;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=2.3;lucidId=op2DOxUPKWHS;" parent="1" vertex="1">
-          <mxGeometry x="544" y="205" width="236" height="47" as="geometry" />
+          <mxGeometry x="549" y="216" width="236" height="47" as="geometry" />
         </mxCell>
         <mxCell id="8GjarqtCZsp81MKR5A-h-85" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;curved=0;strokeWidth=1.5;strokeColor=#5E5E5E;" parent="1" source="8GjarqtCZsp81MKR5A-h-45" target="8GjarqtCZsp81MKR5A-h-63" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -219,8 +219,8 @@
         </mxCell>
         <mxCell id="8GjarqtCZsp81MKR5A-h-92" value="" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="550" y="227.5" as="sourcePoint" />
-            <mxPoint x="770" y="227" as="targetPoint" />
+            <mxPoint x="555" y="238.5" as="sourcePoint" />
+            <mxPoint x="775" y="238" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="QH--4bEgFCzSNv2URltK-1" value="&lt;div style=&quot;display: flex; justify-content: center; text-align: center; align-items: baseline; font-size: 14px; line-height: 1.25; margin-top: -2px;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(51, 51, 51);&quot;&gt;5300&lt;br&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;display: flex; justify-content: center; text-align: center; align-items: baseline; font-size: 14px; line-height: 1.25; margin-top: -2px;&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span style=&quot;font-size: 14px; color: rgb(51, 51, 51);&quot;&gt;A4988 Stepper Motor Driver &lt;/span&gt;&lt;/span&gt;&lt;/div&gt;" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;fontSize=14;spacing=9;strokeColor=#0D5CBA;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#edf5ff;strokeWidth=2.3;lucidId=QH2DF~hNH7CZ;" vertex="1" parent="1">
@@ -264,7 +264,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="d5aZngXSX7vcz7FWKPvq" name="Synoptic">
-    <mxGraphModel dx="1434" dy="766" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1434" dy="795" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
