@@ -27,8 +27,6 @@
 #define DIAM2 9.                   // The diameter (mm) of the stepper motor reductor
 #define NBSTEP_PER_REVOL2 200      // number of steps for a full revolution
 
-#define UP 1                       // moves the sensor upward
-#define DOWN -1                    // moves the sensor downward
 ///////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////

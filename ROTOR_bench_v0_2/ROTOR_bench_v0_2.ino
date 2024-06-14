@@ -262,11 +262,10 @@ void loop()
   LCD_display("Uniq file name:", 0);
   LCD_display(uniq_file_name, 1);
   delay(2000);
-
-  write_headers(uniq_file_name, nb_sensor_pos, Zpos_mm);
   
   // open the data filewith the uniq name:
   dataFile = SD.open(uniq_file_name, FILE_WRITE);
+  write_headers(uniq_file_name, nb_sensor_pos, Zpos_mm);
 
   // scan angle from 0 to 360°:
   int count = 0;
