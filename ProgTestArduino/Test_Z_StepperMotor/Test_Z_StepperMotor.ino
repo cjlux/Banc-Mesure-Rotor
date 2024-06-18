@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////
 
 #define Zref_velocity 5         // the velocity [mm/s] for reaching the limit switch sensor
-#define Z_velocity    10        // the velocity [mm/s] for reaching the limit switch sensor
+#define Z_velocity    15        // the velocity [mm/s] for reaching the limit switch sensor
 #define MIN_NB_ZPOS   1         // The min number of vertical position for the magnetic field sensor
 #define MAX_NB_ZPOS   5         // The max number of vertical position for the magnetic field sensor
 #define ZPOS_MIN      0         // The minimum value of Zpos [mm] for the sensor

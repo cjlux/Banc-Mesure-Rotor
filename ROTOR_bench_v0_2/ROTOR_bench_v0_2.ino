@@ -43,7 +43,7 @@
 #define ZREF_EVERY_ROTATIONSTEP 10
 
 #define Zref_velocity 5         // the velocity [mm/s] for reaching the limit switch sensor
-#define Z_velocity    10        // the velocity [mm/s] for reaching the limit switch sensor
+#define Z_velocity    15        // the velocity [mm/s] for reaching the limit switch sensor
 #define MIN_NB_ZPOS   1         // The min number of vertical position for the magnetic field sensor
 #define MAX_NB_ZPOS   5         // The max number of vertical position for the magnetic field sensor
 #define ZPOS_MIN      0         // The minimum value of Zpos [mm] for the sensor
@@ -129,10 +129,10 @@ void Do_Zmove_sensor(int & curr_pos_mm, int n, bool verbose=false);
 void Do_sensor_measurement(String & line);
 
 // Zmove sensor: core function to move vertically the magnectic sensor:
-void Zmove_sensor(int height_mm, int speed_mm_per_sec=10, bool hold_torque=true);
+void Zmove_sensor(int height_mm, int speed_mm_per_sec=10, bool hold_torque=true, bool verbose=false);
 
 // Zref_sensor: move the sensor th reach the zero reference:
-int Zref_sensor(bool hold_torque=true);
+int Zref_sensor(bool hold_torque=true, bool verbose=false);
 
 // init_SD_card: initialise the SD reader/writer and chacks if a micro-SD is present:
 void init_SD_card();
@@ -303,6 +303,7 @@ void loop()
         Do_Zmove_sensor(curr_Zpos_mm, n, true);
         // Make the sensor measuremnts:
         Do_sensor_measurement(line);
+        delay(200);
       }
     }
     else
@@ -314,6 +315,7 @@ void loop()
         Do_Zmove_sensor(curr_Zpos_mm, n, true);
         // Make the sensor measuremnts:
         Do_sensor_measurement(line);
+        delay(200);
       }
 
     }
@@ -331,7 +333,7 @@ void loop()
       digitalWrite(pinPUL1, LOW);
       delay(time_delay_ms);
     }
-
+    delay(500);
     // If there is only 1 Z position for the sensor, wait 1 seconde:
     if (nb_sensor_pos == 1)
     {
@@ -387,13 +389,13 @@ void LCD_display(const String & mess, int line_num, bool serialprint)
   if (serialprint) Serial.println(mess_16);
 }
 
-void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
+void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque, bool verbose)
 {
   /* To make the sensor cart move of 'dist_mm' upward if 'dist_mm' < 0, 
      downward if it is > 0. 
   */
 
-  //Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
+  if (verbose) Serial.print("Zmove_sensor, dist: "); Serial.println(dist_mm);
   
   // nothing to do if dist is null:
   if (dist_mm == 0) return;
@@ -415,7 +417,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   const float N_Hz = 2. * speed_mm_per_sec / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1.e3 / (N_Hz * NBSTEP_PER_REVOL2));
 
-  //Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
+  if (verbose) Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
 
   // the required number of steps: 
   const int nb_step = int(2. * 180 * dist_mm / (STEPPER_ANGLE2 * M_PI * DIAM2));
@@ -426,10 +428,8 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   digitalWrite(pinPUL2, LOW);    // set the step line LOW
 
   for (int n=0; n < nb_step; n++)
-  {
-    t0 = millis();
-    
-    // Send a 5 micro-step pulse with period equals to Tms:
+  {   
+    // Send a pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
     delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
@@ -445,7 +445,7 @@ void Zmove_sensor(int dist_mm, int speed_mm_per_sec, bool hold_torque)
   return;
 }
 
-int Zref_sensor(bool hold_torque)
+int Zref_sensor(bool hold_torque, bool verbose)
 {
   /* To make the stepper motor move the sensor until it reaches the limit switch sensor */
 
@@ -460,13 +460,13 @@ int Zref_sensor(bool hold_torque)
   // the required revolution speed [revol/sec] and corresponding period:
   float N_Hz = 2 * Zref_velocity / (M_PI * DIAM2);
   const long unsigned int T_ms = int(1e3 / (N_Hz * NBSTEP_PER_REVOL2));
-  Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
-  Serial.print("T_ms: "); Serial.println(T_ms); Serial.flush();
+  if (verbose) Serial.print("N_Hz: "); Serial.println(N_Hz); Serial.flush();
+  if (verbose) Serial.print("T_ms: "); Serial.println(T_ms); Serial.flush();
 
   int limit_state = digitalRead(pinLimitSwitch);
   while (limit_state != HIGH)
   {
-    // Send a 5 micro-step pulse with period equals to Tms:
+    // Send a pulse with period equals to Tms:
     digitalWrite(pinPUL2, HIGH);
     delayMicroseconds(10);
     digitalWrite(pinPUL2, LOW);
@@ -481,7 +481,7 @@ int Zref_sensor(bool hold_torque)
     digitalWrite(pinENA2, HIGH);
   }
   
-  Serial.println(" OK !");
+  if (verbose) Serial.println(" OK !");
 
   return 0.;
 }
@@ -621,7 +621,7 @@ void Do_Zmove_sensor(int & curr_pos_mm, int n, bool verbose)
 
   // make the displacement for real: 
   // (Z_velocity & hold_stepper_torque are global variables)
-  Zmove_sensor(dist, Z_velocity, hold_stepper_torque);
+  Zmove_sensor(dist, Z_velocity, hold_stepper_torque, verbose);
 
   // Update the Z position
   curr_pos_mm = Zpos_mm[n];
