@@ -94,8 +94,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     data_dir = "../" if not args.data_dir else args.data_dir
-    
-    
+        
     fileName, DATA, nb_Z_pos = user_choose_file(data_dir)
 
     # transpose DATA to exxtract the different variables:
@@ -103,4 +102,3 @@ if __name__ == "__main__":
 
     # plot the data
     plot_magField_at_positions(A, magnField, nb_Z_pos, fileName, figsize=(10,8))
-
