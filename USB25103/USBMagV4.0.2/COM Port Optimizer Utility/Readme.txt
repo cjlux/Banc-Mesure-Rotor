@@ -1,0 +1,1 @@
+If the USB magnetometer driver is automatically installed by Microsoft Windows, it will be set to the default values specified by FTDI.  Run this utility to set the proper port latency and buffer sizes for USB Magnetometer fast operation.
