@@ -3,4 +3,5 @@ __pycache__/
 .ipynb_checkpoints/
 ROTOR_bench/*.png
 ROTOR_bench/*.txt
-
+*.txt
+*.png
