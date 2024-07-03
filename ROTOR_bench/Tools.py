@@ -3,64 +3,14 @@
 #
 import os
 import numpy as np
+from dataclasses import dataclass
+
 import matplotlib.pyplot as plt
 from serial import Serial
 from time import sleep, time
 from datetime import datetime
-from ROTOR_config import (MIN_NB_ZPOS, MAX_NB_ZPOS, ZPOS_MIN, ZPOS_MAX,
-                          STEPPER_ANGLE1, RATIO1)
+from ROTOR_config import StepperMotor, Param, Zaxis
 
-def open_Serial():
-    
-    ################################
-    # Connexion to serial port :
-    ################################
-    # Name of the serial port  :
-    #   Windows  : "COM3" or "COM4"....
-    #   PC-Linux : "/dev/ttyACM0" 
-    #   RPi      : same as PC-Linux
-    #   Mac OS X : see the title  bar of the wmonitor window.
-    #
-    # Parameters : Nb data bits  -> 8
-    #              Nb STOP bits  -> 1
-    #              Parity        -> Sans (None)
-    #              baud rate     -> 9600, 14400, 19200, 28800, 38400,
-    #                               57600, 115200, 250000
-    
-    listUSBports = ["/dev/ttyACM0", "/dev/ttyACM1"]
-
-    for port in listUSBports:
-        try:
-            print(f"Trying {port}")
-            serialPort = Serial(port, baudrate=115200, timeout=None)
-            break
-        except:
-            continue
-    print(serialPort)    
-
-    # Open serial serial if needed:
-    sleep(0.5)
-    if not serialPort.is_open :
-        serialPort.open()
-
-    # wait for Arduino ready:
-    print("Waiting for ARDUINO ... ")
-    data = b""
-    t0 = time()
-    data =""
-    while "Arduino OK" not in data :
-        try:
-            data = serialPort.readline().decode().strip()
-        except:
-            data = ""
-        if "INFO" in data:
-            print(data)
-        elif "ERROR" in data:
-            sys.exit()
-
-    print("Found <Arduino OK> : good !",flush=True)
-
-    return serialPort
     
 def get_RotStep():
     while True:
@@ -127,53 +77,19 @@ def get_param_from_user(mess:str,
             break
     return value
 
-def uniq_fileName(rot_step, Zpos_mm):
+def uniq_file_name(prefix='ROTOR', rot_step=None, Zpos_mm=None):
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''
     now = datetime.now() # current date and time
-    fileName = 'ROTOR_'+now.strftime("%Y-%m-%d-%H-%M")
-    fileName += f'_STEP-{rot_step}'
-    for z in Zpos_mm:
-        fileName += f'_{z:03d}'
+    fileName = f'{prefix}_{now.strftime("%Y-%m-%d-%H-%M")}'
+    if rot_step is not None: fileName += f'_ROTSTEP-{rot_step}'
+    if Zpos_mm is not None:
+        for z in Zpos_mm:
+            fileName += f'_{z:03d}'
     fileName += '.txt'
 
     return fileName
 
-def write_header(fileName, rot_step, Zpos_mm):
-    '''
-    Write the header in file based on parameters values
-    '''
-    NBSTEP1 = round(rot_step*RATIO1/STEPPER_ANGLE1)
-    nb_sensor_pos = len(Zpos_mm)
-    with open(fileName, "w", encoding="utf8") as fOut:
-        line1 = f'# YYMMDD_hh:mm:ss ; Angle[°]'
-        line2 = f'# rotation step angle: {rot_step}°, NBSTEP1: {NBSTEP1}\n'
-        line3 = f'# {nb_sensor_pos} Z_POS:'
-        for (n, z) in enumerate(Zpos_mm, 1):
-            line1 += f'; Xmag{n} [mT]; Ymagn{n} [mT]; Zmagn{n} [mT]'
-            line3 += f' {z} mm;'
-        line = line1 + '\n' + line2 + line3 + '\n'
-        fOut.write(line)
+
             
-def get_KeyPressed():
-    '''Wait for a key pressed and returns it.'''
-
-    key_pressed = "="
-    
-    if os.name == 'nt':
-        import msvcrt
-        key_ressed = msvcrt.getch()
-    else:
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            key_pressed = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-                
-    return key_pressed
-
-     

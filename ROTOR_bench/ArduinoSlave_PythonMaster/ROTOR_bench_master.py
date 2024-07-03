@@ -5,8 +5,8 @@
 import sys, os
 import numpy as np
 from time import sleep, time
-from Tools import get_RotStep, get_ZPOS, open_Serial, uniq_fileName, write_header
-from ROTOR_config import STEPPER_ANGLE1, RATIO1
+from Tools_Arduino import get_RotStep, get_ZPOS, open_Serial, uniq_fileName, write_header
+from ROTOR_conf_Arduino import STEPPER_ANGLE1, RATIO1
 
 def main(params:dict = None):
 
