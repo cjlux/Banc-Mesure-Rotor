@@ -18,7 +18,7 @@ def read_file(fileName):
 
     # process the name of the fie <ROTOR_YYYY-MM-DD_hh_mm_ss_ROTSTEP-aa_ZZZ_ZZZ-...txt>
     # Example: <ROTOR_2024-07-03-16-54_ROTSTEP-6_010_030_040.txt>
-    list_pos = fileName.replace('.txt', '').split('_')[4:]
+    list_pos = fileName.replace('.txt', '').split('_')[3:]
     
     # now read the sensor data lines:
     DATA = []
@@ -94,6 +94,7 @@ if __name__ == "__main__":
 
             fileName = os.path.join(data_dir, list_file[i])
             DATA, nb_Zpos = read_file(fileName)
+            print(nb_Zpos)
             # transpose DATA to extract the different variables:
             A, magnField = DATA.T[0], DATA.T[1:]        
             # plot the data
