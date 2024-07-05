@@ -16,8 +16,9 @@ class MyApp(QMainWindow):
         self.initUI()          
         self.show()            
 
-        self.zPos = [0, 0, 0, 0, 0]
-        self.rotStep = 0
+        self.zPos = [0, 0, 0, 0, 0] # 5 Z poistions max
+        self.rotStep = 1.2          # the step of the ROTOR rotation 
+        self.repet   = 1            # number of repetition of the same measurement run
     
     def initUI(self):               
         self.resize(600, 300) 
@@ -37,6 +38,16 @@ class MyApp(QMainWindow):
   
         # Remplissage du 1er onglet :
         vlayout1 = QVBoxLayout()
+
+        w = QLabel("Xorking distance [mm]", parent=self)
+        
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addStretch()
+        
+        vlayout1.addLayout(h)
+        vlayout1.addStretch()
+        
         w = QLabel("Rotation step angle ", parent=self)
         b = QPushButton('RUN', parent=self)
         b.clicked.connect(self.run)
@@ -44,6 +55,7 @@ class MyApp(QMainWindow):
         q.setValue(1.2)
         q.setRange(1.2, 360)
         q.setSingleStep(1.2)
+        q.setSuffix(" °")
         q.setGeometry(250,50,60,25)
         q.valueChanged.connect(self.rotStepChange)
         h = QHBoxLayout()
@@ -57,26 +69,42 @@ class MyApp(QMainWindow):
 
         self.posWidgets = []
         for i in range(5):
-            w = QLabel(f"Position #{i+1} [mm]", parent=self)
+            w = QLabel(f"Position #{i+1}:", parent=self)
             q = QSpinBox(parent=self)
             self.posWidgets.append(q)
             q.setValue(0)
             q.setRange(0, 130)
             q.setSingleStep(1)
+            q.setSuffix(" mm")
             q.setGeometry(250,50,60,25)
             h = QHBoxLayout()
             h.addWidget(w)
             h.addWidget(q)
             h.addStretch()
             vlayout1.addLayout(h)
+            
         vlayout1.addStretch()
+
+        w = QLabel("Number of repetition: ", parent=self)
+        q = QSpinBox(parent=self)
+        q.setValue(1)
+        q.setRange(1, 100)
+        q.setSingleStep(1)
+        q.setGeometry(250,50,60,25)
+        q.valueChanged.connect(self.repetChange)
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(q)
+        h.addStretch()
+        vlayout1.addLayout(h)
         tab1.setLayout(vlayout1)
         self.posWidgets[0].valueChanged.connect(lambda x: self.zposChange(x, 0))
         self.posWidgets[1].valueChanged.connect(lambda x: self.zposChange(x, 1))
         self.posWidgets[2].valueChanged.connect(lambda x: self.zposChange(x, 2))
         self.posWidgets[3].valueChanged.connect(lambda x: self.zposChange(x, 3))
         self.posWidgets[4].valueChanged.connect(lambda x: self.zposChange(x, 4)) 
- 
+
+        
         # Remplissage du 2me onglet :
         vlayout2 = QVBoxLayout()
         btn21 = QPushButton("button21")
@@ -91,11 +119,26 @@ class MyApp(QMainWindow):
 
     def run(self):
         print('run')
+        self.params = {'ROT_STEP_DEG': self.rotStep,
+                  'Z_POS_MM': self.zPos,
+                  'NB_REPET': self.repet}
+        print(self.params)
         
     def zposChange(self, z, n):
+        if n >= 1:
+            prev_z_pos = self.zPos[n-1]
+            if z <= self.zPos[n-1]:
+                z = prev_z_pos+1
+                self.posWidgets[n].setValue(z)
+                self.posWidgets[n].setMinimum(z)
+            else:
+                self.posWidgets[n].setMinimum(prev_z_pos)
         self.zPos[n] = z
         print(self.zPos)
 
+    def repetChange(self, r):
+        self.repet = r
+        
     def rotStepChange(self, r):
         self.rotStep = r
         print(r)
