@@ -375,7 +375,7 @@ class ROTOR_bench:
         # Define the unique file name for the data
         fileName = uniq_file_name('ROTOR', rot_step, Zpos_mm)
 
-        # write the header lines in the data file
+        # write the header lines in the datarotor file
         self.write_header(fileName, rot_step, NBSTEP1, Zpos_mm)
         
         # Enable the shaft stepper motor torque:
@@ -467,15 +467,15 @@ if __name__ == "__main__":
                             STEP_MODE=1, STEPPER_ANGLE=1.8, RATIO=6, NB_STEP_PER_REVOL=200,
                             NB_REVOL_PER_SEC=0.5,
                             GPIO_DIR=10, GPIO_STEP=9, GPIO_ENA=11,
-                            DIAM_MM=9)
+                            DIAM_MM=10)
 
     # starts the pigpio process:
     ROTOR_bench.Launch_pigpio()
 
     R = ROTOR_bench(Stepper1, Stepper2)
 
-    params = {'ROT_STEP_DEG': 6,
-              'Z_POS_MM':[10,30,40],
+    params = {'ROT_STEP_DEG': 4.8,
+              'Z_POS_MM':[0, 30, 60, 90],
               'NB_REPET': 1}
     
     R.run(params)
