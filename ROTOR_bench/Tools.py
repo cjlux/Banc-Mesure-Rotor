@@ -77,22 +77,38 @@ def get_param_from_user(mess:str,
             break
     return value
 
-def uniq_file_name(prefix='ROTOR', work_dist=None, rot_step=None, Zpos_mm=None, repet=(1,1)):
+def uniq_file_name_ROTOR(work_dist, rot_step, Zpos_mm, repet):
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''
     now = datetime.now() # current date and time
-    fileName = f'{prefix}_{now.strftime("%Y-%m-%d-%H-%M")}'
-    if work_dist is not None: fileName += f'_WDIST-{work_dist}'
-    if rot_step is not None: fileName += f'_ROTSTEP-{rot_step}'
-    if Zpos_mm is not None:
-        for z in Zpos_mm:
-            fileName += f'_{z:03d}'
+    fileName = f'ROTOR_{now.strftime("%Y-%m-%d-%H-%M")}'
+    fileName += f'_WDIST-{work_dist}'
+    fileName += f'_ROTSTEP-{rot_step}'
+    for z in Zpos_mm:
+        fileName += f'_{z:03d}'
     n,m = repet
     fileName+= f"_{n}of{m}"
     fileName += '.txt'
     
+    return fileName
 
+def uniq_file_name_FREE(duration, sampling, SMPL=NONE, GAIN=None, DELAY=NONE, repet):
+    '''
+    Defines a uniq file name mixing date info and parameters info.
+    '''
+    now = datetime.now() # current date and time
+    fileName = f'FREE_{now.strftime("%Y-%m-%d-%H-%M")}'
+    if SMPLE is None: SMPL = Params['SENSOR_NB_SAMPLE']
+    if GAIN is None: GAIN =  Params['SENSOR_GAIN']
+    if DELAY is None: DELAY = Params['SENSOR_READ_DELAY']
+    fileName += f'_SMPL-{SMPLE:03d}'
+    fileName += f'_GAIN-{GAIN:02d}'
+    fileName += f'_DELAY-{DELAY:04.2f}'
+    n,m = repet
+    fileName+= f"_{n}of{m}"
+    fileName += '.txt'
+    
     return fileName
 
 

@@ -2,6 +2,9 @@
 # widget QTabWidget: création d'onglets dans la fenêtre principale
 #
 import sys
+sys.path.insert(0, sys.path[0].replace('PyQT5',''))
+print(sys.path)
+
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel)
@@ -9,6 +12,7 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QCoreApplication
 import subprocess
+from ROTOR_config import StepperMotor, Zaxis, Param
 
 class MyApp(QMainWindow):
 
@@ -24,12 +28,15 @@ class MyApp(QMainWindow):
         self.tab5 = None
 
         self.workDist = 1
-        self.zPos     = []    # The list of the Z positions
-        self.rotStep  = 1.2   # the step of the ROTOR rotation 
-        self.repet    = 1     # number of repetition of the same measurement run
+        self.zPos     = []      # The list of the Z positions
+        self.rotStep  = 1.2     # the step of the ROTOR rotation 
+        self.repet    = 1       # number of repetition of the same measurement run
         
-        self.duration = 10    # duration [s] of the free run
-        self.sampling = 0.1   # sampling time when running free
+        self.duration = 10      # duration [s] of the free run
+        self.sampling = 0.1     # sampling time when running free
+        self.SENSOR_NB_SAMPLE  = Param['SENSOR_NB_SAMPLE']
+        self.SENSOR_GAIN       = Param['SENSOR_GAIN']
+        self.SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
 
         self.platform = subprocess.getoutput('uname -a').split()[1]
         print("Platform: ", self.platform)
@@ -189,6 +196,45 @@ class MyApp(QMainWindow):
         h.addWidget(sb)
         h.addStretch()
         VL.addLayout(h)
+
+        w = QLabel("SENSOR_NB_SAMPLE ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(self.SENSOR_NB_SAMPLE)
+        sb.setMinimum(1)
+        sb.setSingleStep(1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.SAMPLE_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+        
+        w = QLabel("SENSOR_GAIN   ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(self.SENSOR_GAIN)
+        sb.setMinimum(1)
+        sb.setSingleStep(1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.GAIN_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+        
+        w = QLabel("SENSOR_READ_DELAY ", parent=self)
+        sb = QDoubleSpinBox(parent=self)
+        sb.setValue(self.SENSOR_READ_DELAY)
+        sb.setMinimum(0.1)
+        sb.setSingleStep(0.1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.DELAY_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
         VL.addStretch()
 
     def __InitTab3(self):
@@ -228,7 +274,11 @@ class MyApp(QMainWindow):
     def RunFree(self):
         self.params = {'MODE': 'RunFree',
                        'DURATION': self.duration,
-                       'SAMPLING': self.sampling,}
+                       'SAMPLING': self.sampling,
+                       'SENSOR_NB_SAMPLE': self.SENSOR_NB_SAMPLE,
+                       'SENSOR_GAIN': self.SENSOR_GAIN,
+                       'SENSOR_READ_DELAY':self.SENSOR_READ_DELAY
+                       }
         print(self.params)
         
         params_str = "{"
@@ -273,6 +323,15 @@ class MyApp(QMainWindow):
         
     def SamplingChanged(self, x):
         self.sampling = x        
+
+    def SAMPLE_Changed(self, x):
+        self.SENSOR_NB_SAMPLE = x        
+
+    def GAIN_Changed(self, x):
+        self.SENSOR_GAIN = x        
+
+    def DELAY_Changed(self, x):
+        self.SENSOR_READ_DELAY = x        
 
     def Center(self):
         desktop = QApplication.desktop()
