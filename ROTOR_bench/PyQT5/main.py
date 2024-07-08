@@ -2,6 +2,9 @@
 # widget QTabWidget: création d'onglets dans la fenêtre principale
 #
 import sys
+sys.path.insert(0, sys.path[0].replace('PyQT5',''))
+print(sys.path)
+
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel)
@@ -9,6 +12,7 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QCoreApplication
 import subprocess
+from ROTOR_config import StepperMotor, Zaxis, Param
 
 class MyApp(QMainWindow):
 
@@ -20,11 +24,19 @@ class MyApp(QMainWindow):
         self.tab1 = None
         self.tab2 = None
         self.tab3 = None
+        self.tab4 = None
+        self.tab5 = None
 
         self.workDist = 1
-        self.zPos     = []    # The list of the Z positions
-        self.rotStep  = 1.2   # the step of the ROTOR rotation 
-        self.repet    = 1     # number of repetition of the same measurement run
+        self.zPos     = []      # The list of the Z positions
+        self.rotStep  = 1.2     # the step of the ROTOR rotation 
+        self.repet    = 1       # number of repetition of the same measurement run
+        
+        self.duration = 10      # duration [s] of the free run
+        self.sampling = 0.1     # sampling time when running free
+        self.SENSOR_NB_SAMPLE  = Param['SENSOR_NB_SAMPLE']
+        self.SENSOR_GAIN       = Param['SENSOR_GAIN']
+        self.SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
 
         self.platform = subprocess.getoutput('uname -a').split()[1]
         print("Platform: ", self.platform)
@@ -36,7 +48,6 @@ class MyApp(QMainWindow):
             sys.exit()
         self.terminal_cmd = ["lxterminal", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
-        print(self.terminal_cmd)
 
         self.InitUI()          
         self.show()            
@@ -57,9 +68,10 @@ class MyApp(QMainWindow):
         self.setCentralWidget(self.tabs) 
 
         # Add 3 tabs:
-        self.tabs.addTab(self.tab1,"Run bench")
-        self.tabs.addTab(self.tab2,"Run Free")
-        self.tabs.addTab(self.tab3,"Display")
+        self.tabs.addTab(self.tab1,"ROTOR bench")
+        self.tabs.addTab(self.tab2,"Free recording")
+        self.tabs.addTab(self.tab3,"Running display")
+        self.tabs.addTab(self.tab4,"Process data files")
 
         # Fill in the tabs:
         self.__InitTab1()
@@ -148,6 +160,83 @@ class MyApp(QMainWindow):
         self.posWidgets[8].valueChanged.connect(lambda x: self.ZposChanged(x, 8)) 
         self.posWidgets[9].valueChanged.connect(lambda x: self.ZposChanged(x, 9)) 
 
+    def __InitTab2(self):
+        ''' To fill the "Run Free" tab'''
+        
+        VL = QVBoxLayout()
+        self.tab2.setLayout(VL)
+        
+        w = QLabel("Free run duration ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(self.duration)
+        sb.setMinimum(0)
+        sb.setSingleStep(1)
+        sb.setSuffix(" s")
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.DurationChanged) 
+        b = QPushButton('RUN free', parent=self)
+        b.clicked.connect(self.RunFree)
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        h.addWidget(b)
+        VL.addLayout(h)
+
+        w = QLabel("Sampling time ", parent=self)
+        sb = QDoubleSpinBox(parent=self)
+        sb.setValue(self.sampling)
+        sb.setMinimum(0.01)
+        sb.setSingleStep(0.1)
+        sb.setSuffix(" s")
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.SamplingChanged) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+
+        w = QLabel("SENSOR_NB_SAMPLE ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(self.SENSOR_NB_SAMPLE)
+        sb.setMinimum(1)
+        sb.setSingleStep(1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.SAMPLE_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+        
+        w = QLabel("SENSOR_GAIN   ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(self.SENSOR_GAIN)
+        sb.setMinimum(1)
+        sb.setSingleStep(1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.GAIN_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+        
+        w = QLabel("SENSOR_READ_DELAY ", parent=self)
+        sb = QDoubleSpinBox(parent=self)
+        sb.setValue(self.SENSOR_READ_DELAY)
+        sb.setMinimum(0.1)
+        sb.setSingleStep(0.1)
+        sb.setGeometry(250,50,60,25)
+        sb.valueChanged.connect(self.DELAY_Changed) 
+        h = QHBoxLayout()
+        h.addWidget(w)
+        h.addWidget(sb)
+        h.addStretch()
+        VL.addLayout(h)
+        VL.addStretch()
+
     def __InitTab3(self):
         ''' To fill the "Run Free" tab'''
         
@@ -163,32 +252,10 @@ class MyApp(QMainWindow):
         VL.addLayout(h)
         VL.addStretch()
 
-    def __InitTab2(self):
-        ''' To fill the "Run Free" tab'''
-        
-        VL = QVBoxLayout()
-        self.tab2.setLayout(VL)
-        
-        w = QLabel("Xorking distance [mm]", parent=self)
-        sb = QSpinBox(parent=self)
-        sb.setValue(0)
-        sb.setMinimum(0)
-        sb.setSingleStep(1)
-        sb.setSuffix(" mm")
-        sb.setGeometry(250,50,60,25)
-        b = QPushButton('RUN bench', parent=self)
-        b.clicked.connect(self.RunBench)
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        h.addWidget(b)
-        VL.addLayout(h)
-        VL.addStretch()
-
     def RunBench(self):
         zPos = [ z for z in self.zPos if z > 0]
-        self.params = {'WORK_DIST': self.workDist,
+        self.params = {'MODE': 'RunBench',
+                       'WORK_DIST': self.workDist,
                        'ROT_STEP_DEG': self.rotStep,
                        'Z_POS_MM': zPos,
                        'NB_REPET': self.repet}
@@ -205,7 +272,24 @@ class MyApp(QMainWindow):
         subprocess.run(self.terminal_cmd)
 
     def RunFree(self):
-        pass
+        self.params = {'MODE': 'RunFree',
+                       'DURATION': self.duration,
+                       'SAMPLING': self.sampling,
+                       'SENSOR_NB_SAMPLE': self.SENSOR_NB_SAMPLE,
+                       'SENSOR_GAIN': self.SENSOR_GAIN,
+                       'SENSOR_READ_DELAY':self.SENSOR_READ_DELAY
+                       }
+        print(self.params)
+        
+        params_str = "{"
+        for k in self.params.keys():
+                params_str += f"'{k}': {self.params[k]}, "
+        params_str += '}'
+        
+        with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
+                F.write(params_str)
+
+        subprocess.run(self.terminal_cmd)
 
     def WorkingDistChanged(self, x):
         self.workDist = x
@@ -228,12 +312,27 @@ class MyApp(QMainWindow):
                 
         self.zPos[n] = z
 
-    def RepetChanged(self, r):
-        self.repet = r
+    def RepetChanged(self, x):
+        self.repet = x
         
-    def RotStepChanged(self, r):
-        self.rotStep = r
+    def RotStepChanged(self, x):
+        self.rotStep = x
         
+    def DurationChanged(self, x):
+        self.duration = x
+        
+    def SamplingChanged(self, x):
+        self.sampling = x        
+
+    def SAMPLE_Changed(self, x):
+        self.SENSOR_NB_SAMPLE = x        
+
+    def GAIN_Changed(self, x):
+        self.SENSOR_GAIN = x        
+
+    def DELAY_Changed(self, x):
+        self.SENSOR_READ_DELAY = x        
+
     def Center(self):
         desktop = QApplication.desktop()
         n = desktop.screenNumber(self.cursor().pos())
@@ -243,6 +342,12 @@ class MyApp(QMainWindow):
         self.move(geo_window.topLeft())
         
 if __name__ == '__main__':
-    app = QApplication(sys.argv) # instanciation classe QApplication
-    my_app = MyApp()             # instanciation classe MyApp
-    app.exec_()                  # lancement boucle événementielle Qt
+    
+    ps_au = subprocess.getoutput("ps au")
+    print(ps_au)
+    if ps_au.count('ROTOR_bench/PyQT5/main.py') >= 2:
+        print("process <python3 .../ROTOR_bench/PyQT5/main.py> already running, tchao !")
+    else:
+        app = QApplication(sys.argv) # instanciation classe QApplication
+        my_app = MyApp()             # instanciation classe MyApp
+        app.exec_()                  # lancement boucle événementielle Qt

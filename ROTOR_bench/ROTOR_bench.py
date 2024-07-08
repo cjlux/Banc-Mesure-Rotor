@@ -299,13 +299,23 @@ class ROTOR_bench:
         self.pi.write(self.stepper2.GPIO_ENA, HIGH)     # release the torque of the Z stepper motor
         print("[INFO] All motor released")
         
-    def continuous_reccord(self, duration=10, SENSOR_READ_DELAY=None):
+    def continuous_reccord(self, params):
         '''
         To measure continuously the magnetic field ans write the data in a CALIB_...txt file.
         '''
-                
+        
+        duration = params["DURATION"]
+        sampling = params['SAMPLING']
+        
+        SAMPLE = params.get('SENSOR_NB_SAMPLE', Params['SENSOR_NB_SAMPLE']
+        GAIN = params.get('SENSOR_GAIN', Params['SENSOR_GAIN']
+        DELAY = params.get('SENSOR_READ_DELAY', Params['SENSOR_READ_DELAY']
+        
+        Zpos_mm   =  parameters['Z_POS_MM']
+        nb_repet  = parameters['NB_REPET']
+
         # Define the unique file name for the data
-        fileName = uniq_file_name(prefix='CALIB')
+        fileName = uniq_file_name_FREE(duration, sampling, SAMPLE, GAIN, DELAY, repet):
 
         if SENSOR_READ_DELAY is None:
             SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
