@@ -77,17 +77,21 @@ def get_param_from_user(mess:str,
             break
     return value
 
-def uniq_file_name(prefix='ROTOR', rot_step=None, Zpos_mm=None):
+def uniq_file_name(prefix='ROTOR', work_dist=None, rot_step=None, Zpos_mm=None, repet=(1,1)):
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''
     now = datetime.now() # current date and time
     fileName = f'{prefix}_{now.strftime("%Y-%m-%d-%H-%M")}'
+    if work_dist is not None: fileName += f'_WDIST-{work_dist}'
     if rot_step is not None: fileName += f'_ROTSTEP-{rot_step}'
     if Zpos_mm is not None:
         for z in Zpos_mm:
             fileName += f'_{z:03d}'
+    n,m = repet
+    fileName+= f"_{n}of{m}"
     fileName += '.txt'
+    
 
     return fileName
 

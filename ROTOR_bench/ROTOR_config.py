@@ -18,16 +18,17 @@ class StepperMotor:
         return 1.e3 / (self.NB_REVOL_PER_SEC * self.NBSTEP_PER_REVOL)
 
 
-class Param(Enum):
-    MIN_NB_ZPOS       = 1    # The min number of vertical position for the magnetic field sensor
-    MAX_NB_ZPOS       = 10   # The max number of vertical position for the magnetic field sensor
-    ZPOS_MIN          = 0    # The minimum value of Zpos [mm] for the sensor
-    ZPOS_MAX          = 130  # The maximum value of Zpos [mm] for the sensor
+Param= {
+    'MIN_NB_ZPOS':      1,    # The min number of vertical position for the magnetic field sensor
+    'MAX_NB_ZPOS':      10,   # The max number of vertical position for the magnetic field sensor
+    'ZPOS_MIN':         0,    # The minimum value of Zpos [mm] for the sensor
+    'ZPOS_MAX':         130,  # The maximum value of Zpos [mm] for the sensor
     
-    SENSOR_NB_SAMPLE  = 10   # the number of samples the sensor will get to give an average
-    SENSOR_GAIN       = 1    # the sensor gain: can be 1,2,4 or 8
-    SENSOR_READ_DELAY = 0.7
-    SENSOR_Oe_mT      = 0.1  # multiplicative coeff to convert sensor Oe unit to milli-Tesla [mT]
+    'SENSOR_NB_SAMPLE': 10,   # the number of samples the sensor will get to give an average
+    'SENSOR_GAIN':      1,    # the sensor gain: can be 1,2,4 or 8
+    'SENSOR_READ_DELAY':0.7,
+    'SENSOR_Oe_mT':     0.1,  # multiplicative coeff to convert sensor Oe unit to milli-Tesla [mT]
+    }
  
 class Zrotation(Enum):
     pass
