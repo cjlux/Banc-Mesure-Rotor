@@ -307,9 +307,9 @@ class ROTOR_bench:
         duration = params["DURATION"]
         sampling = params['SAMPLING']
         
-        SAMPLE = params.get('SENSOR_NB_SAMPLE', Params['SENSOR_NB_SAMPLE']
-        GAIN = params.get('SENSOR_GAIN', Params['SENSOR_GAIN']
-        DELAY = params.get('SENSOR_READ_DELAY', Params['SENSOR_READ_DELAY']
+        SAMPLE = params.get('SENSOR_NB_SAMPLE', Params['SENSOR_NB_SAMPLE'])
+        GAIN = params.get('SENSOR_GAIN', Params['SENSOR_GAIN'])
+        DELAY = params.get('SENSOR_READ_DELAY', Params['SENSOR_READ_DELAY'])
         
         Zpos_mm   =  parameters['Z_POS_MM']
         nb_repet  = parameters['NB_REPET']
