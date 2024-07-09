@@ -18,7 +18,7 @@ class StepperMotor:
         return 1.e3 / (self.NB_REVOL_PER_SEC * self.NBSTEP_PER_REVOL)
 
 
-Param= {
+Param = {
     'MIN_NB_ZPOS':      1,    # The min number of vertical position for the magnetic field sensor
     'MAX_NB_ZPOS':      10,   # The max number of vertical position for the magnetic field sensor
     'ZPOS_MIN':         0,    # The minimum value of Zpos [mm] for the sensor
