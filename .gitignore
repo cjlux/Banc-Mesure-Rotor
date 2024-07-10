@@ -5,3 +5,5 @@ ROTOR_bench/*.png
 ROTOR_bench/*.txt
 *.txt
 *.png
+!CDC/Images/*.png
+
