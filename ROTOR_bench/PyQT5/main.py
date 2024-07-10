@@ -5,12 +5,14 @@ import sys
 sys.path.insert(0, sys.path[0].replace('PyQT5',''))
 print(sys.path)
 
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
-                             QDoubleSpinBox, QSpinBox, QLabel)
+                             QDoubleSpinBox, QSpinBox, QLabel, QGridLayout, QPlainTextEdit,
+                             QSizePolicy)
 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtGui import QIcon, QTextCursor, QFont
+from PyQt5.QtCore import QCoreApplication, QProcess
 import subprocess
 from ROTOR_config import StepperMotor, Zaxis, Param
 
@@ -26,7 +28,10 @@ class MyApp(QMainWindow):
         self.tab3 = None
         self.tab4 = None
         self.tab5 = None
-
+        
+        self.display = None     # the testedit zone to display the ouput of the running command        
+        self.process = None     #  QProcess object for external app
+        
         self.workDist = 1
         self.zPos     = []      # The list of the Z positions
         self.rotStep  = 1.2     # the step of the ROTOR rotation 
@@ -46,8 +51,10 @@ class MyApp(QMainWindow):
         if self.platform != 'raspberrypi':
             print("ERROR:you must use a Rasberry Pi platform !!!")
             sys.exit()
-        self.terminal_cmd = ["lxterminal", "--command", 
+        self.terminal_cmd = ["lxterminal", "--geometry=200x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
+
+        self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
         self.InitUI()          
         self.show()            
@@ -84,24 +91,30 @@ class MyApp(QMainWindow):
         VL = QVBoxLayout()
         self.tab1.setLayout(VL)
         
+        g = QGridLayout()
+        h = QHBoxLayout()
+        h.addLayout(g)
+        h.addStretch()
+        VL.addLayout(h)
+        VL.addStretch()
+
+        g.setColumnMinimumWidth(1, 250)
+        g.setColumnMinimumWidth(2, 150)
+        g.setColumnMinimumWidth(3, 400)
+        g.setColumnMinimumWidth(4, 100)
+        
         w = QLabel("Working distance ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(1)
         sb.setMinimum(0)
         sb.setSingleStep(1)
         sb.setSuffix(" mm")
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.WorkingDistChanged) 
         b = QPushButton('RUN bench', parent=self)
         b.clicked.connect(self.RunBench)
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        h.addWidget(b)
-
-        VL.addLayout(h)
-        VL.addStretch()
+        g.addWidget(w, 1, 1)
+        g.addWidget(sb, 1, 2)
+        g.addWidget(b, 1, 4)
         
         w = QLabel("Rotation step angle ", parent=self)
         sb = QDoubleSpinBox(parent=self)
@@ -109,15 +122,9 @@ class MyApp(QMainWindow):
         sb.setRange(1.2, 360)
         sb.setSingleStep(1.2)
         sb.setSuffix(" °")
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.RotStepChanged)
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        
-        VL.addLayout(h)
-        VL.addStretch()
+        g.addWidget(w,  2, 1)
+        g.addWidget(sb, 2, 2)
 
         self.posWidgets = []
         for i in range(self.NB_MAX_ZPOS):
@@ -128,37 +135,18 @@ class MyApp(QMainWindow):
             sb.setRange(0, 130)
             sb.setSingleStep(1)
             sb.setSuffix(" mm")
-            sb.setGeometry(250,50,60,25)
-            h = QHBoxLayout()
-            h.addWidget(w)
-            h.addWidget(sb)
-            h.addStretch()
-            VL.addLayout(h)  
-        VL.addStretch()
+            sb.valueChanged.connect(lambda x, n=i: self.ZposChanged(n, x))
+            g.addWidget(w,  i+5, 1)
+            g.addWidget(sb, i+5, 2)
 
         w = QLabel("Number of repetition: ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(1)
         sb.setRange(1, 100)
         sb.setSingleStep(1)
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.RepetChanged)
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        VL.addLayout(h)
-
-        self.posWidgets[0].valueChanged.connect(lambda x: self.ZposChanged(x, 0))
-        self.posWidgets[1].valueChanged.connect(lambda x: self.ZposChanged(x, 1))
-        self.posWidgets[2].valueChanged.connect(lambda x: self.ZposChanged(x, 2))
-        self.posWidgets[3].valueChanged.connect(lambda x: self.ZposChanged(x, 3))
-        self.posWidgets[4].valueChanged.connect(lambda x: self.ZposChanged(x, 4)) 
-        self.posWidgets[5].valueChanged.connect(lambda x: self.ZposChanged(x, 5))
-        self.posWidgets[6].valueChanged.connect(lambda x: self.ZposChanged(x, 6))
-        self.posWidgets[7].valueChanged.connect(lambda x: self.ZposChanged(x, 7))
-        self.posWidgets[8].valueChanged.connect(lambda x: self.ZposChanged(x, 8)) 
-        self.posWidgets[9].valueChanged.connect(lambda x: self.ZposChanged(x, 9)) 
+        g.addWidget(w, self.NB_MAX_ZPOS+7, 1)
+        g.addWidget(sb, self.NB_MAX_ZPOS+7, 2)
 
     def __InitTab2(self):
         ''' To fill the "Run Free" tab'''
@@ -166,91 +154,94 @@ class MyApp(QMainWindow):
         VL = QVBoxLayout()
         self.tab2.setLayout(VL)
         
+        g = QGridLayout()
+        h = QHBoxLayout()
+        h.addLayout(g)
+        h.addStretch()
+        VL.addLayout(h)
+        VL.addStretch()
+
+        g.setColumnMinimumWidth(1, 250)
+        g.setColumnMinimumWidth(2, 150)
+        g.setColumnMinimumWidth(3, 400)
+        g.setColumnMinimumWidth(4, 100)
+
         w = QLabel("Free run duration ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(self.duration)
         sb.setMinimum(0)
         sb.setSingleStep(1)
         sb.setSuffix(" s")
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.DurationChanged) 
         b = QPushButton('RUN free', parent=self)
         b.clicked.connect(self.RunFree)
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        h.addWidget(b)
-        VL.addLayout(h)
-
+        g.addWidget(w, 1, 1)
+        g.addWidget(sb, 1, 2)
+        g.addWidget(b, 1, 4)
+        
         w = QLabel("Sampling time ", parent=self)
         sb = QDoubleSpinBox(parent=self)
         sb.setValue(self.sampling)
         sb.setMinimum(0.01)
         sb.setSingleStep(0.1)
         sb.setSuffix(" s")
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.SamplingChanged) 
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        VL.addLayout(h)
-
+        g.addWidget(w, 2, 1)
+        g.addWidget(sb, 2, 2)
+        
         w = QLabel("SENSOR_NB_SAMPLE ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(self.SENSOR_NB_SAMPLE)
         sb.setMinimum(1)
         sb.setSingleStep(1)
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.SAMPLE_Changed) 
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        VL.addLayout(h)
+        g.addWidget(w, 3, 1)
+        g.addWidget(sb, 3, 2)
         
         w = QLabel("SENSOR_GAIN   ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(self.SENSOR_GAIN)
         sb.setMinimum(1)
         sb.setSingleStep(1)
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.GAIN_Changed) 
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        VL.addLayout(h)
+        g.addWidget(w, 4,1)
+        g.addWidget(sb, 4, 2)
         
         w = QLabel("SENSOR_READ_DELAY ", parent=self)
         sb = QDoubleSpinBox(parent=self)
         sb.setValue(self.SENSOR_READ_DELAY)
         sb.setMinimum(0.1)
         sb.setSingleStep(0.1)
-        sb.setGeometry(250,50,60,25)
         sb.valueChanged.connect(self.DELAY_Changed) 
-        h = QHBoxLayout()
-        h.addWidget(w)
-        h.addWidget(sb)
-        h.addStretch()
-        VL.addLayout(h)
-        VL.addStretch()
-
+        g.addWidget(w, 5,1)
+        g.addWidget(sb, 5, 2)
+        
     def __InitTab3(self):
-        ''' To fill the "Run Free" tab'''
+        ''' To display the output of "Run Bench" or "Run Free" process'''
         
         VL = QVBoxLayout()
         self.tab3.setLayout(VL)
+        self.display = QPlainTextEdit()
+        self.display.setReadOnly(True)
+        self.display.setMinimumSize(650,400)
+        self.display.setFont(QFont('Courier New', 8))
+        self.display.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        self.display.setFixedWidth(900)
+        self.display.insertPlainText("Hello ")
+        VL.addWidget(self.display)
 
-        btn21 = QPushButton("button21")
-        btn22 = QPushButton("button22")
-        h = QHBoxLayout()
-        h.addWidget(btn21)
-        h.addStretch()
-        h.addWidget(btn22)
-        VL.addLayout(h)
-        VL.addStretch()
+    def AppendSerialText(self, appendText, color):
+        self.display.moveCursor(QTextCursor.MoveOperation.End)
+        self.display.setFont(QFont('Courier New', 8))
+        self.display.setTextColor(color)
+        self.display.insertPlainText(appendText)
+        self.display.moveCursor(QTextCursor.MoveOperation.End)        
+
+    def dataReady(self):
+        cursor = self.disply.textCursor()
+        cursor.movePosition(cursor.End)
+        cursor.insertText(str(self.process.readAll()))
+        self.display.ensureCursorVisible()        
 
     def RunBench(self):
         zPos = [ z for z in self.zPos if z > 0]
@@ -269,8 +260,39 @@ class MyApp(QMainWindow):
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
                 F.write(params_str)
 
-        subprocess.run(self.terminal_cmd)
+        # QProcess object for external app
+        self.process = QtCore.QProcess(self)
+        self.process.readyReadStandardOutput.connect(self.handle_stdout)
+        self.process.readyReadStandardError.connect(self.handle_stderr)
+        self.process.stateChanged.connect(self.handle_state)
+        # QProcess emits `readyRead` when there is data to be read
+        #self.process.finished.connect(self.process_finished)
+        self.process.readyRead.connect(self.dataReady)
+        self.process.start(self.terminal_cmd2, [])
+        #subprocess.run(self.terminal_cmd)
+    
+    def handle_stderr(self):
+        data = self.process.readAllStandardError()
+        stderr = bytes(data).decode("utf8")
+        self.message(stderr)
 
+    def handle_stdout(self):
+        data = self.process.readAllStandardOutput()
+        stdout = bytes(data).decode("utf8")
+        self.message(stdout)
+
+    def handle_state(self, state):
+        states = {
+            QProcess.NotRunning: 'Not running',
+            QProcess.Starting: 'Starting',
+            QProcess.Running: 'Running',
+        }
+        state_name = states[state]
+        self.message(f"State changed: {state_name}")
+        
+    def message(self, s):
+        self.display.appendPlainText(s)        
+    
     def RunFree(self):
         self.params = {'MODE': 'RunFree',
                        'DURATION': self.duration,
@@ -293,8 +315,10 @@ class MyApp(QMainWindow):
 
     def WorkingDistChanged(self, x):
         self.workDist = x
-    
-    def ZposChanged(self, z, n):
+        
+        self.message(str(x))
+            
+    def ZposChanged(self, n, z):
         print(n, z, self.zPos)
         if z == 0:
             print('a')
@@ -331,7 +355,7 @@ class MyApp(QMainWindow):
         self.SENSOR_GAIN = x        
 
     def DELAY_Changed(self, x):
-        self.SENSOR_READ_DELAY = x        
+        self.SENSOR_READ_DELAY = x   
 
     def Center(self):
         desktop = QApplication.desktop()
