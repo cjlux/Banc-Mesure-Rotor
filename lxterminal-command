@@ -1,1 +1,0 @@
-lxterminal --command="/usr/bin/bash -c 'source rotor/bin/activate && cd Banc-Mesure-Rotor/ && python ROTOR_bench/ROTOR_bench_v0.3.py; read'"

@@ -9,7 +9,7 @@ import sys, subprocess
 from pigpio import pi, OUTPUT, PUD_UP, LOW, HIGH
 
 from ROTOR_config import StepperMotor, Zaxis, Param
-from Tools import uniq_file_name
+from Tools import uniq_file_name_ROTOR, uniq_file_name_FREE
 
 class ROTOR_bench:
 
@@ -154,7 +154,7 @@ class ROTOR_bench:
 
             else:
                 # write simplified header:
-                fOut.write('\n# Xmagn [mT]; Ymagn [mT]; Zmagn [mT];\n')
+                fOut.write('\n# Time[s]; Xmagn [mT]; Ymagn [mT]; Zmagn [mT];\n')
                     
 
 
@@ -290,16 +290,16 @@ class ROTOR_bench:
         self.emergencyStopRequired = True
         self.Stop_ROTOR_Bench()
 
-    def Stop_ROTOR_Bench(self):
+    def Stop_ROTOR_Bench(self, verbose=True):
         '''
         This function is called when the emergency-stop button is pressed.
         It should stop the motors and left the ROTOR bench in s safe state.
         '''
         self.pi.write(self.stepper1.GPIO_ENA, HIGH)     # release the torque of the shaft stepper motor
         self.pi.write(self.stepper2.GPIO_ENA, HIGH)     # release the torque of the Z stepper motor
-        print("[INFO] All motor released")
+        if verbose: print("[INFO] All motor released")
         
-    def continuous_reccord(self, params):
+    def run_free(self, params):
         '''
         To measure continuously the magnetic field ans write the data in a CALIB_...txt file.
         '''
@@ -307,68 +307,72 @@ class ROTOR_bench:
         duration = params["DURATION"]
         sampling = params['SAMPLING']
         
-        SAMPLE = params.get('SENSOR_NB_SAMPLE', Params['SENSOR_NB_SAMPLE'])
-        GAIN = params.get('SENSOR_GAIN', Params['SENSOR_GAIN'])
-        DELAY = params.get('SENSOR_READ_DELAY', Params['SENSOR_READ_DELAY'])
+        SAMPLE = params.get('SENSOR_NB_SAMPLE', params['SENSOR_NB_SAMPLE'])
+        GAIN = params.get('SENSOR_GAIN', params['SENSOR_GAIN'])
+        SENSOR_READ_DELAY = params.get('SENSOR_READ_DELAY', params['SENSOR_READ_DELAY'])
         
-        Zpos_mm   =  parameters['Z_POS_MM']
-        nb_repet  = parameters['NB_REPET']
-
-        # Define the unique file name for the data
-        fileName = uniq_file_name_FREE(duration, sampling, SAMPLE, GAIN, DELAY, repet):
-
-        if SENSOR_READ_DELAY is None:
-            SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
+        nb_repet  = params['NB_REPET']
         
-        # write the header lines in the data file
-        with open(fileName, "w", encoding="utf8") as fOut:
-
-            
-            # write sensorparameters
-            for k in Param.keys():
-                if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')
-            
-            # Send unused command to clean the buhher:
-            self.serialPort.write(b'HI')
-            sleep(1)
-            self.serialPort.read_all()
-
-            '''# make a first write/read to throw unanted characters in the read buffer
-            self.serialPort.write(b'RM')
-            sleep(SENSOR_READ_DELAY)'''
-                
-            t0 = time()
-            while True:
-                t1 = time()
-
-                # send a 'Read Manual' (RM) command to the sensor:
-                self.serialPort.write(b'RM')
-                sleep(SENSOR_READ_DELAY)
-                data = self.serialPort.read_all().decode().replace('\r','')
-                data = data.split('RD')[-1].strip()
-                X, Y, Z = map(float, data.split(','))
-                coeff = Param['SENSOR_Oe_mT']
-                X *= coeff
-                Y *= coeff
-                Z *= coeff
-
-                line = f'{X:12.6f};{Y:12.6f};{Z:12.6f}\n'
-                fOut.write(line)
-                fOut.flush()
-                print(f'[DATA] {line}', end="")
-
-                # set measurement time period to 1 sec:
-                while True:
-                    if time() - t1 >= 1: break
-
-                # quit the loop when the elapsed time reaches furation:
-                if time() - t0 >= duration: break
-
-        # release ressourc/tmp/ROTOR_LAUNCH.txtes:
+        # release motors:
         self.Stop_ROTOR_Bench()
+        
+        now = datetime.now() # current date and time
 
+        for repet in range(1, nb_repet+1):
 
-                        
+          # Define the unique file name for the data
+          fileName = uniq_file_name_FREE(now, duration, sampling, SAMPLE, GAIN, SENSOR_READ_DELAY,  (repet, nb_repet))
+          
+          # write the header lines in the datarotor file
+          self.write_header(fileName)
+          
+          # write the header lines in the data file
+          with open(fileName, "a", encoding="utf8") as fOut:
+
+              
+              '''# write sensorparameters
+              for k in Param.keys():
+                  if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')'''
+              
+              # Send unused command to clean the buhher:
+              self.serialPort.write(b'HI')
+              sleep(1)
+              self.serialPort.read_all()
+
+              '''# make a first write/read to throw unanted characters in the read buffer
+              self.serialPort.write(b'RM')
+              sleep(SENSOR_READ_DELAY)'''
+                  
+              t0 = time()
+              while True:
+                  t1 = time()
+
+                  # send a 'Read Manual' (RM) command to the sensor:
+                  self.serialPort.write(b'RM')
+                  sleep(SENSOR_READ_DELAY)
+                  data = self.serialPort.read_all().decode().replace('\r','')
+                  t_read = time()- t0
+                  data = data.split('RD')[-1].strip()
+                  X, Y, Z = map(float, data.split(','))
+                  coeff = Param['SENSOR_Oe_mT']
+                  X *= coeff
+                  Y *= coeff
+                  Z *= coeff
+
+                  line = f'{t_read:5.2f};{X:12.6f};{Y:12.6f};{Z:12.6f}\n'
+                  fOut.write(line)
+                  fOut.flush()
+                  print(f'[DATA] {line}', end="")
+
+                  # set measurement time period to 1 sec:
+                  while True:
+                      if time() - t1 >= sampling: break
+
+                  # quit the loop when the elapsed time reaches duration:
+                  if time() - t0 >= duration: break
+            
+        print("[INFO] end of free run")  
+        self.serialPort.close()
         
     def run(self, parameters:dict, verbose:bool =False):
 
@@ -385,10 +389,12 @@ class ROTOR_bench:
         if verbose:
             print(f'[INFO] ROT_STEP_DEG: {rot_step}, NBSTEP1: {NBSTEP1}, T_stepper1_sec:{T_stepper1_sec:.3f}')
         
+        now = datetime.now() # current date and time
+
         for repet in range(1, nb_repet+1):
           
           # Define the unique file name for the data
-          fileName = uniq_file_name('ROTOR', work_dist, rot_step, Zpos_mm, (repet, nb_repet))
+          fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
 
           # write the header lines in the datarotor file
           self.write_header(fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
@@ -451,7 +457,7 @@ class ROTOR_bench:
               for i in range(0, NBSTEP1):
                   top = time()
                   self.pi.write(self.stepper1.GPIO_STEP, HIGH)
-                  sleep(20e-6)
+                  sleep(0.001)
                   self.pi.write(self.stepper1.GPIO_STEP, LOW)
                   while True:
                       if time() - top > T_stepper1_sec: break
@@ -460,7 +466,7 @@ class ROTOR_bench:
               if nb_sensor_pos == 1:
                   t1 = time();
                   while t1 - t0 < 1:
-                      t1 = millis()
+                      t1 = time()
 
               count += 1;
 

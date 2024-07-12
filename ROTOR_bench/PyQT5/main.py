@@ -1,7 +1,7 @@
 #
 # widget QTabWidget: création d'onglets dans la fenêtre principale
 #
-import sys
+import sys, json
 sys.path.insert(0, sys.path[0].replace('PyQT5',''))
 print(sys.path)
 
@@ -54,6 +54,12 @@ class MyApp(QMainWindow):
         self.terminal_cmd = ["lxterminal", "--geometry=200x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
 
+        self.plotROTOR_cmd = ["lxterminal", "--command",     
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python Processing/plot_ROTOR.py'"]
+        
+        self.plotFREE_cmd = ["lxterminal", "--command",     
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python Processing/plot_FREE.py'"]
+        
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
         self.InitUI()          
@@ -72,6 +78,7 @@ class MyApp(QMainWindow):
         self.tab1 = QWidget(parent=self)
         self.tab2 = QWidget(parent=self)
         self.tab3 = QWidget(parent=self)
+        self.tab4 = QWidget(parent=self)
         self.setCentralWidget(self.tabs) 
 
         # Add 3 tabs:
@@ -84,7 +91,8 @@ class MyApp(QMainWindow):
         self.__InitTab1()
         self.__InitTab2()
         self.__InitTab3()
-        
+        self.__InitTab4()
+
     def __InitTab1(self):
         ''' To fill in the RunBench tab'''
 
@@ -180,9 +188,10 @@ class MyApp(QMainWindow):
         g.addWidget(b, 1, 4)
         
         w = QLabel("Sampling time ", parent=self)
-        sb = QDoubleSpinBox(parent=self)
-        sb.setValue(self.sampling)
-        sb.setMinimum(0.01)
+        self.sampling_spinbox = QDoubleSpinBox(parent=self)
+        sb = self.sampling_spinbox
+        sb.setValue(self.SENSOR_READ_DELAY)
+        sb.setMinimum(0.1)
         sb.setSingleStep(0.1)
         sb.setSuffix(" s")
         sb.valueChanged.connect(self.SamplingChanged) 
@@ -216,6 +225,15 @@ class MyApp(QMainWindow):
         g.addWidget(w, 5,1)
         g.addWidget(sb, 5, 2)
         
+        w = QLabel("Number of repetition: ", parent=self)
+        sb = QSpinBox(parent=self)
+        sb.setValue(1)
+        sb.setRange(1, 100)
+        sb.setSingleStep(1)
+        sb.valueChanged.connect(self.RepetChanged)
+        g.addWidget(w, 6, 1)
+        g.addWidget(sb, 6, 2)
+        
     def __InitTab3(self):
         ''' To display the output of "Run Bench" or "Run Free" process'''
         
@@ -229,9 +247,27 @@ class MyApp(QMainWindow):
         self.display.setFixedWidth(900)
         self.display.insertPlainText("Hello ")
         VL.addWidget(self.display)
-
+        
+    def __InitTab4(self):
+        
+        VL = QVBoxLayout()
+        self.tab4.setLayout(VL)
+        b = QPushButton('Plot ROTOR data', parent=self)
+        b.clicked.connect(self.PlotROTOR)
+        VL.addWidget(b)
+        b = QPushButton('Plot FREE data', parent=self)
+        b.clicked.connect(self.PlotFREE)
+        VL.addWidget(b)
+        VL.addStretch()
+        
+    def PlotROTOR(self):
+        subprocess.run(self.plotROTOR_cmd)
+        
+    def PlotFREE(self):
+        subprocess.run(self.plotFREE_cmd)
+        
     def AppendSerialText(self, appendText, color):
-        self.display.moveCursor(QTextCursor.MoveOperation.End)
+        self.display.moveCursor(QTextCursor.MoveOperaton.End)
         self.display.setFont(QFont('Courier New', 8))
         self.display.setTextColor(color)
         self.display.insertPlainText(appendText)
@@ -250,17 +286,11 @@ class MyApp(QMainWindow):
                        'ROT_STEP_DEG': self.rotStep,
                        'Z_POS_MM': zPos,
                        'NB_REPET': self.repet}
-        print(self.params)
-        
-        params_str = "{"
-        for k in self.params.keys():
-                params_str += f"'{k}': {self.params[k]}, "
-        params_str += '}'
         
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
-                F.write(params_str)
+            F.write(json.dumps(self.params))
 
-        # QProcess object for external app
+        '''# QProcess object for external app
         self.process = QtCore.QProcess(self)
         self.process.readyReadStandardOutput.connect(self.handle_stdout)
         self.process.readyReadStandardError.connect(self.handle_stderr)
@@ -268,8 +298,8 @@ class MyApp(QMainWindow):
         # QProcess emits `readyRead` when there is data to be read
         #self.process.finished.connect(self.process_finished)
         self.process.readyRead.connect(self.dataReady)
-        self.process.start(self.terminal_cmd2, [])
-        #subprocess.run(self.terminal_cmd)
+        self.process.start(self.terminal_cmd2, [])'''
+        subprocess.run(self.terminal_cmd)
     
     def handle_stderr(self):
         data = self.process.readAllStandardError()
@@ -299,17 +329,12 @@ class MyApp(QMainWindow):
                        'SAMPLING': self.sampling,
                        'SENSOR_NB_SAMPLE': self.SENSOR_NB_SAMPLE,
                        'SENSOR_GAIN': self.SENSOR_GAIN,
-                       'SENSOR_READ_DELAY':self.SENSOR_READ_DELAY
+                       'SENSOR_READ_DELAY':self.SENSOR_READ_DELAY,
+                       'NB_REPET': self.repet
                        }
-        print(self.params)
-        
-        params_str = "{"
-        for k in self.params.keys():
-                params_str += f"'{k}': {self.params[k]}, "
-        params_str += '}'
         
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
-                F.write(params_str)
+            F.write(json.dumps(self.params))
 
         subprocess.run(self.terminal_cmd)
 
@@ -346,7 +371,10 @@ class MyApp(QMainWindow):
         self.duration = x
         
     def SamplingChanged(self, x):
-        self.sampling = x        
+        if x < self.SENSOR_READ_DELAY: 
+                x = self.SENSOR_READ_DELAY
+        self.sampling = x     
+        self.sampling_spinbox.setValue(x)   
 
     def SAMPLE_Changed(self, x):
         self.SENSOR_NB_SAMPLE = x        
