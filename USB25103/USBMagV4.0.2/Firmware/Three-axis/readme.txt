@@ -1,1 +1,0 @@
-This firmware works for both Hall three-axis probes and TMR three-axis probes.
