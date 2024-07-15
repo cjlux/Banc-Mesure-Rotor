@@ -3,7 +3,7 @@
 #
 import sys, json
 sys.path.insert(0, sys.path[0].replace('PyQT5',''))
-print(sys.path)
+#print(sys.path)
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
@@ -50,7 +50,7 @@ class MyApp(QMainWindow):
 
         if self.platform != 'raspberrypi':
             print("ERROR:you must use a Rasberry Pi platform !!!")
-            sys.exit()
+#            sys.exit()
         self.terminal_cmd = ["lxterminal", "--geometry=200x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
 

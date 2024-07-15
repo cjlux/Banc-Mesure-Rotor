@@ -36,9 +36,6 @@ else:
 
 if params['MODE'] == 'RunBench':
     R.run(params, verbose=True)
+    
 elif params['MODE'] == 'RunFree':
     R.run_free(params)
-
-
-
-#R.continuous_reccord(duration=10, SENSOR_READ_DELAY=1)
