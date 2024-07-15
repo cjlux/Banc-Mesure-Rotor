@@ -6,5 +6,6 @@ ROTOR_bench/*.txt
 *.txt
 *.png
 *.bkp
-!CDC/Images/*.png
+.~lock*
+!Docs/Images/*.png
 
