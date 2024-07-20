@@ -3,6 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 ROTOR_bench/*.png
 ROTOR_bench/*.txt
+ROTOR_bench/TXT/
 *.txt
 *.png
 *.bkp
