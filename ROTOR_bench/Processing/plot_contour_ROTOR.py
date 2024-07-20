@@ -40,9 +40,9 @@ if __name__ == "__main__":
             magn_Z = DATA[:, 3::3]
             magn_max = DATA[:, 1:].max()
             magn_min = DATA[:, 1:].min()
-            
-            rotation_step = float(fileName.split('_')[2].split('-')[-1])
-            z_pos_labels = fileName.split('_')[3:-1]
+
+            rotation_step = float(fileName.split('_')[3].split('-')[-1])
+            z_pos_labels = fileName.split('_')[4:-1]
             z_pos_values = list(map(float, z_pos_labels))
             x = np.arange(0, 360+rotation_step, rotation_step)
             y = np.array(z_pos_values)
