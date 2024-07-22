@@ -328,20 +328,11 @@ class ROTOR_bench:
           
           # write the header lines in the data file
           with open(fileName, "a", encoding="utf8") as fOut:
-
-              
-              '''# write sensorparameters
-              for k in Param.keys():
-                  if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')'''
               
               # Send unused command to clean the buhher:
               self.serialPort.write(b'HI')
               sleep(1)
               self.serialPort.read_all()
-
-              '''# make a first write/read to throw unanted characters in the read buffer
-              self.serialPort.write(b'RM')
-              sleep(SENSOR_READ_DELAY)'''
                   
               t0 = time()
               while True:
@@ -378,11 +369,11 @@ class ROTOR_bench:
 
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
-        Zpos_mm   =  parameters['Z_POS_MM']
+        Zpos_mm   = parameters['Z_POS_MM']
         nb_repet  = parameters['NB_REPET']
 
         nb_sensor_pos = len(Zpos_mm)
-        self.Z_pos_mm      = [0] + parameters["Z_POS_MM"]
+        self.Z_pos_mm = [0] + parameters["Z_POS_MM"]
         
         NBSTEP1  = round(rot_step * self.stepper1.RATIO / self.stepper1.STEPPER_ANGLE)    
         T_stepper1_sec = 1 / (self.stepper1.NB_REVOL_PER_SEC * self.stepper1.NB_STEP_PER_REVOL);

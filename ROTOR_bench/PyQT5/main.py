@@ -38,7 +38,7 @@ class MyApp(QMainWindow):
         self.repet    = 1       # number of repetition of the same measurement run
         
         self.duration = 10      # duration [s] of the free run
-        self.sampling = 0.1     # sampling time when running free
+        self.sampling = 0.7     # sampling time when running free
         self.SENSOR_NB_SAMPLE  = Param['SENSOR_NB_SAMPLE']
         self.SENSOR_GAIN       = Param['SENSOR_GAIN']
         self.SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
@@ -77,20 +77,20 @@ class MyApp(QMainWindow):
         self.tabs = QTabWidget(parent=self)
         self.tab1 = QWidget(parent=self)
         self.tab2 = QWidget(parent=self)
-        self.tab3 = QWidget(parent=self)
+        # Not yet... self.tab3 = QWidget(parent=self)
         self.tab4 = QWidget(parent=self)
         self.setCentralWidget(self.tabs) 
 
         # Add 3 tabs:
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
-        self.tabs.addTab(self.tab3,"Running display")
+        # Not yet... self.tabs.addTab(self.tab3,"Running display")
         self.tabs.addTab(self.tab4,"Process data files")
 
         # Fill in the tabs:
         self.__InitTab1()
         self.__InitTab2()
-        self.__InitTab3()
+        # Not yet ... self.__InitTab3()
         self.__InitTab4()
 
     def __InitTab1(self):
@@ -109,7 +109,7 @@ class MyApp(QMainWindow):
         g.setColumnMinimumWidth(1, 250)
         g.setColumnMinimumWidth(2, 150)
         g.setColumnMinimumWidth(3, 400)
-        g.setColumnMinimumWidth(4, 100)
+        g.setColumnMinimumWidth(4, 150)
         
         w = QLabel("Working distance ", parent=self)
         sb = QSpinBox(parent=self)
@@ -117,8 +117,10 @@ class MyApp(QMainWindow):
         sb.setMinimum(0)
         sb.setSingleStep(1)
         sb.setSuffix(" mm")
-        sb.valueChanged.connect(self.WorkingDistChanged) 
+        sb.valueChanged.connect(self.WorkingDistChanged)
+        sb.setMinimumHeight(40)
         b = QPushButton('RUN bench', parent=self)
+        b.setMinimumHeight(40)
         b.clicked.connect(self.RunBench)
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
@@ -131,6 +133,7 @@ class MyApp(QMainWindow):
         sb.setSingleStep(1.2)
         sb.setSuffix(" °")
         sb.valueChanged.connect(self.RotStepChanged)
+        sb.setMinimumHeight(40)
         g.addWidget(w,  2, 1)
         g.addWidget(sb, 2, 2)
 
@@ -144,6 +147,7 @@ class MyApp(QMainWindow):
             sb.setSingleStep(1)
             sb.setSuffix(" mm")
             sb.valueChanged.connect(lambda x, n=i: self.ZposChanged(n, x))
+            sb.setMinimumHeight(40)
             g.addWidget(w,  i+5, 1)
             g.addWidget(sb, i+5, 2)
 
@@ -153,6 +157,7 @@ class MyApp(QMainWindow):
         sb.setRange(1, 100)
         sb.setSingleStep(1)
         sb.valueChanged.connect(self.RepetChanged)
+        sb.setMinimumHeight(40)
         g.addWidget(w, self.NB_MAX_ZPOS+7, 1)
         g.addWidget(sb, self.NB_MAX_ZPOS+7, 2)
 
@@ -172,16 +177,19 @@ class MyApp(QMainWindow):
         g.setColumnMinimumWidth(1, 250)
         g.setColumnMinimumWidth(2, 150)
         g.setColumnMinimumWidth(3, 400)
-        g.setColumnMinimumWidth(4, 100)
+        g.setColumnMinimumWidth(4, 150)
 
         w = QLabel("Free run duration ", parent=self)
         sb = QSpinBox(parent=self)
         sb.setValue(self.duration)
-        sb.setMinimum(0)
+        sb.setMinimum(1)
+        sb.setMaximum(600)
         sb.setSingleStep(1)
         sb.setSuffix(" s")
-        sb.valueChanged.connect(self.DurationChanged) 
+        sb.valueChanged.connect(self.DurationChanged)
+        sb.setMinimumHeight(40)
         b = QPushButton('RUN free', parent=self)
+        b.setMinimumHeight(40)
         b.clicked.connect(self.RunFree)
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
@@ -194,7 +202,8 @@ class MyApp(QMainWindow):
         sb.setMinimum(0.1)
         sb.setSingleStep(0.1)
         sb.setSuffix(" s")
-        sb.valueChanged.connect(self.SamplingChanged) 
+        sb.valueChanged.connect(self.SamplingChanged)
+        sb.setMinimumHeight(40)
         g.addWidget(w, 2, 1)
         g.addWidget(sb, 2, 2)
         
@@ -203,7 +212,8 @@ class MyApp(QMainWindow):
         sb.setValue(self.SENSOR_NB_SAMPLE)
         sb.setMinimum(1)
         sb.setSingleStep(1)
-        sb.valueChanged.connect(self.SAMPLE_Changed) 
+        sb.valueChanged.connect(self.SAMPLE_Changed)
+        sb.setMinimumHeight(40)
         g.addWidget(w, 3, 1)
         g.addWidget(sb, 3, 2)
         
@@ -212,7 +222,8 @@ class MyApp(QMainWindow):
         sb.setValue(self.SENSOR_GAIN)
         sb.setMinimum(1)
         sb.setSingleStep(1)
-        sb.valueChanged.connect(self.GAIN_Changed) 
+        sb.valueChanged.connect(self.GAIN_Changed)
+        sb.setMinimumHeight(40)
         g.addWidget(w, 4,1)
         g.addWidget(sb, 4, 2)
         
@@ -221,7 +232,8 @@ class MyApp(QMainWindow):
         sb.setValue(self.SENSOR_READ_DELAY)
         sb.setMinimum(0.1)
         sb.setSingleStep(0.1)
-        sb.valueChanged.connect(self.DELAY_Changed) 
+        sb.valueChanged.connect(self.DELAY_Changed)
+        sb.setMinimumHeight(40)
         g.addWidget(w, 5,1)
         g.addWidget(sb, 5, 2)
         
@@ -231,6 +243,7 @@ class MyApp(QMainWindow):
         sb.setRange(1, 100)
         sb.setSingleStep(1)
         sb.valueChanged.connect(self.RepetChanged)
+        sb.setMinimumHeight(40)
         g.addWidget(w, 6, 1)
         g.addWidget(sb, 6, 2)
         
@@ -253,9 +266,11 @@ class MyApp(QMainWindow):
         VL = QVBoxLayout()
         self.tab4.setLayout(VL)
         b = QPushButton('Plot ROTOR data', parent=self)
+        b.setMinimumHeight(40)
         b.clicked.connect(self.PlotROTOR)
         VL.addWidget(b)
         b = QPushButton('Plot FREE data', parent=self)
+        b.setMinimumHeight(40)
         b.clicked.connect(self.PlotFREE)
         VL.addWidget(b)
         VL.addStretch()
@@ -383,7 +398,9 @@ class MyApp(QMainWindow):
         self.SENSOR_GAIN = x        
 
     def DELAY_Changed(self, x):
-        self.SENSOR_READ_DELAY = x   
+        self.SENSOR_READ_DELAY = x
+        if x > self.sampling:
+            self.sampling_spinbox.setValue(x)
 
     def Center(self):
         desktop = QApplication.desktop()
@@ -396,7 +413,7 @@ class MyApp(QMainWindow):
 if __name__ == '__main__':
     
     ps_au = subprocess.getoutput("ps au")
-    print(ps_au)
+    # Debug: print(ps_au)
     if ps_au.count('ROTOR_bench/PyQT5/main.py') >= 2:
         print("process <python3 .../ROTOR_bench/PyQT5/main.py> already running, tchao !")
     else:

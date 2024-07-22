@@ -22,7 +22,7 @@ paramFile = "/tmp/ROTOR_LAUNCH.txt"
 if (os.path.exists(paramFile)):
     with open(paramFile, "r", encoding="utf8") as f:
         params = json.loads(f.read())
-    #os.remove(paramFile)
+    os.remove(paramFile)
     print(f"Found file <{paramFile}>, using params: {params}")
 
 else:

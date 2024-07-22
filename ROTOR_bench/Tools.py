@@ -81,7 +81,7 @@ def uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, repet):
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''
-    fileName = f'ROTOR_{now.strftime("%Y-%m-%d-%H-%M")}'
+    fileName = f'TXT/ROTOR_{now.strftime("%Y-%m-%d-%H-%M")}'
     fileName += f'_WDIST-{work_dist}'
     fileName += f'_ROTSTEP-{rot_step}'
     for z in Zpos_mm:
@@ -96,7 +96,7 @@ def uniq_file_name_FREE(now, duration, sampling, SAMPLE=None, GAIN=None, DELAY=N
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''
-    fileName = f'FREE_{now.strftime("%Y-%m-%d-%H-%M")}'
+    fileName = f'TXT/FREE_{now.strftime("%Y-%m-%d-%H-%M")}'
     if SAMPLE is None: SAMPLE = Params['SENSOR_NB_SAMPLE']
     if GAIN is None: GAIN =  Params['SENSOR_GAIN']
     if DELAY is None: DELAY = Params['SENSOR_READ_DELAY']
