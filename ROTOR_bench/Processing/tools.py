@@ -77,7 +77,9 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
         ax.text(1.07*T.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
         ax.text(1.07*T.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
         ax.text(1.07*T.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
-    ax.grid()
+    ax.minorticks_on()
+    ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
+    ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
     ax.set_ylabel("[mT]")
     ax.set_xlabel("Time[s]")
     plt.subplots_adjust(right=0.84)
@@ -112,7 +114,9 @@ def plot_magField_at_positions(A, field, list_pos, filename, figsize=(8,6), show
       ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
       ax.set_title(f"Magnetic field at position #{n+1}: {int(p):3d} mm")
       ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
-      ax.grid()
+      ax.minorticks_on()
+      ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
+      ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
       ax.set_ylabel("[mT]")
 
       if n == nb_Zpos-1:

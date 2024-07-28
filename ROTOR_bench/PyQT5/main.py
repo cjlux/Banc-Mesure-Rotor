@@ -9,10 +9,10 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel, QGridLayout, QPlainTextEdit,
-                             QSizePolicy)
+                             QSizePolicy, QDateEdit, QTimeEdit, QMessageBox)
 
 from PyQt5.QtGui import QIcon, QTextCursor, QFont
-from PyQt5.QtCore import QCoreApplication, QProcess
+from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime
 import subprocess
 from ROTOR_config import StepperMotor, Zaxis, Param
 
@@ -23,14 +23,14 @@ class MyApp(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
 
-        self.tab1 = None
-        self.tab2 = None
-        self.tab3 = None
-        self.tab4 = None
-        self.tab5 = None
+        self.tabs = None    # The main QTabWiget
+        self.tab0 = None    # The tab to set date & time
+        self.tab1 = None    # The tab to start the rotor bench
+        self.tab2 = None    # The tab to run free recording
+        self.tab3 = None    # the tab to run data plotting
         
-        self.display = None     # the testedit zone to display the ouput of the running command        
-        self.process = None     #  QProcess object for external app
+        self.display = None     # the textedit zone to display the ouput of the running command        
+        self.process = None     # QProcess object for external app
         
         self.workDist = 1
         self.zPos     = []      # The list of the Z positions
@@ -73,25 +73,93 @@ class MyApp(QMainWindow):
         self.Center()       
         self.setWindowTitle('ROTOR mesurement bench')
  
-        # Création d'un objet QTabWidget et de 3 onglets vides:
+        # Create the QTabWidget object and empty tabs:
         self.tabs = QTabWidget(parent=self)
+        self.tab0 = QWidget(parent=self)
         self.tab1 = QWidget(parent=self)
         self.tab2 = QWidget(parent=self)
-        # Not yet... self.tab3 = QWidget(parent=self)
-        self.tab4 = QWidget(parent=self)
+        self.tab3 = QWidget(parent=self)
         self.setCentralWidget(self.tabs) 
 
         # Add 3 tabs:
+        self.tabs.addTab(self.tab0,"Set Date & Time")
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
-        # Not yet... self.tabs.addTab(self.tab3,"Running display")
-        self.tabs.addTab(self.tab4,"Process data files")
+        self.tabs.addTab(self.tab3,"Process data files")
 
+        # usefull widgets:
+        self.dateWidget = None
+        self.timeWidget = None
+        
         # Fill in the tabs:
+        self.__InitTab0()
         self.__InitTab1()
         self.__InitTab2()
-        # Not yet ... self.__InitTab3()
-        self.__InitTab4()
+        self.__InitTab3()
+
+        # Select [Date & Time] tab and disable the other tabs:
+        self.tabs.setCurrentIndex(0)
+        self.tabs.setCurrentIndex(0)
+        for i in range(1,4): self.tabs.setTabEnabled(i, False)
+        
+        
+        
+    def __InitTab0(self):
+        ''' To fill in the [Date & Time] tab'''
+
+        VL = QVBoxLayout()
+        self.tab0.setLayout(VL)
+
+        VL.addStretch()
+        h = QHBoxLayout()
+        VL.addLayout(h)
+        VL.addStretch()
+
+        l = QLabel("Date: ", parent=self)
+        q = QDateEdit(parent=self)
+        self.dateWidget = q
+        q.setDate(QDate.currentDate())
+        q.setCalendarPopup(True)
+        q.setDisplayFormat('yyyy / MM / dd')
+        q.setMinimumHeight(30)
+        h.addWidget(l)
+        h.addWidget(q)
+
+        l = QLabel("Time: ", parent=self)
+        q = QTimeEdit(parent=self)
+        q.setTime(QTime.currentTime())
+        q.setMinimumHeight(30)
+        self.timeWidget = q
+        h.addWidget(l)
+        h.addWidget(q)
+
+        b = QPushButton('Set date & time', parent=self)
+        b.setMinimumHeight(30)
+        b.clicked.connect(self.SetDateTime)
+        h.addStretch()
+        h.addWidget(b)
+
+        VL.addLayout(h)
+        VL.addStretch()
+        
+
+
+    def SetDateTime(self):
+        ''' The Date & Time have changed'''
+        
+        mess = 'Date & time will be set to\n'
+        mess += f"{QDate.toString(self.dateWidget.date(), 'yyyy/MM/dd')}\t"
+        mess += f"{QTime.toString(self.timeWidget.time(), 'hh:mm')}"
+        
+        choice = QMessageBox.question(self, 'Confirm', mess,
+                                   QMessageBox.Yes | QMessageBox.No,   # buttons 'Yes' & 'No'
+                                   QMessageBox.No)                     # 'No' is default
+
+        if choice == QMessageBox.Yes:
+            self.tabs.setCurrentIndex(1)
+            self.tabs.setTabEnabled(0, False)
+            for i in range(1,4): self.tabs.setTabEnabled(i, True)
+
 
     def __InitTab1(self):
         ''' To fill in the RunBench tab'''
@@ -247,11 +315,11 @@ class MyApp(QMainWindow):
         g.addWidget(w, 6, 1)
         g.addWidget(sb, 6, 2)
         
-    def __InitTab3(self):
+    def __InitTab4(self):
         ''' To display the output of "Run Bench" or "Run Free" process'''
         
         VL = QVBoxLayout()
-        self.tab3.setLayout(VL)
+        self.tab4.setLayout(VL)
         self.display = QPlainTextEdit()
         self.display.setReadOnly(True)
         self.display.setMinimumSize(650,400)
@@ -261,10 +329,10 @@ class MyApp(QMainWindow):
         self.display.insertPlainText("Hello ")
         VL.addWidget(self.display)
         
-    def __InitTab4(self):
+    def __InitTab3(self):
         
         VL = QVBoxLayout()
-        self.tab4.setLayout(VL)
+        self.tab3.setLayout(VL)
         b = QPushButton('Plot ROTOR data', parent=self)
         b.setMinimumHeight(40)
         b.clicked.connect(self.PlotROTOR)
@@ -359,7 +427,7 @@ class MyApp(QMainWindow):
         self.message(str(x))
             
     def ZposChanged(self, n, z):
-        print(n, z, self.zPos)
+        print('start', n, z, self.zPos)
         if z == 0:
             print('a')
             for i in range(n, len(self.posWidgets)):
@@ -372,9 +440,10 @@ class MyApp(QMainWindow):
                 if z <= prev_z_pos:
                     z = prev_z_pos+1
                     self.posWidgets[n].setValue(z)
-                    self.posWidgets[n].setMinimum(0)
+                    self.posWidgets[n].setMinimum(prev_z_pos)
                 
         self.zPos[n] = z
+        print('end: ', n, z, self.zPos)
 
     def RepetChanged(self, x):
         self.repet = x
@@ -401,6 +470,16 @@ class MyApp(QMainWindow):
         self.SENSOR_READ_DELAY = x
         if x > self.sampling:
             self.sampling_spinbox.setValue(x)
+
+    def CheckZpos(self):
+
+        zPos = self.zPos
+        
+        # zPos must be strictly incresing:
+        for i in range(1, len(zPos)):
+            if zPos[i] > 0 and zPos[i] <= zPos[i-1]:
+                return -1
+        
 
     def Center(self):
         desktop = QApplication.desktop()
