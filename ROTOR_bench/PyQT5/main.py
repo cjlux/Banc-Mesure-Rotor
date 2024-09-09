@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QSizePolicy, QDateEdit, QTimeEdit, QMessageBox)
 
 from PyQt5.QtGui import QIcon, QTextCursor, QFont
-from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime
+from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime, QSize
 import subprocess
 from ROTOR_config import StepperMotor, Zaxis, Param
 
@@ -23,22 +23,26 @@ class MyApp(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
 
-        self.tabs = None    # The main QTabWiget
-        self.tab0 = None    # The tab to set date & time
-        self.tab1 = None    # The tab to start the rotor bench
-        self.tab2 = None    # The tab to run free recording
-        self.tab3 = None    # the tab to run data plotting
-        
-        self.display = None     # the textedit zone to display the ouput of the running command        
-        self.process = None     # QProcess object for external app
+        self.tabs = None         # The main QTabWiget
+        self.tab0 = QWidget()    # The tab to set date & time
+        self.tab1 = QWidget()    # The tab to start the rotor bench
+        self.tab2 = QWidget()    # The tab to run free recording
+        self.tab3 = QWidget()    # the tab to run data plotting
+        self.tab4 = QWidget()    # the tab to ...
+
+        # usefull widgets:
+        self.dateWidget = None   # For setting the date
+        self.timeWidget = None   # For setting the date
+        self.display    = None   # the textedit zone to display the ouput of the running command        
+        self.process    = None   # QProcess object for external app
         
         self.workDist = 1
-        self.zPos     = []      # The list of the Z positions
-        self.rotStep  = 1.2     # the step of the ROTOR rotation 
-        self.repet    = 1       # number of repetition of the same measurement run
+        self.zPos     = []       # The list of the Z positions
+        self.rotStep  = 1.2      # the step of the ROTOR rotation 
+        self.repet    = 1        # number of repetition of the same measurement run
         
-        self.duration = 10      # duration [s] of the free run
-        self.sampling = 0.7     # sampling time when running free
+        self.duration = 10       # duration [s] of the free run
+        self.sampling = 0.7      # sampling time when running free
         self.SENSOR_NB_SAMPLE  = Param['SENSOR_NB_SAMPLE']
         self.SENSOR_GAIN       = Param['SENSOR_GAIN']
         self.SENSOR_READ_DELAY = Param['SENSOR_READ_DELAY']
@@ -74,33 +78,27 @@ class MyApp(QMainWindow):
         self.setWindowTitle('ROTOR mesurement bench')
  
         # Create the QTabWidget object and empty tabs:
-        self.tabs = QTabWidget(parent=self)
-        self.tab0 = QWidget(parent=self)
-        self.tab1 = QWidget(parent=self)
-        self.tab2 = QWidget(parent=self)
-        self.tab3 = QWidget(parent=self)
-        self.setCentralWidget(self.tabs) 
-
-        # Add 3 tabs:
+        self.tabs = QTabWidget()
+        self.setCentralWidget(self.tabs)
+        
+        # Add all the tabs:
         self.tabs.addTab(self.tab0,"Set Date & Time")
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
         self.tabs.addTab(self.tab3,"Process data files")
-
-        # usefull widgets:
-        self.dateWidget = None
-        self.timeWidget = None
+        self.tabs.addTab(self.tab4,"Display...")
         
         # Fill in the tabs:
         self.__InitTab0()
         self.__InitTab1()
         self.__InitTab2()
         self.__InitTab3()
+        self.__InitTab4()
 
         # Select [Date & Time] tab and disable the other tabs:
         self.tabs.setCurrentIndex(0)
         self.tabs.setCurrentIndex(0)
-        for i in range(1,4): self.tabs.setTabEnabled(i, False)
+        for i in range(1,5): self.tabs.setTabEnabled(i, False)
         
         
         
@@ -110,13 +108,9 @@ class MyApp(QMainWindow):
         VL = QVBoxLayout()
         self.tab0.setLayout(VL)
 
-        VL.addStretch()
         h = QHBoxLayout()
-        VL.addLayout(h)
-        VL.addStretch()
-
-        l = QLabel("Date: ", parent=self)
-        q = QDateEdit(parent=self)
+        l = QLabel("Date: ")
+        q = QDateEdit()
         self.dateWidget = q
         q.setDate(QDate.currentDate())
         q.setCalendarPopup(True)
@@ -125,20 +119,21 @@ class MyApp(QMainWindow):
         h.addWidget(l)
         h.addWidget(q)
 
-        l = QLabel("Time: ", parent=self)
-        q = QTimeEdit(parent=self)
+        l = QLabel("Time: ")
+        q = QTimeEdit()
         q.setTime(QTime.currentTime())
         q.setMinimumHeight(30)
         self.timeWidget = q
         h.addWidget(l)
         h.addWidget(q)
 
-        b = QPushButton('Set date & time', parent=self)
+        b = QPushButton('Set date & time')
         b.setMinimumHeight(30)
         b.clicked.connect(self.SetDateTime)
         h.addStretch()
         h.addWidget(b)
 
+        VL.addStretch()
         VL.addLayout(h)
         VL.addStretch()
         
@@ -158,7 +153,7 @@ class MyApp(QMainWindow):
         if choice == QMessageBox.Yes:
             self.tabs.setCurrentIndex(1)
             self.tabs.setTabEnabled(0, False)
-            for i in range(1,4): self.tabs.setTabEnabled(i, True)
+            for i in range(1,5): self.tabs.setTabEnabled(i, True)
 
 
     def __InitTab1(self):
@@ -176,26 +171,37 @@ class MyApp(QMainWindow):
 
         g.setColumnMinimumWidth(1, 250)
         g.setColumnMinimumWidth(2, 150)
-        g.setColumnMinimumWidth(3, 400)
-        g.setColumnMinimumWidth(4, 150)
+        g.setColumnMinimumWidth(3, 100)
+        g.setColumnMinimumWidth(4, 200)
+        g.setColumnMinimumWidth(5, 200)
         
-        w = QLabel("Working distance ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("Working distance ")
+        sb = QSpinBox()
         sb.setValue(1)
         sb.setMinimum(0)
         sb.setSingleStep(1)
         sb.setSuffix(" mm")
         sb.valueChanged.connect(self.WorkingDistChanged)
         sb.setMinimumHeight(40)
-        b = QPushButton('RUN bench', parent=self)
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.RunBench)
+        
+        b1 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByAngle.png"),
+                        text='RUN by Angle')
+        b1.setMinimumHeight(110)
+        b1.setIconSize(QSize(100,100))
+        b1.clicked.connect(lambda s, mode='ByAngle': self.RunBench(s, mode))
+
+        b2 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByZPos.png"),
+                        text='RUN by Zpos')
+        b2.setMinimumHeight(110)
+        b2.setIconSize(QSize(100,100))
+        b2.clicked.connect(lambda s, mode='ByZpos': self.RunBench(s, mode))
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
-        g.addWidget(b, 1, 4)
+        g.addWidget(b1, 1, 4)
+        g.addWidget(b2, 1, 5)
         
-        w = QLabel("Rotation step angle ", parent=self)
-        sb = QDoubleSpinBox(parent=self)
+        w = QLabel("Rotation step angle ")
+        sb = QDoubleSpinBox()
         sb.setValue(1.2)
         sb.setRange(1.2, 360)
         sb.setSingleStep(1.2)
@@ -207,8 +213,8 @@ class MyApp(QMainWindow):
 
         self.posWidgets = []
         for i in range(self.NB_MAX_ZPOS):
-            w = QLabel(f"Position #{i+1:2d}:", parent=self)
-            sb = QSpinBox(parent=self)
+            w = QLabel(f"Position #{i+1:2d}:")
+            sb = QSpinBox()
             self.posWidgets.append(sb)
             sb.setValue(0)
             sb.setRange(0, 130)
@@ -219,8 +225,8 @@ class MyApp(QMainWindow):
             g.addWidget(w,  i+5, 1)
             g.addWidget(sb, i+5, 2)
 
-        w = QLabel("Number of repetition: ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("Number of repetition: ")
+        sb = QSpinBox()
         sb.setValue(1)
         sb.setRange(1, 100)
         sb.setSingleStep(1)
@@ -247,8 +253,8 @@ class MyApp(QMainWindow):
         g.setColumnMinimumWidth(3, 400)
         g.setColumnMinimumWidth(4, 150)
 
-        w = QLabel("Free run duration ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("Free run duration ")
+        sb = QSpinBox()
         sb.setValue(self.duration)
         sb.setMinimum(1)
         sb.setMaximum(600)
@@ -256,15 +262,15 @@ class MyApp(QMainWindow):
         sb.setSuffix(" s")
         sb.valueChanged.connect(self.DurationChanged)
         sb.setMinimumHeight(40)
-        b = QPushButton('RUN free', parent=self)
+        b = QPushButton('RUN free')
         b.setMinimumHeight(40)
         b.clicked.connect(self.RunFree)
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
         g.addWidget(b, 1, 4)
         
-        w = QLabel("Sampling time ", parent=self)
-        self.sampling_spinbox = QDoubleSpinBox(parent=self)
+        w = QLabel("Sampling time ")
+        self.sampling_spinbox = QDoubleSpinBox()
         sb = self.sampling_spinbox
         sb.setValue(self.SENSOR_READ_DELAY)
         sb.setMinimum(0.1)
@@ -275,8 +281,8 @@ class MyApp(QMainWindow):
         g.addWidget(w, 2, 1)
         g.addWidget(sb, 2, 2)
         
-        w = QLabel("SENSOR_NB_SAMPLE ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("SENSOR_NB_SAMPLE ")
+        sb = QSpinBox()
         sb.setValue(self.SENSOR_NB_SAMPLE)
         sb.setMinimum(1)
         sb.setSingleStep(1)
@@ -285,8 +291,8 @@ class MyApp(QMainWindow):
         g.addWidget(w, 3, 1)
         g.addWidget(sb, 3, 2)
         
-        w = QLabel("SENSOR_GAIN   ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("SENSOR_GAIN   ")
+        sb = QSpinBox()
         sb.setValue(self.SENSOR_GAIN)
         sb.setMinimum(1)
         sb.setSingleStep(1)
@@ -295,8 +301,8 @@ class MyApp(QMainWindow):
         g.addWidget(w, 4,1)
         g.addWidget(sb, 4, 2)
         
-        w = QLabel("SENSOR_READ_DELAY ", parent=self)
-        sb = QDoubleSpinBox(parent=self)
+        w = QLabel("SENSOR_READ_DELAY ")
+        sb = QDoubleSpinBox()
         sb.setValue(self.SENSOR_READ_DELAY)
         sb.setMinimum(0.1)
         sb.setSingleStep(0.1)
@@ -305,8 +311,8 @@ class MyApp(QMainWindow):
         g.addWidget(w, 5,1)
         g.addWidget(sb, 5, 2)
         
-        w = QLabel("Number of repetition: ", parent=self)
-        sb = QSpinBox(parent=self)
+        w = QLabel("Number of repetition: ")
+        sb = QSpinBox()
         sb.setValue(1)
         sb.setRange(1, 100)
         sb.setSingleStep(1)
@@ -314,7 +320,21 @@ class MyApp(QMainWindow):
         sb.setMinimumHeight(40)
         g.addWidget(w, 6, 1)
         g.addWidget(sb, 6, 2)
+                
+    def __InitTab3(self):
         
+        VL = QVBoxLayout()
+        self.tab3.setLayout(VL)
+        b = QPushButton('Plot ROTOR data')
+        b.setMinimumHeight(40)
+        b.clicked.connect(self.PlotROTOR)
+        VL.addWidget(b)
+        b = QPushButton('Plot FREE data')
+        b.setMinimumHeight(40)
+        b.clicked.connect(self.PlotFREE)
+        VL.addWidget(b)
+        VL.addStretch()
+
     def __InitTab4(self):
         ''' To display the output of "Run Bench" or "Run Free" process'''
         
@@ -328,20 +348,6 @@ class MyApp(QMainWindow):
         self.display.setFixedWidth(900)
         self.display.insertPlainText("Hello ")
         VL.addWidget(self.display)
-        
-    def __InitTab3(self):
-        
-        VL = QVBoxLayout()
-        self.tab3.setLayout(VL)
-        b = QPushButton('Plot ROTOR data', parent=self)
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.PlotROTOR)
-        VL.addWidget(b)
-        b = QPushButton('Plot FREE data', parent=self)
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.PlotFREE)
-        VL.addWidget(b)
-        VL.addStretch()
         
     def PlotROTOR(self):
         subprocess.run(self.plotROTOR_cmd)
@@ -362,7 +368,7 @@ class MyApp(QMainWindow):
         cursor.insertText(str(self.process.readAll()))
         self.display.ensureCursorVisible()        
 
-    def RunBench(self):
+    def RunBench(self, state, mode):
         zPos = [ z for z in self.zPos if z > 0]
         self.params = {'MODE': 'RunBench',
                        'WORK_DIST': self.workDist,
@@ -382,6 +388,8 @@ class MyApp(QMainWindow):
         #self.process.finished.connect(self.process_finished)
         self.process.readyRead.connect(self.dataReady)
         self.process.start(self.terminal_cmd2, [])'''
+
+        print(f'mode: <{mode}>')
         subprocess.run(self.terminal_cmd)
     
     def handle_stderr(self):
