@@ -404,7 +404,8 @@ class MyApp(QMainWindow):
         self.message(f"State changed: {state_name}")
         
     def message(self, s):
-        self.display.appendPlainText(s)        
+        pass
+        #self.display.appendPlainText(s)        
     
     def RunFree(self):
         self.params = {'MODE': 'RunFree',
