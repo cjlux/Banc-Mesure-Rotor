@@ -151,6 +151,13 @@ class MyApp(QMainWindow):
                                    QMessageBox.No)                     # 'No' is default
 
         if choice == QMessageBox.Yes:
+            new_date = f"{QDate.toString(self.dateWidget.date(), 'MMdd')}"
+            new_date += f"{QTime.toString(self.timeWidget.time(), 'hhmm')}"
+            new_date += f"{QDate.toString(self.dateWidget.date(), 'yy')}"
+            command = f"sudo date {new_date}"
+            print(command)
+            full_command = ["lxterminal", "--command", command]
+            subprocess.run(full_command)
             self.tabs.setCurrentIndex(1)
             self.tabs.setTabEnabled(0, False)
             for i in range(1,5): self.tabs.setTabEnabled(i, True)
