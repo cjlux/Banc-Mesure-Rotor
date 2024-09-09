@@ -196,6 +196,7 @@ class MyApp(QMainWindow):
         b1.setMinimumHeight(110)
         b1.setIconSize(QSize(100,100))
         b1.clicked.connect(lambda s, mode='ByAngle': self.RunBench(s, mode))
+        b1.setDisabled(True)
 
         b2 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByZPos.png"),
                         text='RUN by Zpos')
