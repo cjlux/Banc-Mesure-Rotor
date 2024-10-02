@@ -3,15 +3,16 @@ from ROTOR_bench import ROTOR_bench
 from ROTOR_config import StepperMotor
 
 Stepper1 = StepperMotor("Stepper motor connected to the shaft",
-                            STEP_MODE=1, STEPPER_ANGLE=1.8, RATIO=6, NB_STEP_PER_REVOL=200,
-                            NB_REVOL_PER_SEC=0.5,
-                            GPIO_DIR=17, GPIO_STEP=27, GPIO_ENA=22)
+                        STEP_MODE=1, STEPPER_ANGLE=1.8, NB_STEP_PER_REVOL=200,
+                        NB_REVOL_PER_SEC=0.5,
+                        GPIO_DIR=17, GPIO_STEP=27, GPIO_ENA=22,
+                        RATIO=6)
 
 Stepper2 = StepperMotor("Stepper motor for the sensorZ motion", 
-                            STEP_MODE=1, STEPPER_ANGLE=1.8, RATIO=6, NB_STEP_PER_REVOL=200,
-                            NB_REVOL_PER_SEC=0.5,
-                            GPIO_DIR=10, GPIO_STEP=9, GPIO_ENA=11,
-                            DIAM_MM=10)
+                        STEP_MODE=1, STEPPER_ANGLE=1.8, NB_STEP_PER_REVOL=200,
+                        NB_REVOL_PER_SEC=0.5,
+                        GPIO_DIR=10, GPIO_STEP=9, GPIO_ENA=11,
+                        DIAM_MM=10)
 
 # starts the pigpio process:
 ROTOR_bench.Launch_pigpio()

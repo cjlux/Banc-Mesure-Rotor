@@ -154,10 +154,16 @@ class MyApp(QMainWindow):
             new_date = f"{QDate.toString(self.dateWidget.date(), 'MMdd')}"
             new_date += f"{QTime.toString(self.timeWidget.time(), 'hhmm')}"
             new_date += f"{QDate.toString(self.dateWidget.date(), 'yy')}"
-            command = f"sudo date {new_date}"
-            print(command)
-            full_command = ["lxterminal", "--command", command]
-            subprocess.run(full_command)
+            
+            sudo_command = f"sudo date {new_date}"
+            full_command = ["lxterminal", "--command", sudo_command]
+            
+            # Run the sudo command if on RPi:
+            if self.platform != 'raspberrypi':
+                print(f"would launch command: <{full_command})> on RPi")
+            else:    
+                subprocess.run(full_command)
+
             self.tabs.setCurrentIndex(1)
             self.tabs.setTabEnabled(0, False)
             for i in range(1,5): self.tabs.setTabEnabled(i, True)
@@ -420,8 +426,7 @@ class MyApp(QMainWindow):
         self.message(f"State changed: {state_name}")
         
     def message(self, s):
-        pass
-        #self.display.appendPlainText(s)        
+        self.display.appendPlainText(s)        
     
     def RunFree(self):
         self.params = {'MODE': 'RunFree',

@@ -6,7 +6,7 @@ class StepperMotor:
     INFO:str                # some infos on the moror
     STEP_MODE:int           # used for 1/2, 1/4, 1/8.... microstep mode
     STEPPER_ANGLE: float    # the angle of one step of the stepper motor
-    RATIO:int               # The ratio of the stepper motor reductor
+    RATIO:int = None        # The ratio of the stepper motor reductor
     NB_STEP_PER_REVOL:int   # The number of steps for a full revolution	
     NB_REVOL_PER_SEC:float  # the number of revolution per seconde
     GPIO_DIR:int            # the pin numberfor the Direction signal
@@ -29,10 +29,6 @@ Param = {
     'SENSOR_READ_DELAY':0.7,
     'SENSOR_Oe_mT':     0.1,  # multiplicative coeff to convert sensor Oe unit to milli-Tesla [mT]
     }
- 
-class Zrotation(Enum):
-    pass
-
     
 class Zaxis(Enum):
     ZREF_EVERY_ROTSTEP  = 10    # make a Z referencing every ZMOVE_EVERY_ROTATIONSTEP rotations of the ROTOR
