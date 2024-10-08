@@ -20,12 +20,12 @@ class ROTOR_bench:
         self.stepper2 = stepper2    # the stepper motor for the sensorZ motion
         
         # GPIO in/out lines are defined in GPIOD_define_line() method:
-        self.stepper1_DIR_line = None
+        self.stepper1_DIR_line  = None
         self.stepper1_STEP_line = None
-        self.stepper1_ENA_line = None
-        self.stepper2_DIR_line = None
+        self.stepper1_ENA_line  = None
+        self.stepper2_DIR_line  = None
         self.stepper2_STEP_line = None
-        self.stepper2_ENA_line = None
+        self.stepper2_ENA_line  = None
         
         self.emergencyStopRequired = False
         self.serialPort = None      # The serial port connect to the USB link with the magnetic sensor.
@@ -99,15 +99,15 @@ class ROTOR_bench:
     def GPIOD_define_lines(self):
         ''' To define the needed RPi GPIO in/out lines.'''
         
-        self.stepper1_DIR_line = self.gpio_chip.get_line(self.stepper1.GPIO_DIR)
+        self.stepper1_DIR_line  = self.gpio_chip.get_line(self.stepper1.GPIO_DIR)
         self.stepper1_STEP_line = self.gpio_chip.get_line(self.stepper1.GPIO_STEP)
-        self.stepper1_ENA_line = self.gpio_chip.get_line(self.stepper1.GPIO_ENA)
+        self.stepper1_ENA_line  = self.gpio_chip.get_line(self.stepper1.GPIO_ENA)
 
-        self.stepper2_DIR_line = self.gpio_chip.get_line(self.stepper2.GPIO_DIR)
+        self.stepper2_DIR_line  = self.gpio_chip.get_line(self.stepper2.GPIO_DIR)
         self.stepper2_STEP_line = self.gpio_chip.get_line(self.stepper2.GPIO_STEP)
-        self.stepper2_ENA_line = self.gpio_chip.get_line(self.stepper2.GPIO_ENA)
+        self.stepper2_ENA_line  = self.gpio_chip.get_line(self.stepper2.GPIO_ENA)
         
-        self.limit_switch_line = self.gpio_chip.get_line(Zaxis.GPIO_LimitSwitch.value)
+        self.limit_switch_line  = self.gpio_chip.get_line(Zaxis.GPIO_LimitSwitch.value)
         
     def GPIOD_config_lines(self):
         ''' To parameter RPi GPIO lines as Input or Ouput.'''
@@ -131,12 +131,12 @@ class ROTOR_bench:
         ''' To initialize the RPi GPIO output lines.'''
 
         self.stepper1_DIR_line.set_value(0)
-        self.stepper1_STEP_line.set_value(1) # disable torque
-        self.stepper1_ENA_line.set_value(0)
+        self.stepper1_ENA_line.set_value(1) # disable torque
+        self.stepper1_STEP_line.set_value(0)
         
         self.stepper2_DIR_line.set_value(0)
-        self.stepper2_STEP_line.set_value(1) # disable torque
-        self.stepper2_ENA_line.set_value(0)
+        self.stepper2_ENA_line.set_value(1) # disable torque
+        self.stepper2_STEP_line.set_value(0)
 
     def write_header(self, file_name:str, work_dist:float=None, rot_step:float = None, NBSTEP1:int = None, Zpos:list = None):
 

@@ -39,3 +39,8 @@ if params['MODE'] == 'RunBench':
     
 elif params['MODE'] == 'RunFree':
     R.run_free(params)
+    
+elif params['MODE'] == 'ReleaseMotors':
+    R.Stop_ROTOR_Bench()
+    
+

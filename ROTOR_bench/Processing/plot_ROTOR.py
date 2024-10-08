@@ -18,15 +18,18 @@ if __name__ == "__main__":
     data_dir = "./TXT" if not args.data_dir else args.data_dir
     all_file = args.all_file
         
-    list_file = get_files_by_date(data_dir, 'ROTOR')
-
+    #JLC_was: list_file = get_files_by_date(data_dir, 'ROTOR')
+    list_file = [f for f in os.listdir(data_dir) \
+             if f.lower().endswith('.txt') and f.startswith('ROTOR')]
+    list_file.sort()
+    print(list_file)
     if not list_file:
         print(f"No .txt file found in directory <{data_dir}>, tchao")
         
     elif not all_file:    
         while True:
             for i, file in enumerate(list_file):
-                print(f'{i:2d} -> {os.path.join(data_dir, file)}')
+                print(f'{i:3d} -> {os.path.join(data_dir, file)}')
             rep = input("Fichier choisi [Q->Quit, RET->Choose last file]: ")
             if rep.lower() == 'q':
                 break

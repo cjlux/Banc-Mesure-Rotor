@@ -28,6 +28,7 @@ class MyApp(QMainWindow):
         self.tab2 = QWidget()    # The tab to run free recording
         self.tab3 = QWidget()    # the tab to run data plotting
         self.tab4 = QWidget()    # the tab to ...
+        self.tab5 = QWidget()    # The Tools tab
 
         # usefull widgets:
         self.dateWidget = None   # For setting the date
@@ -54,18 +55,18 @@ class MyApp(QMainWindow):
         if self.platform != 'raspberrypi':
             print("ERROR:you must use a Rasberry Pi platform !!!")
 #            sys.exit()
-        self.terminal_cmd = ["lxterminal", "--geometry=200x30", "--command", 
+        self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
 
         self.plotROTOR_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py; read'"]
         
         self.plotFREE_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py; read'"]
         
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
-        self.InitUI()          
+        self.InitUI()
         self.show()            
     
     def InitUI(self):
@@ -85,12 +86,14 @@ class MyApp(QMainWindow):
         self.tabs.addTab(self.tab2,"Free recording")
         self.tabs.addTab(self.tab3,"Process data files")
         self.tabs.addTab(self.tab4,"Display...")
+        self.tabs.addTab(self.tab5,"Tools...")
         
         # Fill in the tabs:
         self.__InitTab1()
         self.__InitTab2()
         self.__InitTab3()
         self.__InitTab4()
+        self.__InitTab5()
 
         # Select tab [rotor bENCH]:
         self.tabs.setCurrentIndex(0)        
@@ -290,6 +293,16 @@ class MyApp(QMainWindow):
         self.display.insertPlainText("Hello ")
         VL.addWidget(self.display)
         
+    def __InitTab5(self):
+        ''' Tools'''
+        VL = QVBoxLayout()
+        self.tab5.setLayout(VL)
+        b = QPushButton('Release all motors')
+        b.setMinimumHeight(40)
+        b.clicked.connect(self.RunReleaseMotors)
+        VL.addWidget(b)
+        VL.addStretch()
+        
     def PlotROTOR(self):
         subprocess.run(self.plotROTOR_cmd)
         
@@ -333,6 +346,19 @@ class MyApp(QMainWindow):
 
         print(f'mode: <{mode}>')
         subprocess.run(self.terminal_cmd)
+
+    def RunReleaseMotors(self):
+        '''To release the holding torque of all motors'''
+        self.params = {'MODE': 'ReleaseMotors',
+                       'WORK_DIST': 0,
+                       'ROT_STEP_DEG': 0,
+                       'Z_POS_MM': [],
+                       'NB_REPET': 0}
+        
+        with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
+            F.write(json.dumps(self.params))
+            
+        subprocess.run(self.terminal_cmd)
     
     def handle_stderr(self):
         data = self.process.readAllStandardError()
@@ -369,7 +395,7 @@ class MyApp(QMainWindow):
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
             F.write(json.dumps(self.params))
 
-        subprocess.run(self.terminal_cmd)
+        subprocess.run(self.releaseMotors_cmd)
 
     def WorkingDistChanged(self, x):
         self.workDist = x
