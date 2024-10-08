@@ -12,10 +12,8 @@ Stepper2 = StepperMotor("Stepper motor for the sensorZ motion",
                         STEP_MODE=1, STEPPER_ANGLE=1.8, NB_STEP_PER_REVOL=200,
                         NB_REVOL_PER_SEC=0.5,
                         GPIO_DIR=10, GPIO_STEP=9, GPIO_ENA=11,
+                        RATIO=None,
                         DIAM_MM=10)
-
-# starts the pigpio process:
-ROTOR_bench.Launch_pigpio()
 
 R = ROTOR_bench(Stepper1, Stepper2)
 paramFile = "/tmp/ROTOR_LAUNCH.txt"

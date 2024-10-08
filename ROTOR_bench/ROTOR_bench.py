@@ -6,7 +6,9 @@ from serial import Serial
 from time import sleep, time
 from datetime import datetime
 import sys, subprocess
-from pigpio import pi, OUTPUT, PUD_UP, LOW, HIGH
+
+import gpiod
+#pI4: from pigpio import pi, OUTPUT, PUD_UP, LOW, HIGH
 
 from ROTOR_config import StepperMotor, Zaxis, Param
 from Tools import uniq_file_name_ROTOR, uniq_file_name_FREE
@@ -18,12 +20,24 @@ class ROTOR_bench:
         self.stepper1 = stepper1    # the stepper motor for rotating the shaft
         self.stepper2 = stepper2    # the stepper motor for the sensorZ motion
         
+        # GPIO in/out lines are defined in GPIOD_define_line() method:
+        self.stepper1_DIR_line = None
+        self.stepper1_STE_line = None
+        self.stepper1_ENA_line = None
+        self.stepper2_DIR_line = None
+        self.stepper2_STE_line = None
+        self.stepper2_ENA_line = None
+        
         self.emergencyStopRequired = False
         self.serialPort = None      # The serial port connect to the USB link with the magnetic sensor.
-
         self.Z_pos_mm = []          # The list of the sensorZ positions, the first one is 0.
         
-        self.pi = pigpio.pi()       # the driver to the GPIOport of the RPi
+        # Instanciate the RPi GPIO driver with the 'gpiod' module:
+        self.gpio_chip = gpiod.Chip('gpiochip4')
+
+        self.GPIOD_define_lines()
+        self.GPIOD_config_lines()
+        self.GPIOD_init_lines()
 
         # open the seriallink with the sensor:
         self.open_Serial(5)
@@ -74,7 +88,6 @@ class ROTOR_bench:
         data = self.serialPort.read_all().decode().strip()            
         print(f"[INFO] Found:\n{data}\n[INFO] Sound good !")
 
-
     def config_USBsensor(self):
         if self.serialPort is None:
             print('[ERROR] SeialPort is not opened, cannot configure the USBsensor')
@@ -83,42 +96,48 @@ class ROTOR_bench:
         sleep(0.5)
         self.serialPort.write(f"PG {Param['SENSOR_GAIN']}".encode('ascii'))
         return 0
+            
+    def GPIOD_define_lines(self):
+        ''' To define the needed RPi GPIO in/out lines.'''
         
-    @staticmethod
-    def Launch_pigpio():
-      '''Launch the 'pigpiod' process if needed'''
-      out = subprocess.run(['ps','-axu'], capture_output=True, text=True)
-      if 'pigpiod' not in out.stdout:
-         command = "sudo pigpiod"
-         print(f"[INFO] Lauching '{command}'")
-         out = subprocess.run(command.split(), capture_output=True, text=True)
-      else:
-         print(f"[INFO] Process 'pigpiod' already launched...")
+        self.stepper1_DIR_line = self.gpio_chip.get_line(self.stepper1.GPIO_DIR)
+        self.stepper1_STE_line = self.gpio_chip.get_line(self.stepper1.GPIO_STEP)
+        self.stepper1_ENA_line = self.gpio_chip.get_line(self.stepper1.GPIO_ENA)
 
-    def GPIO_config(self):
-        # set up the stepper motor1 (rotation of the ROTOR):
-        self.pi.set_mode(self.stepper1.GPIO_DIR, OUTPUT)
-        self.pi.set_mode(self.stepper1.GPIO_STEP, OUTPUT)
-        self.pi.set_mode(self.stepper1.GPIO_ENA, OUTPUT)
-
-        self.pi.write(self.stepper1.GPIO_DIR, LOW)
-        self.pi.write(self.stepper1.GPIO_ENA, HIGH) # disable torque
-        self.pi.write(self.stepper1.GPIO_PUL, LOW)
-
-        # set up the stepper motor2 (sensor Z motion):
-        self.pi.set_mode(self.stepper2.GPIO_DIR, OUTPUT)
-        self.pi.set_mode(self.stepper2.GPIO_STEP, OUTPUT)
-        self.pi.set_mode(self.stepper2.GPIO_ENA, OUTPUT)
-
-        self.pi.write(self.stepper2.GPIO_DIR, LOW)
-        self.pi.write(self.stepper2.GPIO_ENA, HIGH) # disable torque
-        self.pi.write(self.stepper2.GPIO_PUL, LOW)
-
-        # The limit switch sensor is normally closed, connected between GND and pinLimitSwitch.
+        self.stepper2_DIR_line = self.gpio_chip.get_line(self.stepper2.GPIO_DIR)
+        self.stepper2_STE_line = self.gpio_chip.get_line(self.stepper2.GPIO_STEP)
+        self.stepper2_ENA_line = self.gpio_chip.get_line(self.stepper2.GPIO_ENA)
+        
+        self.limit_switch_line = self.gpio_chip.get_line(Zaxis.GPIO_LimitSwitch.value)
+        
+    def GPIOD_config_lines(self):
+        ''' To parameter RPi GPIO lines as Input or Ouput.'''
+        
+        # set the stepper1 lines as Outputs:
+        self.stepper1_DIR_line.request(consumer="stepper1_DIR",  type=gpiod.LINE_REQ_DIR_OUT)
+        self.stepper1_STE_line.request(consumer="stepper1_STEP", type=gpiod.LINE_REQ_DIR_OUT)
+        self.stepper1_ENA_line.request(consumer="stepper1_ENA",  type=gpiod.LINE_REQ_DIR_OUT)
+        
+        # set the stepper2 lines as Outputs:
+        self.stepper2_DIR_line.request(consumer="stepper2_DIR",  type=gpiod.LINE_REQ_DIR_OUT)
+        self.stepper2_STE_line.request(consumer="stepper2_STEP", type=gpiod.LINE_REQ_DIR_OUT)
+        self.stepper2_ENA_line.request(consumer="stepper2_ENA",  type=gpiod.LINE_REQ_DIR_OUT)
+        
+        # The limit switch sensor is normally closed, connected between GND and RPi pinLimitSwitch.
         # pinLimitSwitch is set as INPUT pulled up to tge 5V. Normally the input is connected to GND
-        # du to the limit switch; and when the switch is pressed yhe input goes to 5V (HIGH).
-        self.pi.set_mode(Zaxis.GPIO_LimitSwitch.value, OUTPUT)
-        self.pi.set_pull_up_down(Zaxis.GPIO_LimitSwitch.value, PUD_UP)
+        # du to the limit switch; and when the switch is pressed the input goes to 5V (HIGH).
+        self.limit_switch_line.request(consumer="Limit Switch",  type=gpiod.LINE_REQ_DIR_IN, flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP)
+
+    def GPIOD_init_lines(self):
+        ''' To initialize the RPi GPIO output lines.'''
+
+        self.stepper1_DIR_line.setvalue(0)
+        self.stepper1_STE_line.setvalue(1) # disable torque
+        self.stepper1_ENA_line.setvalue(0)
+        
+        self.stepper2_DIR_line.setvalue(0)
+        self.stepper2_STE_line.setvalue(1) # disable torque
+        self.stepper2_ENA_line.setvalue(0)
 
     def write_header(self, file_name:str, work_dist:float=None, rot_step:float = None, NBSTEP1:int = None, Zpos:list = None):
 
@@ -165,10 +184,10 @@ class ROTOR_bench:
         print("[INFO] Stepper motor Z referencing...");
 
         # move upward:
-        self.pi.write(self.stepper2.GPIO_DIR, LOW)
+        self.stepper2.GPIO_DIR_line.set_value(0)
 
         # apply the motor holding torque:
-        self.pi.write(self.stepper2.GPIO_ENA, LOW)
+        self.stepper2.GPIO_ENA_line.set_value(0)
 
         #  the required revolution speed [revol/sec] and corresponding period:
         N_Hz  = 2 * Zaxis.Zref_velocity.value / (np.pi * self.stepper2.DIAM_MM
@@ -176,19 +195,19 @@ class ROTOR_bench:
         T_sec = 1 / (N_Hz * self.stepper2.NB_STEP_PER_REVOL)
         if verbose: print(f"[INFO] N_Hz: {N_Hz:.2f}, T_ms: {T_sec*1e3:.2f}")
 
-        limit_state = self.pi.read(Zaxis.GPIO_LimitSwitch.value)
+        limit_state = self.limit_switch_line.get_value()
         while limit_state != HIGH:
             # Send a pulse with period equals to Tms:
             t0 = time()
-            self.pi.write(self.stepper2.GPIO_STEP, HIGH)
-            limit_state = self.pi.read(Zaxis.GPIO_LimitSwitch.value)
-            self.pi.write(self.stepper2.GPIO_STEP, LOW)
+            self.stepper2.GPIO_STEP_line.set_value(1)
+            limit_state = self.limit_switch_line.get_value()
+            self.stepper2.GPIO_STEP_line.set_value(0)
             while True:
                 if time() - t0 > T_sec: break
 
         if hold_torque == False: 
             # disable the motor holding torque:
-            self.pi.write(self.stepper2.GPIO_ENA, HIGH)
+            self.stepper2.GPIO_ENA_line.set_value(1)
 
         if verbose: print("[INFO] OK !")
         return 0
@@ -232,9 +251,9 @@ class ROTOR_bench:
 
         # Set the direction of move:
         if dist_mm > 0:
-            self.pi.write(self.stepper2.GPIO_DIR, HIGH)  # direction of move is downward:
+            self.stepper2.GPIO_DIR_line.set_value(1)  # direction of move is downward:
         elif dist_mm < 0:
-            self.pi.write(self.stepper2.GPIO_DIR, LOW)   # direction of move is upward:
+            self.stepper2.GPIO_DIR_line.set_value(0)   # direction of move is upward:
             dist_mm = -dist_mm
             
         # the required revolution speed [revol/sec] and corresponding period:
@@ -248,21 +267,21 @@ class ROTOR_bench:
         # Let's do the job:
 
         # apply the motor holding torque:
-        self.pi.write(self.stepper2.GPIO_STEP, LOW)
+        self.stepper2.GPIO_ENA_line.set_value(0)
 
-        self.pi.write(self.stepper2.GPIO_STEP, LOW)
+        self.stepper2.GPIO_STEP_line.set_value(0)
         for n in range(nb_step):
             t0 = time()
             # Send a pulse with period equals to Tms:
-            self.pi.write(self.stepper2.GPIO_STEP, HIGH)
+            self.stepper2.GPIO_STEP_line.set_value(1)
             sleep(20e-6)
-            self.pi.write(self.stepper2.GPIO_STEP, LOW)
+            self.stepper2.GPIO_STEP_line.set_value(0)
             while True:
                 if time() - t0 > T_sec: break
 
         if hold_torque == False: 
             # disable the motor holding torque:
-            self.pi.write(self.stepper2.GPIO_ENA, HIGH)        
+            self.stepper2.GPIO_ENA_line.set_value(1)       
 
     def Do_sensor_measurement(self, fake=False):
         '''
@@ -295,8 +314,8 @@ class ROTOR_bench:
         This function is called when the emergency-stop button is pressed.
         It should stop the motors and left the ROTOR bench in s safe state.
         '''
-        self.pi.write(self.stepper1.GPIO_ENA, HIGH)     # release the torque of the shaft stepper motor
-        self.pi.write(self.stepper2.GPIO_ENA, HIGH)     # release the torque of the Z stepper motor
+        self.stepper1.GPIO_ENA_line.set_value(1)     # release the torque of the shaft stepper motor
+        self.stepper2.GPIO_ENA_line.set_value(1)     # release the torque of the Z stepper motor
         if verbose: print("[INFO] All motor released")
         
     def run_free(self, params):
@@ -447,9 +466,9 @@ class ROTOR_bench:
               # Make the stepper motor do the steps to turn the ROTOR of the 'rotor_step' value:
               for i in range(0, NBSTEP1):
                   top = time()
-                  self.pi.write(self.stepper1.GPIO_STEP, HIGH)
+                  self.stepper1.GPIO_STEP_line.set_value(1)
                   sleep(0.001)
-                  self.pi.write(self.stepper1.GPIO_STEP, LOW)
+                  self.stepper1.GPIO_STEP_line.set_value(0)
                   while True:
                       if time() - top > T_stepper1_sec: break
               

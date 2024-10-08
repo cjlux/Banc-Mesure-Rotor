@@ -24,7 +24,6 @@ class MyApp(QMainWindow):
         QMainWindow.__init__(self)
 
         self.tabs = None         # The main QTabWiget
-        self.tab0 = QWidget()    # The tab to set date & time
         self.tab1 = QWidget()    # The tab to start the rotor bench
         self.tab2 = QWidget()    # The tab to run free recording
         self.tab3 = QWidget()    # the tab to run data plotting
@@ -82,92 +81,20 @@ class MyApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         
         # Add all the tabs:
-        self.tabs.addTab(self.tab0,"Set Date & Time")
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
         self.tabs.addTab(self.tab3,"Process data files")
         self.tabs.addTab(self.tab4,"Display...")
         
         # Fill in the tabs:
-        self.__InitTab0()
         self.__InitTab1()
         self.__InitTab2()
         self.__InitTab3()
         self.__InitTab4()
 
-        # Select [Date & Time] tab and disable the other tabs:
-        self.tabs.setCurrentIndex(0)
-        self.tabs.setCurrentIndex(0)
-        for i in range(1,5): self.tabs.setTabEnabled(i, False)
+        # Select tab [rotor bENCH]:
+        self.tabs.setCurrentIndex(0)        
         
-        
-        
-    def __InitTab0(self):
-        ''' To fill in the [Date & Time] tab'''
-
-        VL = QVBoxLayout()
-        self.tab0.setLayout(VL)
-
-        h = QHBoxLayout()
-        l = QLabel("Date: ")
-        q = QDateEdit()
-        self.dateWidget = q
-        q.setDate(QDate.currentDate())
-        q.setCalendarPopup(True)
-        q.setDisplayFormat('yyyy / MM / dd')
-        q.setMinimumHeight(30)
-        h.addWidget(l)
-        h.addWidget(q)
-
-        l = QLabel("Time: ")
-        q = QTimeEdit()
-        q.setTime(QTime.currentTime())
-        q.setMinimumHeight(30)
-        self.timeWidget = q
-        h.addWidget(l)
-        h.addWidget(q)
-
-        b = QPushButton('Set date & time')
-        b.setMinimumHeight(30)
-        b.clicked.connect(self.SetDateTime)
-        h.addStretch()
-        h.addWidget(b)
-
-        VL.addStretch()
-        VL.addLayout(h)
-        VL.addStretch()
-        
-
-
-    def SetDateTime(self):
-        ''' The Date & Time have changed'''
-        
-        mess = 'Date & time will be set to\n'
-        mess += f"{QDate.toString(self.dateWidget.date(), 'yyyy/MM/dd')}\t"
-        mess += f"{QTime.toString(self.timeWidget.time(), 'hh:mm')}"
-        
-        choice = QMessageBox.question(self, 'Confirm', mess,
-                                   QMessageBox.Yes | QMessageBox.No,   # buttons 'Yes' & 'No'
-                                   QMessageBox.No)                     # 'No' is default
-
-        if choice == QMessageBox.Yes:
-            new_date = f"{QDate.toString(self.dateWidget.date(), 'MMdd')}"
-            new_date += f"{QTime.toString(self.timeWidget.time(), 'hhmm')}"
-            new_date += f"{QDate.toString(self.dateWidget.date(), 'yy')}"
-            
-            sudo_command = f"sudo date {new_date}"
-            full_command = ["lxterminal", "--command", sudo_command]
-            
-            # Run the sudo command if on RPi:
-            if self.platform != 'raspberrypi':
-                print(f"would launch command: <{full_command})> on RPi")
-            else:    
-                subprocess.run(full_command)
-
-            self.tabs.setCurrentIndex(1)
-            self.tabs.setTabEnabled(0, False)
-            for i in range(1,5): self.tabs.setTabEnabled(i, True)
-
 
     def __InitTab1(self):
         ''' To fill in the RunBench tab'''
