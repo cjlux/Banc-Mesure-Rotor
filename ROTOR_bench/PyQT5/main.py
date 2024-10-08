@@ -310,7 +310,8 @@ class MyApp(QMainWindow):
         self.display.ensureCursorVisible()        
 
     def RunBench(self, state, mode):
-        zPos = [ z for z in self.zPos if z > 0]
+        zPos = [ z for z in self.zPos if z >= 0]
+        zPos = list(set(zPos)) # don't dupplicate Z position
         self.params = {'MODE': 'RunBench',
                        'WORK_DIST': self.workDist,
                        'ROT_STEP_DEG': self.rotStep,
@@ -379,6 +380,7 @@ class MyApp(QMainWindow):
         print('start', n, z, self.zPos)
         if z == 0:
             print('a')
+            # nullify all the Zpos after 'n':
             for i in range(n, len(self.posWidgets)):
                 self.posWidgets[i].setValue(0)
                 self.posWidgets[i].setMinimum(0)

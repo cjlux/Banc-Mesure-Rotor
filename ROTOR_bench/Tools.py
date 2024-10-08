@@ -1,16 +1,6 @@
 #
 # Copyright 2024 Jean-Luc.CHARLES@mailo.com
 #
-import os
-import numpy as np
-from dataclasses import dataclass
-
-import matplotlib.pyplot as plt
-from serial import Serial
-from time import sleep, time
-from datetime import datetime
-from ROTOR_config import StepperMotor, Param, Zaxis
-
     
 def get_RotStep():
     while True:
@@ -83,7 +73,7 @@ def uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, repet):
     '''
     fileName = f'TXT/ROTOR_{now.strftime("%Y-%m-%d-%H-%M")}'
     fileName += f'_WDIST-{work_dist}'
-    fileName += f'_ROTSTEP-{rot_step}'
+    fileName += f'_ROTSTEP-{rot_step:.1f}'
     for z in Zpos_mm:
         fileName += f'_{z:03d}'
     n,m = repet
