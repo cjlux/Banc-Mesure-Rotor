@@ -24,11 +24,11 @@ class MyApp(QMainWindow):
         QMainWindow.__init__(self)
 
         self.tabs = None         # The main QTabWiget
-        self.tab0 = QWidget()    # The tab to set date & time
         self.tab1 = QWidget()    # The tab to start the rotor bench
         self.tab2 = QWidget()    # The tab to run free recording
         self.tab3 = QWidget()    # the tab to run data plotting
         self.tab4 = QWidget()    # the tab to ...
+        self.tab5 = QWidget()    # The Tools tab
 
         # usefull widgets:
         self.dateWidget = None   # For setting the date
@@ -55,18 +55,18 @@ class MyApp(QMainWindow):
         if self.platform != 'raspberrypi':
             print("ERROR:you must use a Rasberry Pi platform !!!")
 #            sys.exit()
-        self.terminal_cmd = ["lxterminal", "--geometry=200x30", "--command", 
+        self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
 
         self.plotROTOR_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py; read'"]
         
         self.plotFREE_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py; read'"]
         
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
-        self.InitUI()          
+        self.InitUI()
         self.show()            
     
     def InitUI(self):
@@ -82,92 +82,22 @@ class MyApp(QMainWindow):
         self.setCentralWidget(self.tabs)
         
         # Add all the tabs:
-        self.tabs.addTab(self.tab0,"Set Date & Time")
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
         self.tabs.addTab(self.tab3,"Process data files")
         self.tabs.addTab(self.tab4,"Display...")
+        self.tabs.addTab(self.tab5,"Tools...")
         
         # Fill in the tabs:
-        self.__InitTab0()
         self.__InitTab1()
         self.__InitTab2()
         self.__InitTab3()
         self.__InitTab4()
+        self.__InitTab5()
 
-        # Select [Date & Time] tab and disable the other tabs:
-        self.tabs.setCurrentIndex(0)
-        self.tabs.setCurrentIndex(0)
-        for i in range(1,5): self.tabs.setTabEnabled(i, False)
+        # Select tab [rotor bENCH]:
+        self.tabs.setCurrentIndex(0)        
         
-        
-        
-    def __InitTab0(self):
-        ''' To fill in the [Date & Time] tab'''
-
-        VL = QVBoxLayout()
-        self.tab0.setLayout(VL)
-
-        h = QHBoxLayout()
-        l = QLabel("Date: ")
-        q = QDateEdit()
-        self.dateWidget = q
-        q.setDate(QDate.currentDate())
-        q.setCalendarPopup(True)
-        q.setDisplayFormat('yyyy / MM / dd')
-        q.setMinimumHeight(30)
-        h.addWidget(l)
-        h.addWidget(q)
-
-        l = QLabel("Time: ")
-        q = QTimeEdit()
-        q.setTime(QTime.currentTime())
-        q.setMinimumHeight(30)
-        self.timeWidget = q
-        h.addWidget(l)
-        h.addWidget(q)
-
-        b = QPushButton('Set date & time')
-        b.setMinimumHeight(30)
-        b.clicked.connect(self.SetDateTime)
-        h.addStretch()
-        h.addWidget(b)
-
-        VL.addStretch()
-        VL.addLayout(h)
-        VL.addStretch()
-        
-
-
-    def SetDateTime(self):
-        ''' The Date & Time have changed'''
-        
-        mess = 'Date & time will be set to\n'
-        mess += f"{QDate.toString(self.dateWidget.date(), 'yyyy/MM/dd')}\t"
-        mess += f"{QTime.toString(self.timeWidget.time(), 'hh:mm')}"
-        
-        choice = QMessageBox.question(self, 'Confirm', mess,
-                                   QMessageBox.Yes | QMessageBox.No,   # buttons 'Yes' & 'No'
-                                   QMessageBox.No)                     # 'No' is default
-
-        if choice == QMessageBox.Yes:
-            new_date = f"{QDate.toString(self.dateWidget.date(), 'MMdd')}"
-            new_date += f"{QTime.toString(self.timeWidget.time(), 'hhmm')}"
-            new_date += f"{QDate.toString(self.dateWidget.date(), 'yy')}"
-            
-            sudo_command = f"sudo date {new_date}"
-            full_command = ["lxterminal", "--command", sudo_command]
-            
-            # Run the sudo command if on RPi:
-            if self.platform != 'raspberrypi':
-                print(f"would launch command: <{full_command})> on RPi")
-            else:    
-                subprocess.run(full_command)
-
-            self.tabs.setCurrentIndex(1)
-            self.tabs.setTabEnabled(0, False)
-            for i in range(1,5): self.tabs.setTabEnabled(i, True)
-
 
     def __InitTab1(self):
         ''' To fill in the RunBench tab'''
@@ -363,6 +293,16 @@ class MyApp(QMainWindow):
         self.display.insertPlainText("Hello ")
         VL.addWidget(self.display)
         
+    def __InitTab5(self):
+        ''' Tools'''
+        VL = QVBoxLayout()
+        self.tab5.setLayout(VL)
+        b = QPushButton('Release all motors')
+        b.setMinimumHeight(40)
+        b.clicked.connect(self.RunReleaseMotors)
+        VL.addWidget(b)
+        VL.addStretch()
+        
     def PlotROTOR(self):
         subprocess.run(self.plotROTOR_cmd)
         
@@ -383,7 +323,8 @@ class MyApp(QMainWindow):
         self.display.ensureCursorVisible()        
 
     def RunBench(self, state, mode):
-        zPos = [ z for z in self.zPos if z > 0]
+        zPos = [ z for z in self.zPos if z >= 0]
+        zPos = list(set(zPos)) # don't dupplicate Z position
         self.params = {'MODE': 'RunBench',
                        'WORK_DIST': self.workDist,
                        'ROT_STEP_DEG': self.rotStep,
@@ -404,6 +345,19 @@ class MyApp(QMainWindow):
         self.process.start(self.terminal_cmd2, [])'''
 
         print(f'mode: <{mode}>')
+        subprocess.run(self.terminal_cmd)
+
+    def RunReleaseMotors(self):
+        '''To release the holding torque of all motors'''
+        self.params = {'MODE': 'ReleaseMotors',
+                       'WORK_DIST': 0,
+                       'ROT_STEP_DEG': 0,
+                       'Z_POS_MM': [],
+                       'NB_REPET': 0}
+        
+        with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
+            F.write(json.dumps(self.params))
+            
         subprocess.run(self.terminal_cmd)
     
     def handle_stderr(self):
@@ -441,7 +395,7 @@ class MyApp(QMainWindow):
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
             F.write(json.dumps(self.params))
 
-        subprocess.run(self.terminal_cmd)
+        subprocess.run(self.releaseMotors_cmd)
 
     def WorkingDistChanged(self, x):
         self.workDist = x
@@ -452,6 +406,7 @@ class MyApp(QMainWindow):
         print('start', n, z, self.zPos)
         if z == 0:
             print('a')
+            # nullify all the Zpos after 'n':
             for i in range(n, len(self.posWidgets)):
                 self.posWidgets[i].setValue(0)
                 self.posWidgets[i].setMinimum(0)
