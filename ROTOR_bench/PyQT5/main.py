@@ -132,13 +132,13 @@ class MyApp(QMainWindow):
         b1.setMinimumHeight(110)
         b1.setIconSize(QSize(100,100))
         b1.clicked.connect(lambda s, mode='ByAngle': self.RunBench(s, mode))
-        b1.setDisabled(True)
 
         b2 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByZPos.png"),
                         text='RUN by Zpos')
         b2.setMinimumHeight(110)
         b2.setIconSize(QSize(100,100))
-        b2.clicked.connect(lambda s, mode='ByZpos': self.RunBench(s, mode))
+        b2.clicked.connect(lambda s, mode='ByZPos': self.RunBench(s, mode))
+        
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
         g.addWidget(b1, 1, 4)
@@ -207,7 +207,7 @@ class MyApp(QMainWindow):
         sb.valueChanged.connect(self.DurationChanged)
         sb.setMinimumHeight(40)
         b = QPushButton('RUN free')
-        b.setMinimumHeight(40)
+        b.setMinimumHeight(110)
         b.clicked.connect(self.RunFree)
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
@@ -325,7 +325,7 @@ class MyApp(QMainWindow):
     def RunBench(self, state, mode):
         zPos = [ z for z in self.zPos if z >= 0]
         zPos = list(set(zPos)) # don't dupplicate Z position
-        self.params = {'MODE': 'RunBench',
+        self.params = {'MODE': mode,
                        'WORK_DIST': self.workDist,
                        'ROT_STEP_DEG': self.rotStep,
                        'Z_POS_MM': zPos,
@@ -383,7 +383,7 @@ class MyApp(QMainWindow):
         self.display.appendPlainText(s)        
     
     def RunFree(self):
-        self.params = {'MODE': 'RunFree',
+        self.params = {'MODE': 'Free',
                        'DURATION': self.duration,
                        'SAMPLING': self.sampling,
                        'SENSOR_NB_SAMPLE': self.SENSOR_NB_SAMPLE,

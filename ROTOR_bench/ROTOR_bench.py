@@ -7,7 +7,6 @@ from datetime import datetime
 import sys, subprocess
 
 import gpiod
-#pI4: from pigpio import pi, OUTPUT, PUD_UP, LOW, HIGH
 
 from ROTOR_config import StepperMotor, Zaxis, Param
 from Tools import uniq_file_name_ROTOR, uniq_file_name_FREE
@@ -138,8 +137,16 @@ class ROTOR_bench:
         self.stepper2_ENA_line.set_value(1) # disable torque
         self.stepper2_STEP_line.set_value(0)
 
-    def write_header(self, file_name:str, work_dist:float=None, rot_step:float = None, NBSTEP1:int = None, Zpos:list = None):
+    def write_header(self,
+                     MODE:str,
+                     file_name:str,
+                     work_dist:float=None,
+                     rot_step:float=None,
+                     NBSTEP1:int=None,
+                     Zpos:list=None):
 
+        assert MODE in ("by_ZPos", "FreeRun", "by_Angle")
+        
         with open(file_name, "w", encoding="utf8") as fOut:
 
             # write calibration data:
@@ -148,32 +155,32 @@ class ROTOR_bench:
             # write sensorparameters
             for k in Param.keys():
                 if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')
-            
-            if work_dist is not None:
-                # write infos on 'work_dist':
+
+            if MODE in ("by_ZPos", "by_Angle"):
+                # Write header for a "by Zpos" measurement strategy:
                 fOut.write(f'# working dist: {work_dist} mm\n')
-
-            if rot_step is not None:
-                # write infos on 'rot_step' angle:
                 fOut.write(f'# Rotation step angle: {rot_step}°\n')
-
-            if Zpos is not None:
-                nb_pos = len(Zpos)
-                
-                # Write all the Z positions in the header file:
+                nb_pos = len(Zpos)                    
                 for n, p in enumerate(Zpos, 1):
-                    fOut.write(f"# sensor pos #{n}: {p} mm\n")
-                    
-                # Write columns header:
+                    fOut.write(f"# sensor pos #{n}: {p} mm\n")                
+            
+            if MODE == "by_ZPos":
+                # Write specific columns header:
                 line = "#\n# angle[°]"
                 for n in range(1, nb_pos+1):
                     line += f"; X{n}_magn [mT]; Y{n}_magn [mT]; Z{n}_magn [mT]"
                 fOut.write(line + '\n')
 
-            else:
-                # write simplified header:
-                fOut.write('\n# Time[s]; Xmagn [mT]; Ymagn [mT]; Zmagn [mT];\n')
-                    
+            else if MODE == "by_Angle":
+                # Write specific columns header:
+                line  = "#\n# ZPos#;"
+                line += " a1[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]; ..."
+                line += " a2[°]; X2_magn[mT]; Y2_magn[mT]; Z2_magn[mT]; ...";
+                fOut.write(line + '\n')
+    
+            else if MODE == "FreeRun":
+                # write simplified header for "Free Run" mode:
+                fOut.write('\n# Time[s]; Xmagn [mT]; Ymagn [mT]; Zmagn [mT];\n')            
 
 
     def Zref_sensor(self, hold_torque:bool = False, verbose:bool = False):
@@ -321,6 +328,7 @@ class ROTOR_bench:
         '''
         To measure continuously the magnetic field ans write the data in a CALIB_...txt file.
         '''
+        MODE = "FreeRun"
         
         duration = params["DURATION"]
         sampling = params['SAMPLING']
@@ -338,53 +346,57 @@ class ROTOR_bench:
 
         for repet in range(1, nb_repet+1):
 
-          # Define the unique file name for the data
-          fileName = uniq_file_name_FREE(now, duration, sampling, SAMPLE, GAIN, SENSOR_READ_DELAY,  (repet, nb_repet))
+            # Define the unique file name for the data
+            fileName = uniq_file_name_FREE(now, duration, sampling, SAMPLE, GAIN, SENSOR_READ_DELAY,  (repet, nb_repet))
           
-          # write the header lines in the data rotor file
-          self.write_header(fileName)
+            # write the header lines in the data rotor file
+            self.write_header(MODE, fileName)
           
-          # write the header lines in the data file
-          with open(fileName, "a", encoding="utf8") as fOut:
+            # write the header lines in the data file
+            with open(fileName, "a", encoding="utf8") as fOut:
               
-              # Send unused command to clean the buhher:
-              self.serialPort.write(b'HI')
-              sleep(1)
-              self.serialPort.read_all()
+                # Send unused command to clean the buhher:
+                self.serialPort.write(b'HI')
+                sleep(1)
+                self.serialPort.read_all()
                   
-              t0 = time()
-              while True:
-                  t1 = time()
+                t0 = time()
+                while True:
+                    t1 = time()
 
-                  # send a 'Read Manual' (RM) command to the sensor:
-                  self.serialPort.write(b'RM')
-                  sleep(SENSOR_READ_DELAY)
-                  data = self.serialPort.read_all().decode().replace('\r','')
-                  t_read = time()- t0
-                  data = data.split('RD')[-1].strip()
-                  X, Y, Z = map(float, data.split(','))
-                  coeff = Param['SENSOR_Oe_mT']
-                  X *= coeff
-                  Y *= coeff
-                  Z *= coeff
+                    # send a 'Read Manual' (RM) command to the sensor:
+                    self.serialPort.write(b'RM')
+                    sleep(SENSOR_READ_DELAY)
+                    data = self.serialPort.read_all().decode().replace('\r','')
+                    t_read = time()- t0
+                    data = data.split('RD')[-1].strip()
+                    X, Y, Z = map(float, data.split(','))
+                    coeff = Param['SENSOR_Oe_mT']
+                    X *= coeff
+                    Y *= coeff
+                    Z *= coeff
 
-                  line = f'{t_read:5.2f};{X:12.6f};{Y:12.6f};{Z:12.6f}\n'
-                  fOut.write(line)
-                  fOut.flush()
-                  print(f'[DATA] {line}', end="")
+                    line = f'{t_read:5.2f};{X:12.6f};{Y:12.6f};{Z:12.6f}\n'
+                    fOut.write(line)
+                    fOut.flush()
+                    print(f'[DATA] {line}', end="")
 
-                  # set measurement time period to 1 sec:
-                  while True:
-                      if time() - t1 >= sampling: break
+                    # set measurement time period to 1 sec:
+                    while True:
+                        if time() - t1 >= sampling: break
 
-                  # quit the loop when the elapsed time reaches duration:
-                  if time() - t0 >= duration: break
+                    # quit the loop when the elapsed time reaches duration:
+                    if time() - t0 >= duration: break
             
-        print("[INFO] end of free run")  
+        print("[INFO] end run_free")  
         self.serialPort.close()
         
-    def run(self, parameters:dict, verbose:bool =False):
-
+    def run_by_Zpos(self, parameters:dict, verbose:bool =False):
+        '''Make the measurement: for each angle position the magnetic sensor is moved
+           vetically along the Z axis to explore the magnetic field at the different Zpos.
+        '''
+        MODE = "by_ZPos"
+        
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
         Zpos_mm   = parameters['Z_POS_MM']
@@ -402,91 +414,188 @@ class ROTOR_bench:
 
         for repet in range(1, nb_repet+1):
           
-          # Define the unique file name for the data
-          fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
+            # Define the unique file name for the data
+            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
 
-          # write the header lines in the datarotor file
-          self.write_header(fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
-          
-          # Enable the shaft stepper motor torque:
-          self.stepper1_ENA_line.set_value(0) 
+            # write the header lines in the datarotor file
+            self.write_header(MODE, fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
 
-          # open the data file with the uniq name:
-          fOut = open(fileName, "a", encoding="utf8")
-          
-          # scan angle from 0 to 360°:
-          count = 0
-          curr_Zpos_mm = 0
+            # Enable the shaft stepper motor torque:
+            self.stepper1_ENA_line.set_value(0) 
 
-          # Send unused command to clean the buhher:
-          self.serialPort.write(b'HI')
-          sleep(1)
-          self.serialPort.read_all()
+            # open the data file with the uniq name:
+            fOut = open(fileName, "a", encoding="utf8")
 
-          '''# make a first write/read to throw unanted characters in the read buffer
-          self.serialPort.write(b'RM')
-          sleep(Param.SENSOR_READ_DELAY.value)'''
+            # scan angle from 0 to 360°:
+            count = 0
+            curr_Zpos_mm = 0
 
-          while True:
-              t0 = time()
-              angle = rot_step*count
-              if angle > 360: break
+            # Send unused command to clean the buffer:
+            self.serialPort.write(b'HI')
+            sleep(1)
+            self.serialPort.read_all()
 
-              # Now make the mmagnetic field measurement for all the positions of the sensor:
-              line = f'{angle:5.1f}'
+            while True:
+                t0 = time()
+                angle = rot_step*count
+                if angle > 360: break
 
-              Zpos_move_required = count % Zaxis.ZREF_EVERY_ROTSTEP.value
+                # Now make the mmagnetic field measurement for all the positions of the sensor:
+                line = f'{angle:5.1f}'
 
-              if Zpos_move_required == 0: curr_Zpos_mm = self.Zref_sensor(hold_torque=True);
+                Zpos_move_required = count % Zaxis.ZREF_EVERY_ROTSTEP.value
 
-              go = count % 2
-              if go == 0:
-                  start, stop, step = 1, nb_sensor_pos+1, 1
-              else:
-                  start, stop, step = nb_sensor_pos, 0, -1
+                if Zpos_move_required == 0: curr_Zpos_mm = self.Zref_sensor(hold_torque=True);
 
-              # Move the sensor donward along Z axis:
-              for n in range(start, stop, step):
-                  # Move the sensor to the right Z position:
-                  curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True);
-                  # Make the sensor measuremnts:
-                  X, Y, Z = self.Do_sensor_measurement();
-                  coeff = Param['SENSOR_Oe_mT']
-                  X *= coeff
-                  Y *= coeff
-                  Z *= coeff
-                  line += f';{X:12.6f};{Y:12.6f};{Z:12.6f}'
+                go = count % 2
+                if go == 0:
+                    start, stop, step = 1, nb_sensor_pos+1, 1
+                else:
+                    start, stop, step = nb_sensor_pos, 0, -1
 
-              # Write data:
-              fOut.write(line + '\n')
-              fOut.flush()
-              line = "[DATA] " + line
-              print(line)
-              # Make the stepper motor do the steps to turn the ROTOR of the 'rotor_step' value:
-              for i in range(0, NBSTEP1):
-                  top = time()
-                  self.stepper1_STEP_line.set_value(1)
-                  sleep(0.001)
-                  self.stepper1_STEP_line.set_value(0)
-                  while True:
-                      if time() - top > T_stepper1_sec: break
+                # Move the sensor donward along Z axis:
+                for n in range(start, stop, step):
+
+                    # Move the sensor to the right Z position:
+                    curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True);
+
+                    # Make the sensor measuremnts:
+                    X, Y, Z = self.Do_sensor_measurement();
+                    coeff = Param['SENSOR_Oe_mT']
+                    X *= coeff
+                    Y *= coeff
+                    Z *= coeff
+                    line += f';{X:12.6f};{Y:12.6f};{Z:12.6f}'
+
+                # Write data:
+                fOut.write(line + '\n')
+                fOut.flush()
+                print("[DATA] " + line)
+                
+                # Make the stepper motor do the steps to turn the ROTOR of the 'rotor_step' value:
+                for i in range(0, NBSTEP1):
+                    top = time()
+                    self.stepper1_STEP_line.set_value(1)
+                    sleep(0.001)
+                    self.stepper1_STEP_line.set_value(0)
+                    while True:
+                        if time() - top > T_stepper1_sec: break
               
-              # If there is only one Z position for the sensor, wait 1 seconde:
-              if nb_sensor_pos == 1:
-                  t1 = time();
-                  while t1 - t0 < 1:
-                      t1 = time()
+                # If there is only one Z position for the sensor, wait 1 seconde:
+                if nb_sensor_pos == 1:
+                    t1 = time();
+                    while t1 - t0 < 1:
+                        t1 = time()
 
-              count += 1;
+                count += 1;
 
-          # release all motor torques:
-          self.Stop_ROTOR_Bench()
+        # release all motor torques:
+        self.Stop_ROTOR_Bench()
 
-          # close the data file:
-          fOut.close();
+        # close the data file:
+        fOut.close();
+        
+        print("[INFO] end of Run_by_ZPos")    
+        self.serialPort.close()
 
-          print("END of measure")
+    def run_by_Angle(self, parameters:dict, verbose:bool =False):
+        '''Make the measurements: for each Zpos the rotor is rotated by a step angle
+           to explore the magnetic field at the different angle positions.
+           Onec a full rotation is achieved, the sensor moves to the next Zpos
+           and the rotor is rotated again...
+        '''
+
+        MODE = "by_Angle"
+        
+        work_dist = parameters["WORK_DIST"]
+        rot_step  = parameters['ROT_STEP_DEG']
+        Zpos_mm   = parameters['Z_POS_MM']
+        nb_repet  = parameters['NB_REPET']
+
+        nb_sensor_pos = len(Zpos_mm)
+        nb_angle_pos  = int(360 / rot_step)
+        self.Z_pos_mm = [0] + parameters["Z_POS_MM"]
+        
+        NBSTEP1  = round(rot_step * self.stepper1.RATIO / self.stepper1.STEPPER_ANGLE)    
+        T_stepper1_sec = 1 / (self.stepper1.NB_REVOL_PER_SEC * self.stepper1.NB_STEP_PER_REVOL);
+        if verbose:
+            print(f'[INFO] ROT_STEP_DEG: {rot_step}, NBSTEP1: {NBSTEP1}, T_stepper1_sec:{T_stepper1_sec:.3f}')
+        
+        now = datetime.now() # current date and time
+
+        for repet in range(1, nb_repet+1):
           
+            # Define the unique file name for the data
+            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
+
+            # write the header lines in the data rotor file
+            self.write_header(MODE, fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
+          
+            # Enable the shaft stepper motor torque:
+            self.stepper1_ENA_line.set_value(0) 
+
+            # open the data file with the uniq name:
+            fOut = open(fileName, "a", encoding="utf8")
+
+            # Start the sensor position at top:
+            curr_Zpos_mm = 0
+
+            # Send unused command to clean the buffer:
+            self.serialPort.write(b'HI')
+            sleep(1)
+            self.serialPort.read_all()
+
+            # Loop on the sensor Zpos:
+            for n in range(1, nb_sensor_pos+1):         
+                  
+                # Move the sensor to the right Z position:
+                curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True)
+
+                # Now make the magnetic field measurement for all the positions of the sensor:
+                line = f'{n:2d};'
+
+                # scan angle from 0 to 360°:
+                count = 0
+
+                # The loop on the rotor angle (make a complete rotation)
+                while True:
+
+                    angle = rot_step*count
+                    if angle > 360: break
+                  
+                    # Make the sensor measuremnts:
+                    X, Y, Z = self.Do_sensor_measurement();
+                    coeff = Param['SENSOR_Oe_mT']
+                    X *= coeff
+                    Y *= coeff
+                    Z *= coeff
+                    values = f'{angle:5.1f};{X:12.6f};{Y:12.6f};{Z:12.6f}'
+                    line += values
+
+                    print("[DATA] " + values)
+
+                    # Make the stepper motor do the steps to turn the ROTOR of the 'rotor_step' value:
+                    for i in range(0, NBSTEP1):
+                        top = time()
+                        self.stepper1_STEP_line.set_value(1)
+                        sleep(0.001)
+                        self.stepper1_STEP_line.set_value(0)
+                        while True:
+                            if time() - top > T_stepper1_sec: break
+
+                    count += 1;
+
+                # Write data:
+                fOut.write(line + '\n')
+                fOut.flush()
+                  
+        # release all motor torques:
+        self.Stop_ROTOR_Bench()
+          
+        # close the data file:
+        fOut.close();
+
+        print("END of Run_by_Angle")  
         self.serialPort.close()
 
 if __name__ == "__main__":

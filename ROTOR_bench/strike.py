@@ -2,6 +2,13 @@ import sys, os, json
 from ROTOR_bench import ROTOR_bench
 from ROTOR_config import StepperMotor
 
+#
+# This is the file that is in charge :
+#  1/ To define the properties of the 2 stepper motors of the measurement bench
+#  2/ to instanciate a ROTOR_bench object, passing the 2 stepper motors as arguments
+#  3/ To read the  paramFile (/tmp/ROTOR_LAUNCH.txt) and to lauch the right ROTOR_bench
+#     method depending on the value of MODE in the paramfile.
+#      
 Stepper1 = StepperMotor("Stepper motor connected to the shaft",
                         STEP_MODE=1, STEPPER_ANGLE=1.8, NB_STEP_PER_REVOL=200,
                         NB_REVOL_PER_SEC=0.5,
@@ -34,10 +41,13 @@ else:
               'NB_REPET': 1}
     print(f"File <{paramFile}> not found... using params:<{params}>")
 
-if params['MODE'] == 'RunBench':
-    R.run(params, verbose=True)
+if params['MODE'] == 'ByZPos':
+    R.run_by_ZPos(params, verbose=True)
     
-elif params['MODE'] == 'RunFree':
+elif params['MODE'] == 'ByAngle':
+    R.run_by_Angle(params, verbose=True)
+
+elif params['MODE'] == 'Free':
     R.run_free(params)
     
 elif params['MODE'] == 'ReleaseMotors':
