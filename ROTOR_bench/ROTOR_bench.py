@@ -11,7 +11,7 @@ import gpiod
 from ROTOR_config import StepperMotor, Zaxis, Param
 from Tools import uniq_file_name_ROTOR, uniq_file_name_FREE
 
-class ROTOR_bench:
+class ROTOR_bench():
 
     def __init__(self, stepper1, stepper2):
 
@@ -105,12 +105,11 @@ class ROTOR_bench:
         self.stepper2_DIR_line  = self.gpio_chip.get_line(self.stepper2.GPIO_DIR)
         self.stepper2_STEP_line = self.gpio_chip.get_line(self.stepper2.GPIO_STEP)
         self.stepper2_ENA_line  = self.gpio_chip.get_line(self.stepper2.GPIO_ENA)
-        
+
         self.limit_switch_line  = self.gpio_chip.get_line(Zaxis.GPIO_LimitSwitch.value)
         
     def GPIOD_config_lines(self):
         ''' To parameter RPi GPIO lines as Input or Ouput.'''
-        
         # set the stepper1 lines as Outputs:
         self.stepper1_DIR_line.request(consumer="stepper1_DIR",  type=gpiod.LINE_REQ_DIR_OUT)
         self.stepper1_STEP_line.request(consumer="stepper1_STEP", type=gpiod.LINE_REQ_DIR_OUT)
@@ -171,14 +170,12 @@ class ROTOR_bench:
                     line += f"; X{n}_magn [mT]; Y{n}_magn [mT]; Z{n}_magn [mT]"
                 fOut.write(line + '\n')
 
-            else if MODE == "by_Angle":
+            elif MODE == "by_Angle":
                 # Write specific columns header:
-                line  = "#\n# ZPos#;"
-                line += " a1[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]; ..."
-                line += " a2[°]; X2_magn[mT]; Y2_magn[mT]; Z2_magn[mT]; ...";
+                line  = "#\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
                 fOut.write(line + '\n')
     
-            else if MODE == "FreeRun":
+            elif MODE == "FreeRun":
                 # write simplified header for "Free Run" mode:
                 fOut.write('\n# Time[s]; Xmagn [mT]; Ymagn [mT]; Zmagn [mT];\n')            
 
@@ -391,9 +388,9 @@ class ROTOR_bench:
         print("[INFO] end run_free")  
         self.serialPort.close()
         
-    def run_by_Zpos(self, parameters:dict, verbose:bool =False):
+    def run_by_ZPos(self, parameters:dict, verbose:bool =False):
         '''Make the measurement: for each angle position the magnetic sensor is moved
-           vetically along the Z axis to explore the magnetic field at the different Zpos.
+           vertically along the Z axis to explore the magnetic field at the different Zpos.
         '''
         MODE = "by_ZPos"
         
@@ -445,7 +442,7 @@ class ROTOR_bench:
 
                 Zpos_move_required = count % Zaxis.ZREF_EVERY_ROTSTEP.value
 
-                if Zpos_move_required == 0: curr_Zpos_mm = self.Zref_sensor(hold_torque=True);
+                if Zpos_move_required == 0: curr_Zpos_mm = self.Zref_sensor(hold_torque=True)
 
                 go = count % 2
                 if go == 0:
@@ -457,7 +454,7 @@ class ROTOR_bench:
                 for n in range(start, stop, step):
 
                     # Move the sensor to the right Z position:
-                    curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True);
+                    curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True, verbose=True);
 
                     # Make the sensor measuremnts:
                     X, Y, Z = self.Do_sensor_measurement();
@@ -501,7 +498,7 @@ class ROTOR_bench:
     def run_by_Angle(self, parameters:dict, verbose:bool =False):
         '''Make the measurements: for each Zpos the rotor is rotated by a step angle
            to explore the magnetic field at the different angle positions.
-           Onec a full rotation is achieved, the sensor moves to the next Zpos
+           Once a full rotation is achieved, the sensor moves to the next Zpos
            and the rotor is rotated again...
         '''
 
@@ -545,20 +542,22 @@ class ROTOR_bench:
             sleep(1)
             self.serialPort.read_all()
 
+            self.Zref_sensor(hold_torque=True)
+            
             # Loop on the sensor Zpos:
             for n in range(1, nb_sensor_pos+1):         
                   
                 # Move the sensor to the right Z position:
                 curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True)
 
-                # Now make the magnetic field measurement for all the positions of the sensor:
-                line = f'{n:2d};'
-
                 # scan angle from 0 to 360°:
                 count = 0
 
                 # The loop on the rotor angle (make a complete rotation)
                 while True:
+
+                    # Now make the magnetic field measurement for all the positions of the sensor:
+                    line = f'{n:2d};'
 
                     angle = rot_step*count
                     if angle > 360: break
@@ -583,11 +582,11 @@ class ROTOR_bench:
                         while True:
                             if time() - top > T_stepper1_sec: break
 
-                    count += 1;
+                    count += 1
 
-                # Write data:
-                fOut.write(line + '\n')
-                fOut.flush()
+                    # Write data:
+                    fOut.write(line + '\n')
+                    fOut.flush()
                   
         # release all motor torques:
         self.Stop_ROTOR_Bench()

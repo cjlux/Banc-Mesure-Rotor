@@ -1,7 +1,7 @@
 #
 # widget QTabWidget: création d'onglets dans la fenêtre principale
 #
-import sys, json
+import sys, json, os
 sys.path.insert(0, sys.path[0].replace('PyQT5',''))
 #print(sys.path)
 
@@ -127,13 +127,13 @@ class MyApp(QMainWindow):
         sb.valueChanged.connect(self.WorkingDistChanged)
         sb.setMinimumHeight(40)
         
-        b1 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByAngle.png"),
+        b1 = QPushButton(icon=QIcon("./PyQT5/icons/Icon_RunByAngle.png"),
                         text='RUN by Angle')
         b1.setMinimumHeight(110)
         b1.setIconSize(QSize(100,100))
         b1.clicked.connect(lambda s, mode='ByAngle': self.RunBench(s, mode))
 
-        b2 = QPushButton(icon=QIcon("./icons/Icon_RunRotorByZPos.png"),
+        b2 = QPushButton(icon=QIcon("./PyQT5/icons/Icon_RunByZPos.png"),
                         text='RUN by Zpos')
         b2.setMinimumHeight(110)
         b2.setIconSize(QSize(100,100))
@@ -325,6 +325,10 @@ class MyApp(QMainWindow):
     def RunBench(self, state, mode):
         zPos = [ z for z in self.zPos if z >= 0]
         zPos = list(set(zPos)) # don't dupplicate Z position
+        
+        # JLC: bug the set modifies the order!!!!
+        zPos.sort()   # !!!!
+
         self.params = {'MODE': mode,
                        'WORK_DIST': self.workDist,
                        'ROT_STEP_DEG': self.rotStep,
@@ -433,7 +437,7 @@ class MyApp(QMainWindow):
         
     def SamplingChanged(self, x):
         if x < self.SENSOR_READ_DELAY: 
-                x = self.SENSOR_READ_DELAY
+                x = selBanc-Mesure-Rotor/ROTOR_benchf.SENSOR_READ_DELAY
         self.sampling = x     
         self.sampling_spinbox.setValue(x)   
 
@@ -449,7 +453,6 @@ class MyApp(QMainWindow):
             self.sampling_spinbox.setValue(x)
 
     def CheckZpos(self):
-
         zPos = self.zPos
         
         # zPos must be strictly incresing:
@@ -467,12 +470,13 @@ class MyApp(QMainWindow):
         self.move(geo_window.topLeft())
         
 if __name__ == '__main__':
-    
-    ps_au = subprocess.getoutput("ps au")
+
+    ps_axu = subprocess.getoutput("ps axu")
     # Debug: print(ps_au)
-    if ps_au.count('ROTOR_bench/PyQT5/main.py') >= 2:
-        print("process <python3 .../ROTOR_bench/PyQT5/main.py> already running, tchao !")
+    if ps_axu.count('ROTOR_bench/PyQT5/main.py') >= 2:
+        print("process <python3 .../ROTOR_bench/PyQT5/main.pyy> already running, tchao !")
     else:
+        os.chdir('/home/rotor/Banc-Mesure-Rotor/ROTOR_bench')
         app = QApplication(sys.argv) # instanciation classe QApplication
         my_app = MyApp()             # instanciation classe MyApp
         app.exec_()                  # lancement boucle événementielle Qt

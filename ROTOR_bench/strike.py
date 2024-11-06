@@ -11,7 +11,7 @@ from ROTOR_config import StepperMotor
 #      
 Stepper1 = StepperMotor("Stepper motor connected to the shaft",
                         STEP_MODE=1, STEPPER_ANGLE=1.8, NB_STEP_PER_REVOL=200,
-                        NB_REVOL_PER_SEC=0.5,
+                        NB_REVOL_PER_SEC=0.3,
                         GPIO_DIR=17, GPIO_STEP=27, GPIO_ENA=22,
                         RATIO=6)
 
@@ -41,16 +41,18 @@ else:
               'NB_REPET': 1}
     print(f"File <{paramFile}> not found... using params:<{params}>")
 
-if params['MODE'] == 'ByZPos':
-    R.run_by_ZPos(params, verbose=True)
+match(params['MODE']):
     
-elif params['MODE'] == 'ByAngle':
-    R.run_by_Angle(params, verbose=True)
+    case 'ByZPos':
+        R.run_by_ZPos(params, verbose=True)
+    
+    case 'ByAngle':
+        R.run_by_Angle(params, verbose=True)
 
-elif params['MODE'] == 'Free':
-    R.run_free(params)
+    case 'Free':
+        R.run_free(params)
     
-elif params['MODE'] == 'ReleaseMotors':
-    R.Stop_ROTOR_Bench()
+    case 'ReleaseMotors':
+        R.Stop_ROTOR_Bench()
     
 

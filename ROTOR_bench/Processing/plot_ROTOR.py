@@ -40,10 +40,15 @@ if __name__ == "__main__":
 
             fileName = os.path.join(data_dir, list_file[i])
             DATA, list_pos = read_file_ROTOR(fileName)
-            # transpose DATA to extract the different variables:
-            A, magnField = DATA.T[0], DATA.T[1:]        
-            # plot the data
-            plot_magField_at_positions(A, magnField, list_pos, fileName, figsize=(10,8))
+
+            if DATA.shape[1] == 5:
+                print("Plot ByAngle")
+            else:
+                print("plot ByPos")
+                # transpose DATA to extract the different variables:
+                A, magnField = DATA.T[0], DATA.T[1:]        
+                # plot the data
+                plot_magField_at_positions(A, magnField, list_pos, fileName, figsize=(10,8))
             
     else:
         for f in list_file:
