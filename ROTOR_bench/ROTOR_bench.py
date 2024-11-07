@@ -454,7 +454,7 @@ class ROTOR_bench():
                 for n in range(start, stop, step):
 
                     # Move the sensor to the right Z position:
-                    curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True, verbose=True);
+                    curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True)
 
                     # Make the sensor measuremnts:
                     X, Y, Z = self.Do_sensor_measurement();

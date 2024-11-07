@@ -98,7 +98,7 @@ def plot_magField_at_positions(A, field, list_pos, filename, figsize=(8,6), show
     dirname = os.path.dirname(filename)
     filename = os.path.basename(filename)
 
-    fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=False)
+    fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True)
     fig.suptitle(f"Rotor magnetic field", size=16)
     fig.text(0.5, .92, f"from file <{filename}>", size=10, color="gray",
                 horizontalalignment='center')
