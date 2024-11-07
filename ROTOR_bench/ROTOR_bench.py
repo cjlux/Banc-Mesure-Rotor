@@ -435,7 +435,7 @@ class ROTOR_bench():
             while True:
                 t0 = time()
                 angle = rot_step*count
-                if angle > 360: break
+                if angle >= 360: break
 
                 # Now make the mmagnetic field measurement for all the positions of the sensor:
                 line = f'{angle:5.1f}'
@@ -560,7 +560,7 @@ class ROTOR_bench():
                     line = f'{n:2d};'
 
                     angle = rot_step*count
-                    if angle > 360: break
+                    if angle >= 360: break
                   
                     # Make the sensor measuremnts:
                     X, Y, Z = self.Do_sensor_measurement();

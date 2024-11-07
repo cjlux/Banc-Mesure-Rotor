@@ -60,6 +60,9 @@ class MyApp(QMainWindow):
 
         self.plotROTOR_cmd = ["lxterminal", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py; read'"]
+
+        self.plotROTOR_CMAP_cmd = ["lxterminal", "--command",     
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py; read'"]
         
         self.plotFREE_cmd = ["lxterminal", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py; read'"]
@@ -141,8 +144,6 @@ class MyApp(QMainWindow):
         
         g.addWidget(w, 1, 1)
         g.addWidget(sb, 1, 2)
-        g.addWidget(b1, 1, 4)
-        g.addWidget(b2, 1, 5)
         
         w = QLabel("Rotation step angle ")
         sb = QDoubleSpinBox()
@@ -169,6 +170,9 @@ class MyApp(QMainWindow):
             g.addWidget(w,  i+5, 1)
             g.addWidget(sb, i+5, 2)
 
+        g.addWidget(b1, 1, 4)
+        g.addWidget(b2, 1, 5)
+        
         w = QLabel("Number of repetition: ")
         sb = QSpinBox()
         sb.setValue(1)
@@ -269,14 +273,22 @@ class MyApp(QMainWindow):
         
         VL = QVBoxLayout()
         self.tab3.setLayout(VL)
+
         b = QPushButton('Plot ROTOR data')
         b.setMinimumHeight(40)
         b.clicked.connect(self.PlotROTOR)
         VL.addWidget(b)
+        
+        b = QPushButton('ColorMap ROTOR data')
+        b.setMinimumHeight(40)
+        b.clicked.connect(self.CmapROTOR)
+        VL.addWidget(b)
+        
         b = QPushButton('Plot FREE data')
         b.setMinimumHeight(40)
         b.clicked.connect(self.PlotFREE)
         VL.addWidget(b)
+        
         VL.addStretch()
 
     def __InitTab4(self):
@@ -306,6 +318,9 @@ class MyApp(QMainWindow):
     def PlotROTOR(self):
         subprocess.run(self.plotROTOR_cmd)
         
+    def CmapROTOR(self):
+        subprocess.run(self.plotROTOR_CMAP_cmd)
+
     def PlotFREE(self):
         subprocess.run(self.plotFREE_cmd)
         

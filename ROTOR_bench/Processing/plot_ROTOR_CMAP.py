@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser.add_argument('--dir', action="store", dest='data_dir', 
                          help="Optional, the relative path of the data directory")
     args = parser.parse_args()
-    data_dir = "../../" if not args.data_dir else args.data_dir
+    data_dir = "./TXT" if not args.data_dir else args.data_dir
         
     list_file = get_files_by_date(data_dir, 'ROTOR')
 
@@ -32,6 +32,31 @@ if __name__ == "__main__":
 
             fileName = os.path.join(data_dir, list_file[i])
             DATA, list_pos = read_file_ROTOR(fileName)
+
+
+            if DATA.shape[1] == 5:
+                mode = "Plot ByAngle"
+                # re-arrange DATA to be an array with lines formated like:
+                # "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
+                # instead of:
+                # "# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
+                nb_col = 1 + 3 * len(list_pos) #  angle col + (X , Y, Z) * nb_Zpo
+                nb_row = int(len(DATA)/len(list_pos))
+                newDATA = np.ndarray((nb_row, nb_col), dtype=float)
+
+                # copy angle column
+                newDATA[ :, 0] = DATA[ : nb_row, 1]
+                # copy X,Y,Z for all Zpos:
+                nb_val = 3 # the 3 components X, Y and Z
+                for n in range(len(list_pos)):
+                    newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
+
+                DATA = newDATA
+
+            else:
+                mode = "Plot ByAngle"
+
+
             # transpose DATA to extract the different variables:
             A, magnField = DATA.T[0], DATA.T[1:]        
             # plot the data

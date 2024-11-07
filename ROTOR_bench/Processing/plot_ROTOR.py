@@ -1,10 +1,46 @@
-from tools import get_files_by_date, read_file_ROTOR, plot_magField_at_positions
+from tools import read_file_ROTOR, plot_magField_at_positions
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, os
 from os.path import join
 from stat import ST_CTIME
 
+def plot_ROTOR(fille_path):
+    
+    DATA, list_pos = read_file_ROTOR(fille_path)
+
+    if DATA.shape[1] == 5:
+        print("Plot ByAngle")
+        # re-arrange DATA to be an array with lines formated like:
+        # "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
+        # instead of:
+        # "# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
+        nb_col = 1 + 3 * len(list_pos) #  angle col + (X , Y, Z) * nb_Zpo
+        nb_row = int(len(DATA)/len(list_pos))
+        newDATA = np.ndarray((nb_row, nb_col), dtype=float)
+
+        # copy angle column
+        newDATA[ :, 0] = DATA[ : nb_row, 1]
+        # copy X,Y,Z for all Zpos:
+        nb_val = 3 # the 3 components X, Y and Z
+        for n in range(len(list_pos)):
+            newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
+
+        DATA = newDATA
+
+        A, magnField = DATA.T[0], DATA.T[1:]
+        plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=(10,8))
+
+    else:
+        print("plot ByPos")
+        # transpose DATA to extract the different variables:
+        A, magnField = DATA.T[0], DATA.T[1:]        
+        # plot the data
+        plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=(10,8))
+    
+
+
+    
 if __name__ == "__main__":
     
     import argparse
@@ -38,44 +74,15 @@ if __name__ == "__main__":
             else:
                 i = int(rep)
 
-            fileName = os.path.join(data_dir, list_file[i])
-            DATA, list_pos = read_file_ROTOR(fileName)
-
-            if DATA.shape[1] == 5:
-                print("Plot ByAngle")
-                # re-arrange DATA to be an array with lines formated like:
-                # "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
-                # instead of:
-                # "# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
-                nb_col = 1 + 3 * len(list_pos) #  angle col + (X , Y, Z) * nb_Zpo
-                nb_row = int(len(DATA)/len(list_pos))
-                newDATA = np.ndarray((nb_row, nb_col), dtype=float)
-
-                # copy angle column
-                newDATA[ :, 0] = DATA[ : nb_row, 1]
-                # copy X,Y,Z for all Zpos:
-                nb_val = 3 # the 3 components X, Y and Z
-                for n in range(len(list_pos)):
-                    newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
-
-                DATA = newDATA
-
-                A, magnField = DATA.T[0], DATA.T[1:]
-                plot_magField_at_positions(A, magnField, list_pos, fileName, figsize=(10,8))
-
-            else:
-                print("plot ByPos")
-                # transpose DATA to extract the different variables:
-                A, magnField = DATA.T[0], DATA.T[1:]        
-                # plot the data
-                plot_magField_at_positions(A, magnField, list_pos, fileName, figsize=(10,8))
+            file_path = os.path.join(data_dir, list_file[i])
+            plot_ROTOR(file_path)
             
     else:
         for f in list_file:
-            fileName = os.path.join(data_dir, f)
-            DATA, list_pos = read_file_ROTOR(fileName)
+            file_path = os.path.join(data_dir, f)
+            DATA, list_pos = read_file_ROTOR(file_path)
             # transpose DATA to extract the different variables:
             A, magnField = DATA.T[0], DATA.T[1:]        
             # plot the data
-            plot_magField_at_positions(A, magnField, list_pos, fileName, figsize=(10,8), show=False)
+            plot_magField_at_positions(A, magnField, list_pos, file_path, figsize=(10,8), show=False)
         
