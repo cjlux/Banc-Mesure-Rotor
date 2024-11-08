@@ -9,7 +9,7 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel, QGridLayout, QPlainTextEdit,
-                             QSizePolicy, QDateEdit, QTimeEdit, QMessageBox)
+                             QSizePolicy, QCheckBox, QDateEdit, QTimeEdit, QMessageBox)
 
 from PyQt5.QtGui import QIcon, QTextCursor, QFont
 from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime, QSize
@@ -87,7 +87,7 @@ class MyApp(QMainWindow):
         # Add all the tabs:
         self.tabs.addTab(self.tab1,"ROTOR bench")
         self.tabs.addTab(self.tab2,"Free recording")
-        self.tabs.addTab(self.tab3,"Process data files")
+        self.tabs.addTab(self.tab3,"Plot data files")
         self.tabs.addTab(self.tab4,"Display...")
         self.tabs.addTab(self.tab5,"Tools...")
         
@@ -270,26 +270,37 @@ class MyApp(QMainWindow):
         g.addWidget(sb, 6, 2)
                 
     def __InitTab3(self):
+        '''To fill in the "Plot data file" tab'''
+        V = QVBoxLayout()
+        self.tab3.setLayout(V)
         
-        VL = QVBoxLayout()
-        self.tab3.setLayout(VL)
+        H = QHBoxLayout()
 
-        b = QPushButton('Plot ROTOR data')
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.PlotROTOR)
-        VL.addWidget(b)
+        for label, callback in zip(('Plot ROTOR data', 'ColorMap ROTOR data', 'Plot FREE data'),
+                                 (self.PlotROTOR, self.CmapROTOR, (self.PlotFREE))):
+            b = QPushButton(label)
+            b.setMinimumHeight(40)
+            b.setMinimumWidth(200)
+            b.clicked.connect(callback)
+            H.addWidget(b)
         
-        b = QPushButton('ColorMap ROTOR data')
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.CmapROTOR)
-        VL.addWidget(b)
+        H.addStretch()
         
-        b = QPushButton('Plot FREE data')
-        b.setMinimumHeight(40)
-        b.clicked.connect(self.PlotFREE)
-        VL.addWidget(b)
+        h = QHBoxLayout()
+        for lab in ("X", "Y", "Y"):
+            c = QCheckBox(lab)
+            c.toggle()
+            c.stateChanged.connect(lambda state, label=lab: self.set_XYZ(state, label))
+            h.addWidget(c)
         
-        VL.addStretch()
+        H.addLayout(h)
+        
+        V.addLayout(H)
+        
+        V.addStretch()
+        
+    def set_XYZ(self, state, lab):
+        print(f'{lab=}, {state=}')
 
     def __InitTab4(self):
         ''' To display the output of "Run Bench" or "Run Free" process'''
@@ -491,7 +502,8 @@ if __name__ == '__main__':
     if ps_axu.count('ROTOR_bench/PyQT5/main.py') >= 2:
         print("process <python3 .../ROTOR_bench/PyQT5/main.pyy> already running, tchao !")
     else:
-        os.chdir('/home/rotor/Banc-Mesure-Rotor/ROTOR_bench')
+        target_dir = os.path.dirname(os.path.dirname(__file__))
+        os.chdir(target_dir)
         app = QApplication(sys.argv) # instanciation classe QApplication
         my_app = MyApp()             # instanciation classe MyApp
         app.exec_()                  # lancement boucle événementielle Qt

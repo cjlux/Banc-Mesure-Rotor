@@ -51,7 +51,9 @@ def read_file_FREE(fileName):
     return DATA
     
 def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
-
+    '''
+        To plot magnetic field versus time (free measurement).    
+    '''
     dirname = os.path.dirname(filename)
     filename = os.path.basename(filename)
 
@@ -89,43 +91,130 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
     if show: plt.show()
     plt.close()
 
-def plot_magField_at_positions(A, field, list_pos, filename, figsize=(8,6), show=True):
-
+def plot_magField_at_positions(A, field, list_pos, filename, 
+                               figsize=(8,6), mode='', xyz=(1,1,1), show=True):
+    '''
+        To plot magnetic field versus angle, for diffrent Z positions
+        of the magnetic sensor.
+    '''
+    dirname = os.path.dirname(filename)
+    filename = os.path.basename(filename)
+    print(f"plot file <{filename[:23]}...> [{mode:8s}] ", end='')
+    
     nb_Zpos = len(list_pos)
     nb_comp, nb_angle_pos = field.shape
     assert(nb_comp // 3 == nb_Zpos)
 
+    try:
+        fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True, sharey=True)
+        fig.suptitle(f"Rotor magnetic field", size=16)
+        fig.text(0.5, .92, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+                    horizontalalignment='center')
+        
+        magn_max = field.max()
+        magn_min = field.min()
+        
+        for n, (ax, Zpos) in enumerate(zip(axes, list_pos)):      
+            X, Y, Z = field[3*n:3*n+3]
+            if xyz[0]: ax.plot(A, X, '-or', markersize=0.5, label='X')
+            if xyz[1]: ax.plot(A, Y, '-og', markersize=0.5, label='Y')
+            if xyz[2]: ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
+            ax.set_title(f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm",
+                         loc='left', fontsize=9)
+            if n == 0: 
+                ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
+                ax.set_ylabel("[mT]")
+            ax.minorticks_on()
+            ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
+            ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
+            ax.set_ylim(1.1*magn_min, 1.1*magn_max)
+
+            if n == nb_Zpos-1:
+                ax.set_xlabel("rotor angle [°]")
+            
+        plt.subplots_adjust(right=0.86, hspace=0.4)
+        figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
+        if show: 
+            print('')
+            plt.show()
+        else:
+            print(f' -> <{os.path.basename(figPath)}')
+            plt.savefig(figPath)
+        plt.close()
+    except:
+        print("A problem occured when processing data file....")
+        
+        
+def colormap_magField(A, field, list_pos, filename, 
+                      figsize=(8,6), mode='', xyz=(0,0,1), show=True):
+    '''
+        To draw the magnetic field color map versus angle & Zpos, for diffrent 
+        Z positions of the magnetic sensor.
+    '''
     dirname = os.path.dirname(filename)
     filename = os.path.basename(filename)
+    print(f"plot file <{filename[:23]}...> [{mode:8s}] ", end='')
 
-    fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True)
-    fig.suptitle(f"Rotor magnetic field", size=16)
-    fig.text(0.5, .92, f"from file <{filename}>", size=10, color="gray",
-                horizontalalignment='center')
-    for n, p in enumerate(list_pos):
-      if nb_Zpos >=2:
-          ax = axes[n]
-      else:
-          ax = axes
-
-      X, Y, Z = field[3*n:3*n+3]
-      ax.plot(A, X, '-or', markersize=0.5, label='X')
-      ax.plot(A, Y, '-og', markersize=0.5, label='Y')
-      ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
-      ax.set_title(f"Magnetic field at position #{n+1}: {int(p):3d} mm")
-      ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
-      ax.minorticks_on()
-      ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
-      ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-      ax.set_ylabel("[mT]")
-
-      if n == nb_Zpos-1:
-         ax.set_xlabel("rotor angle [°]")
-
-    plt.subplots_adjust(right=0.86, hspace=0.4)
-    figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
-    if show == False: print(figPath)
-    plt.savefig(figPath)
-    if show: plt.show()
-    plt.close()
+    nb_Zpos = len(list_pos)
+    nb_angle_pos, nb_comp = field.shape
+    assert(nb_comp // 3 == nb_Zpos)
     
+    # Check how many magnetic field components to plot:
+    nb_plot = sum(xyz)
+    if nb_plot == 0: return
+
+    try:
+        fig, axes = plt.subplots(nb_plot, 1, figsize=figsize, sharex=True)
+        if nb_plot == 1: axes = [axes]
+        fig.suptitle(f"Rotor magnetic field", size=16)
+        fig.text(0.5, .92, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+                    horizontalalignment='center')
+        
+        list_axes  = [None, None, None]
+        num_axe = 0
+        for n, todo in enumerate(xyz):
+            if todo:
+                list_axes[n] = axes[num_axe]
+                num_axe +=1
+                    
+        mag_labels = ["X", "Y", "Z"]
+        magnXYZ    = [field[:, 0::3], field[:, 1::3], field[:, 2::3]]
+
+        magn_max = field.max()
+        magn_min = field.min()
+
+        z_pos_labels = filename.split('_')[4:-1]
+        z_pos_values = list(map(float, z_pos_labels))
+        x = np.linspace(0, A[-1], len(A))
+        y = np.array(z_pos_values)
+        X, Y = np.meshgrid(x, y)
+
+        first_plot = True
+        for ax, todo, magn, label in zip(list_axes, xyz, magnXYZ, mag_labels):
+            if todo:
+                p = ax.pcolor(X, Y, magn.T, cmap='seismic', vmin=magn_min, vmax=magn_max)
+                ax.set_title(f"Magnetic field {label}", loc='left', fontsize=9)
+                ax.set_yticks(z_pos_values[::-1], z_pos_labels)
+                if first_plot: 
+                    ax.set_ylabel("Z pos. from top [mm]")
+                    first_plot = False
+        
+        # write xlabel for the last plot:
+        ax.set_xlabel("Rotation angle [°]")
+        
+        cax = plt.axes((0.9, 0.1, 0.02, 0.8))
+        cbar = fig.colorbar(p, cax=cax, shrink=0.8)    #, location='right', anchor=(1.5, 0.5))
+        cbar.ax.set_ylabel('Magnetic field [mT]', rotation=270)
+        
+        plt.subplots_adjust(hspace=0.37, right=0.87)
+        figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
+        if show: 
+            print('')
+            plt.show()
+        else:
+            print(f' -> <{os.path.basename(figPath)}')
+            plt.savefig(figPath)
+        plt.close()
+
+    except:
+        print("A problem occured when processing data file....")
