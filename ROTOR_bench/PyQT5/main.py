@@ -40,6 +40,7 @@ class MyApp(QMainWindow):
         self.zPos     = []       # The list of the Z positions
         self.rotStep  = 1.2      # the step of the ROTOR rotation 
         self.repet    = 1        # number of repetition of the same measurement run
+        self.XYZ      = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot or no the X,Y,Z component of the magn. field
         
         self.duration = 10       # duration [s] of the free run
         self.sampling = 0.7      # sampling time when running free
@@ -56,17 +57,17 @@ class MyApp(QMainWindow):
             print("ERROR:you must use a Rasberry Pi platform !!!")
 #            sys.exit()
         self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py '"]
 
         self.plotROTOR_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py; read'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py '"]
 
         self.plotROTOR_CMAP_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py; read'"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py "]
         
         self.plotFREE_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py; read'"]
-        
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py '"]
+
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
         self.InitUI()
@@ -287,7 +288,7 @@ class MyApp(QMainWindow):
         H.addStretch()
         
         h = QHBoxLayout()
-        for lab in ("X", "Y", "Y"):
+        for lab in ("X", "Y", "Z"):
             c = QCheckBox(lab)
             c.toggle()
             c.stateChanged.connect(lambda state, label=lab: self.set_XYZ(state, label))
@@ -300,7 +301,8 @@ class MyApp(QMainWindow):
         V.addStretch()
         
     def set_XYZ(self, state, lab):
-        print(f'{lab=}, {state=}')
+        self.XYZ[lab] = state//2
+        print(f'{self.XYZ=}')
 
     def __InitTab4(self):
         ''' To display the output of "Run Bench" or "Run Free" process'''
@@ -330,6 +332,9 @@ class MyApp(QMainWindow):
         subprocess.run(self.plotROTOR_cmd)
         
     def CmapROTOR(self):
+        xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
+        self.plotROTOR_CMAP_cmd[-1] += f" --xyz {xyz}; read'"
+        print(f'{self.plotROTOR_CMAP_cmd=}')
         subprocess.run(self.plotROTOR_CMAP_cmd)
 
     def PlotFREE(self):

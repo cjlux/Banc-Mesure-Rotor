@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--all', action="store_true", dest='all_file', 
                          help="Optional, to draw the plots for all of the .txt in the directory")
     args = parser.parse_args()
-    data_dir = "../TXT" if not args.data_dir else args.data_dir
+    data_dir = "./TXT" if not args.data_dir else args.data_dir
     all_file = args.all_file
         
     #JLC_was: list_file = get_files_by_date(data_dir, 'ROTOR')
