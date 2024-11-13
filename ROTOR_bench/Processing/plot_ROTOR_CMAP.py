@@ -30,7 +30,9 @@ def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
     # Extract the different variables:
     A, magnField = DATA[:, 0], DATA[:, 1:]  
     # plot the colormap:
-    colormap_magField(A, magnField, list_pos, fille_path, figsize=(10,8), mode=mode, show=show, xyz=xyz) 
+    heights = (None, 4, 6, 8)
+    height  = heights[sum(xyz)]
+    colormap_magField(A, magnField, list_pos, fille_path, figsize=(10, height), mode=mode, show=show, xyz=xyz) 
  
     
 if __name__ == "__main__":

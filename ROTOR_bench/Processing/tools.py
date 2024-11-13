@@ -177,7 +177,7 @@ def colormap_magField(A, field, list_pos, filename,
         fig, axes = plt.subplots(nb_plot, 1, figsize=figsize, sharex=True)
         if nb_plot == 1: axes = [axes]
         fig.suptitle(f"Rotor magnetic field", size=16)
-        fig.text(0.5, .92, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+        fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
                     horizontalalignment='center')
         
         list_axes  = [None, None, None]
@@ -213,11 +213,11 @@ def colormap_magField(A, field, list_pos, filename,
         # write xlabel for the last plot:
         last_ax.set_xlabel("Rotation angle [°]")
         
-        cax = plt.axes((0.9, 0.1, 0.02, 0.8))
+        cax = plt.axes((0.9, 0.1, 0.02, 0.75))
         cbar = fig.colorbar(p, cax=cax, shrink=0.8)    #, location='right', anchor=(1.5, 0.5))
         cbar.ax.set_ylabel('Magnetic field [mT]', rotation=270)
         
-        plt.subplots_adjust(hspace=0.37, right=0.87)
+        plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
         XYZ = build_XYZ_name_with_tuple(xyz)
         figPath = os.path.join(dirname, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
         if show == False: print(figPath)

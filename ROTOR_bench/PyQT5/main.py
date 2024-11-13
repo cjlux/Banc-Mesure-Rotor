@@ -59,13 +59,13 @@ class MyApp(QMainWindow):
         self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read '"]
 
-        self.plotROTOR_cmd = ["lxterminal", "--command",     
+        self.plotROTOR_cmd = ["lxterminal", "--geometry=150x50", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py "]
 
-        self.plotROTOR_CMAP_cmd = ["lxterminal", "--command",     
+        self.plotROTOR_CMAP_cmd = ["lxterminal", "--geometry=150x50", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py "]
         
-        self.plotFREE_cmd = ["lxterminal", "--command",     
+        self.plotFREE_cmd = ["lxterminal", "--geometry=150x50", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py '"]
 
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
@@ -340,7 +340,7 @@ class MyApp(QMainWindow):
         cmd = self.plotROTOR_CMAP_cmd.copy()
         cmd[-1] += f" --xyz {xyz}; read'"
         print(f'{self.plotROTOR_CMAP_cmd=}\n{cmd=}')
-        subprocess.run(self.plotROTOR_CMAP_cmd)
+        subprocess.run(cmd)
 
     def PlotFREE(self):
         subprocess.run(self.plotFREE_cmd)
@@ -509,6 +509,7 @@ if __name__ == '__main__':
 
     ps_axu = subprocess.getoutput("ps axu")
     # Debug: print(ps_au)
+    pa_axu = "debug"
     if ps_axu.count('ROTOR_bench/PyQT5/main.py') >= 2:
         print("process <python3 .../ROTOR_bench/PyQT5/main.pyy> already running, tchao !")
     else:

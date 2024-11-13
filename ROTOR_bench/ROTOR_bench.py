@@ -165,14 +165,14 @@ class ROTOR_bench():
             
             if MODE == "byZPos":
                 # Write specific columns header:
-                line = "#\n# angle[°]"
+                line = "# byPos\n# angle[°]"
                 for n in range(1, nb_pos+1):
                     line += f"; X{n}_magn [mT]; Y{n}_magn [mT]; Z{n}_magn [mT]"
                 fOut.write(line + '\n')
 
-            elif MODE == "byAngleMODE":
+            elif MODE == "byAngle":
                 # Write specific columns header:
-                line  = "#\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
+                line  = "# byAngle\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
                 fOut.write(line + '\n')
     
             elif MODE == "FreeRun":
