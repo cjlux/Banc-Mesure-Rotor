@@ -99,5 +99,35 @@ def uniq_file_name_FREE(now, duration, sampling, SAMPLE=None, GAIN=None, DELAY=N
     
     return fileName
 
+def touch_txt_by_date():
+    '''
+    To touch files *.txt in TXT dir so as to use the date included in the filenames...
+    '''
+    
+    import os
+    from pathlib import Path
+    import calendar, time
+    
+    working_dir = Path(os.getcwd())
+    print(f'Working dir: {working_dir}')
+    
+    TXT_dir = Path(working_dir) / 'TXT'
+    os.chdir(TXT_dir)
+    
+    working_dir = Path(os.getcwd())
+    print(f'Working dir: {working_dir}')
+    
+    list_txt = [f for f in os.listdir(working_dir) if f.endswith("txt")]
+    
+    for f in list_txt:
+        f_path = Path(working_dir, f)
+        date = f.split('_')[1]
+        print(f'Processing file <{f}> with date <{date}>')
 
-            
+        m_epoch = calendar.timegm(time.strptime(f'{date}', '%Y-%m-%d-%H-%M'))
+        m_epoch -= 3600
+        if "2024-03-03-02-00" < date < "2024-10-27-03-00": m_epoch -=3600
+        
+        os.utime(f_path, (m_epoch, m_epoch))
+        
+    
