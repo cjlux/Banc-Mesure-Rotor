@@ -34,10 +34,10 @@ if (os.path.exists(paramFile)):
 
 else:
     # If file /tmp/ROTOR_LAUNCH.txt is not found use these parameters:
-    params = {'MODE': 'RunBench',
+    params = {'MODE': 'ByAngle',
               'WORK_DIST': 12,
-              'ROT_STEP_DEG': 4.8,
-              'Z_POS_MM':[0, 30, 60, 90],
+              'ROT_STEP_DEG': 120,
+              'Z_POS_MM':[30],
               'NB_REPET': 1}
     print(f"File <{paramFile}> not found... using params:<{params}>")
 

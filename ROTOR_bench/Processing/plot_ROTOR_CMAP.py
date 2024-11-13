@@ -8,7 +8,7 @@ def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
     DATA, list_pos = read_file_ROTOR(fille_path)
     
     if DATA.shape[1] == 5:
-        mode="by Angle"
+        mode="byAngle"
         # re-arrange DATA to be an array with lines formated like:
         # "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
         # instead of:
@@ -25,7 +25,7 @@ def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
             newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
         DATA = newDATA
     else:
-        mode="by ZPos"
+        mode="byZPos"
 
     # Extract the different variables:
     A, magnField = DATA[:, 0], DATA[:, 1:]  
@@ -63,7 +63,6 @@ if __name__ == "__main__":
     
     if not list_file:
        print(f"No .txt file found in directory <{data_dir}>, tchao")
-       print(f'{xyz=}')
     
     elif not all_file: 
         while True:

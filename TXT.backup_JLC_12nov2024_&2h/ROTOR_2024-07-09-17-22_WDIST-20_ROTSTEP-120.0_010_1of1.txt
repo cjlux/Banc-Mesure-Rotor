@@ -1,0 +1,40 @@
+# *CALIBRATION************
+# Voff:  -0.000557, -0.000502, 0.000355
+# Oe*Vref/V:  18766.300781, 19118.269531, 18920.400390
+# mV/Vref/Oe:  0.053287, 0.052306, 0.052853
+# Hrel:  0.000000, 0.000000, 0.000000
+# ADC Vref:  4.000000
+# ADC Bits:  16
+# ADC samples:  10
+# ADC Speed:  4
+# Linearization
+# A0:  0.000000, 0.000000, 0.000000
+# A1:  1.000000, 1.000000, 1.000000
+# A2:  0.000000, 0.000000, 0.000000
+# A3:  0.222500, 0.222500, 0.222500
+# A4:  0.000000, 0.000000, 0.000000
+# A5:  3.403000, 3.403000, 3.403000
+# Orthogonalization
+# 1.000000, 0.000000, 0.000000
+# 0.000000, 1.000000, 0.000000
+# 0.000000, 0.000000, 1.000000
+# EEPROM Cal Valid, Valid, Valid
+# EEPROM Lin Valid, Valid, Valid
+# EEPROM Ortho Not Valid
+# Sensor ID:   USB25103-1715507101             
+# Software Version:  MDTUSBMAG3D.V9.20220510
+# ************************
+# 
+# SENSOR_NB_SAMPLE: 10 
+# SENSOR_GAIN: 1 
+# SENSOR_READ_DELAY: 0.7 
+# SENSOR_Oe_mT: 0.1 
+# working dist: 20 mm
+# Rotation step angle: 120.0°
+# sensor pos #1: 10 mm
+#
+# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]
+  0.0;  -47.199000;  -10.330000;   -2.164200
+120.0;   -6.145300;    0.116590;   29.793000
+240.0;   47.593000;   11.311000;    1.455400
+360.0;    6.284800;    0.865270;  -30.550000
