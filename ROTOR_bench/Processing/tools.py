@@ -134,19 +134,16 @@ def plot_magField_at_positions(A, field, list_pos, filename,
             
         plt.subplots_adjust(right=0.86, hspace=0.4)
         figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
-        if show: 
-            print('')
-            plt.show()
-        else:
-            print(f' -> <{os.path.basename(figPath)}')
-            plt.savefig(figPath)
+        if show == False: print(figPath)
+        plt.savefig(figPath)
+        if show: plt.show()
         plt.close()
     except:
         print("A problem occured when processing data file....")
         
         
 def colormap_magField(A, field, list_pos, filename, 
-                      figsize=(8,6), mode='', xyz=(0,0,1), show=True):
+                      figsize=(8,6), mode='', xyz=(1,1,1), show=True):
     '''
         To draw the magnetic field color map versus angle & Zpos, for diffrent 
         Z positions of the magnetic sensor.
@@ -198,9 +195,10 @@ def colormap_magField(A, field, list_pos, filename,
                 if first_plot: 
                     ax.set_ylabel("Z pos. from top [mm]")
                     first_plot = False
+                last_ax = ax
         
         # write xlabel for the last plot:
-        ax.set_xlabel("Rotation angle [°]")
+        last_ax.set_xlabel("Rotation angle [°]")
         
         cax = plt.axes((0.9, 0.1, 0.02, 0.8))
         cbar = fig.colorbar(p, cax=cax, shrink=0.8)    #, location='right', anchor=(1.5, 0.5))
@@ -208,13 +206,10 @@ def colormap_magField(A, field, list_pos, filename,
         
         plt.subplots_adjust(hspace=0.37, right=0.87)
         figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
-        if show: 
-            print('')
-            plt.show()
-        else:
-            print(f' -> <{os.path.basename(figPath)}')
-            plt.savefig(figPath)
+        if show == False: print(figPath)
+        plt.savefig(figPath)
+        if show: plt.show()
         plt.close()
-
+        
     except:
         print("A problem occured when processing data file....")

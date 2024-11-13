@@ -1,10 +1,10 @@
 from tools import read_file_ROTOR, colormap_magField
 import numpy as np
 import sys, os
-from os.path import join
 
-def colormap_ROTOR(fille_path, show=True):
+def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
     
+    print(f'{xyz=}')
     DATA, list_pos = read_file_ROTOR(fille_path)
     
     if DATA.shape[1] == 5:
@@ -30,7 +30,7 @@ def colormap_ROTOR(fille_path, show=True):
     # Extract the different variables:
     A, magnField = DATA[:, 0], DATA[:, 1:]  
     # plot the colormap:
-    colormap_magField(A, magnField, list_pos, fille_path, figsize=(10,8), mode=mode, show=show) 
+    colormap_magField(A, magnField, list_pos, fille_path, figsize=(10,8), mode=mode, show=show, xyz=xyz) 
  
     
 if __name__ == "__main__":
@@ -39,10 +39,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir', action="store", dest='data_dir', 
                          help="Optional, the relative path of the data directory")
+    parser.add_argument('--xyz', action="store", dest='xyz', 
+                         help="Which component of the magnetic field to plot : '101' plots X and Z")
     parser.add_argument('-a', '--all', action="store_true", dest='all_file', 
                          help="Optional, to draw the plots for all of the .txt in the directory")
     args = parser.parse_args()
-    data_dir = "../TXT" if not args.data_dir else args.data_dir
+    data_dir = "./TXT" if not args.data_dir else args.data_dir
+    xyz = "111" if not args.xyz else str(args.xyz)
+    print(f'{xyz=}')
+    Lxyz = []
+    for n in xyz:
+        Lxyz.append(int(n))
+    Txyz = tuple(Lxyz)
+    print(f'{Txyz=}')
+    
+
     all_file = args.all_file
     
     #JLC_was: list_file = get_files_by_date(data_dir, 'ROTOR')
@@ -52,7 +63,8 @@ if __name__ == "__main__":
     
     if not list_file:
        print(f"No .txt file found in directory <{data_dir}>, tchao")
-       
+       print(f'{xyz=}')
+    
     elif not all_file: 
         while True:
             for i, file in enumerate(list_file):
@@ -66,9 +78,9 @@ if __name__ == "__main__":
                 i = int(rep)
 
             file_path = os.path.join(data_dir, list_file[i])
-            colormap_ROTOR(file_path)    
+            colormap_ROTOR(file_path, xyz=Txyz)    
              
     else:
         for f in list_file:
             f_path = os.path.join(data_dir, f)
-            colormap_ROTOR(f_path, show=False)       
+            colormap_ROTOR(f_path, xyz=Txyz, show=False)       
