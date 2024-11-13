@@ -4,6 +4,13 @@ import sys, os
 from os.path import join
 from stat import ST_CTIME
 
+def build_XYZ_name_with_tuple(xyz):
+    labels = ("X", "Y", "Z")
+    label = ""
+    for x, lab in zip(xyz, labels):
+        if x: label+= lab
+    return label
+
 def get_files_by_date(directory, PREFIX):
     d = directory
     files = [(os.stat(join(d, f))[ST_CTIME], f) for f in os.listdir(directory) \
@@ -105,8 +112,13 @@ def plot_magField_at_positions(A, field, list_pos, filename,
     nb_comp, nb_angle_pos = field.shape
     assert(nb_comp // 3 == nb_Zpos)
 
+    # Check how many magnetic field components to plot:
+    nb_plot = sum(xyz)
+    if nb_plot == 0: return
+
     try:
         fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True, sharey=True)
+        if nb_Zpos ==1 : axes = [axes]
         fig.suptitle(f"Rotor magnetic field", size=16)
         fig.text(0.5, .92, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
                     horizontalalignment='center')
@@ -133,7 +145,8 @@ def plot_magField_at_positions(A, field, list_pos, filename,
                 ax.set_xlabel("rotor angle [°]")
             
         plt.subplots_adjust(right=0.86, hspace=0.4)
-        figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
+        XYZ = build_XYZ_name_with_tuple(xyz)
+        figPath = os.path.join(dirname, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
         if show == False: print(figPath)
         plt.savefig(figPath)
         if show: plt.show()
@@ -205,7 +218,8 @@ def colormap_magField(A, field, list_pos, filename,
         cbar.ax.set_ylabel('Magnetic field [mT]', rotation=270)
         
         plt.subplots_adjust(hspace=0.37, right=0.87)
-        figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
+        XYZ = build_XYZ_name_with_tuple(xyz)
+        figPath = os.path.join(dirname, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
         if show == False: print(figPath)
         plt.savefig(figPath)
         if show: plt.show()

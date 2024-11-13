@@ -67,7 +67,7 @@ def get_param_from_user(mess:str,
             break
     return value
 
-def uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, repet):
+def uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, repet, mode):
     '''
     Defines a uniq file name mixing date info and parameters info.
     '''

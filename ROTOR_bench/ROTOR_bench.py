@@ -144,7 +144,7 @@ class ROTOR_bench():
                      NBSTEP1:int=None,
                      Zpos:list=None):
 
-        assert MODE in ("by_ZPos", "FreeRun", "by_Angle")
+        assert MODE in ("byZPos", "FreeRun", "byAngle")
         
         with open(file_name, "w", encoding="utf8") as fOut:
 
@@ -155,7 +155,7 @@ class ROTOR_bench():
             for k in Param.keys():
                 if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')
 
-            if MODE in ("by_ZPos", "by_Angle"):
+            if MODE in ("byZPos", "byAngle"):
                 # Write header for a "by Zpos" measurement strategy:
                 fOut.write(f'# working dist: {work_dist} mm\n')
                 fOut.write(f'# Rotation step angle: {rot_step}°\n')
@@ -163,14 +163,14 @@ class ROTOR_bench():
                 for n, p in enumerate(Zpos, 1):
                     fOut.write(f"# sensor pos #{n}: {p} mm\n")                
             
-            if MODE == "by_ZPos":
+            if MODE == "byZPos":
                 # Write specific columns header:
                 line = "#\n# angle[°]"
                 for n in range(1, nb_pos+1):
                     line += f"; X{n}_magn [mT]; Y{n}_magn [mT]; Z{n}_magn [mT]"
                 fOut.write(line + '\n')
 
-            elif MODE == "by_Angle":
+            elif MODE == "byAngleMODE":
                 # Write specific columns header:
                 line  = "#\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
                 fOut.write(line + '\n')
@@ -392,7 +392,7 @@ class ROTOR_bench():
         '''Make the measurement: for each angle position the magnetic sensor is moved
            vertically along the Z axis to explore the magnetic field at the different Zpos.
         '''
-        MODE = "by_ZPos"
+        MODE = "byZPos"
         
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
@@ -400,7 +400,7 @@ class ROTOR_bench():
         nb_repet  = parameters['NB_REPET']
 
         nb_sensor_pos = len(Zpos_mm)
-        self.Z_pos_mm = [0] + parameters["Z_POS_MM"]
+        self.Z_pos_mm = parameters["Z_POS_MM"]
         
         NBSTEP1  = round(rot_step * self.stepper1.RATIO / self.stepper1.STEPPER_ANGLE)    
         T_stepper1_sec = 1 / (self.stepper1.NB_REVOL_PER_SEC * self.stepper1.NB_STEP_PER_REVOL);
@@ -409,10 +409,12 @@ class ROTOR_bench():
         
         now = datetime.now() # current date and time
 
+        print(f'{Zpos_mm=}')
+
         for repet in range(1, nb_repet+1):
           
             # Define the unique file name for the data
-            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
+            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet), MODE)
 
             # write the header lines in the datarotor file
             self.write_header(MODE, fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
@@ -446,9 +448,9 @@ class ROTOR_bench():
 
                 go = count % 2
                 if go == 0:
-                    start, stop, step = 1, nb_sensor_pos+1, 1
+                    start, stop, step = 0, nb_sensor_pos, 1
                 else:
-                    start, stop, step = nb_sensor_pos, 0, -1
+                    start, stop, step = nb_sensor_pos-1, -1, -1
 
                 # Move the sensor donward along Z axis:
                 for n in range(start, stop, step):
@@ -502,7 +504,7 @@ class ROTOR_bench():
            and the rotor is rotated again...
         '''
 
-        MODE = "by_Angle"
+        MODE = "byAngle"
         
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
@@ -511,7 +513,7 @@ class ROTOR_bench():
 
         nb_sensor_pos = len(Zpos_mm)
         nb_angle_pos  = int(360 / rot_step)
-        self.Z_pos_mm = [0] + parameters["Z_POS_MM"]
+        self.Z_pos_mm = parameters["Z_POS_MM"]
         
         NBSTEP1  = round(rot_step * self.stepper1.RATIO / self.stepper1.STEPPER_ANGLE)    
         T_stepper1_sec = 1 / (self.stepper1.NB_REVOL_PER_SEC * self.stepper1.NB_STEP_PER_REVOL);
@@ -523,7 +525,7 @@ class ROTOR_bench():
         for repet in range(1, nb_repet+1):
           
             # Define the unique file name for the data
-            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet))
+            fileName = uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, (repet, nb_repet), MODE)
 
             # write the header lines in the data rotor file
             self.write_header(MODE, fileName, work_dist, rot_step, NBSTEP1, Zpos_mm)
@@ -545,7 +547,7 @@ class ROTOR_bench():
             self.Zref_sensor(hold_torque=True)
             
             # Loop on the sensor Zpos:
-            for n in range(1, nb_sensor_pos+1):         
+            for n in range(0, nb_sensor_pos):         
                   
                 # Move the sensor to the right Z position:
                 curr_Zpos_mm = self.Do_Zmove_sensor(curr_Zpos_mm, n, hold_torque=True)

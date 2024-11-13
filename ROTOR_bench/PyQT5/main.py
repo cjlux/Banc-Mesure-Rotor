@@ -57,10 +57,10 @@ class MyApp(QMainWindow):
             print("ERROR:you must use a Rasberry Pi platform !!!")
 #            sys.exit()
         self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py '"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read '"]
 
         self.plotROTOR_cmd = ["lxterminal", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py '"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py "]
 
         self.plotROTOR_CMAP_cmd = ["lxterminal", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py "]
@@ -329,12 +329,17 @@ class MyApp(QMainWindow):
         VL.addStretch()
         
     def PlotROTOR(self):
-        subprocess.run(self.plotROTOR_cmd)
+        xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
+        cmd = self.plotROTOR_cmd.copy()
+        cmd[-1] += f" --xyz {xyz}; read'"
+        print(f'{self.plotROTOR_cmd=}\n{cmd=}')
+        subprocess.run(cmd)
         
     def CmapROTOR(self):
         xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
-        self.plotROTOR_CMAP_cmd[-1] += f" --xyz {xyz}; read'"
-        print(f'{self.plotROTOR_CMAP_cmd=}')
+        cmd = self.plotROTOR_CMAP_cmd.copy()
+        cmd[-1] += f" --xyz {xyz}; read'"
+        print(f'{self.plotROTOR_CMAP_cmd=}\n{cmd=}')
         subprocess.run(self.plotROTOR_CMAP_cmd)
 
     def PlotFREE(self):
@@ -356,7 +361,7 @@ class MyApp(QMainWindow):
     def RunBench(self, state, mode):
         zPos = [ z for z in self.zPos if z >= 0]
         zPos = list(set(zPos)) # don't dupplicate Z position
-        
+        if zPos[0] == 0 and self.zPos[0] != 0: zPos.remove(0)
         # JLC: bug the set modifies the order!!!!
         zPos.sort()   # !!!!
 
