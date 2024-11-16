@@ -22,7 +22,6 @@ Stepper2 = StepperMotor("Stepper motor for the sensorZ motion",
                         RATIO=None,
                         DIAM_MM=10)
 
-R = ROTOR_bench(Stepper1, Stepper2)
 paramFile = "/tmp/ROTOR_LAUNCH.txt"
 
 if (os.path.exists(paramFile)):
@@ -44,15 +43,19 @@ else:
 match(params['MODE']):
     
     case 'ByZPos':
+        R = ROTOR_bench(Stepper1, Stepper2)
         R.run_by_ZPos(params, verbose=True)
     
     case 'ByAngle':
+        R = ROTOR_bench(Stepper1, Stepper2)
         R.run_by_Angle(params, verbose=True)
 
     case 'Free':
+        R = ROTOR_bench(Stepper1, Stepper2)
         R.run_free(params)
     
     case 'ReleaseMotors':
+        R = ROTOR_bench(Stepper1, Stepper2, init_serial=False)
         R.Stop_ROTOR_Bench()
     
 

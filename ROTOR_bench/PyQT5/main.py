@@ -9,16 +9,21 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel, QGridLayout, QPlainTextEdit,
-                             QSizePolicy, QCheckBox, QDateEdit, QTimeEdit, QMessageBox)
+                             QSizePolicy, QCheckBox, QMessageBox)
 
 from PyQt5.QtGui import QIcon, QTextCursor, QFont
 from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime, QSize
 import subprocess
 from ROTOR_config import StepperMotor, Zaxis, Param
 
+from listFiles import ListFile
+from Processing.plot_ROTOR_CMAP import colormap_ROTOR
+from Processing.plot_ROTOR import plot_ROTOR
+
 class MyApp(QMainWindow):
 
     NB_MAX_ZPOS = 10
+    TXT_dir = '../TXT'
     
     def __init__(self):
         QMainWindow.__init__(self)
@@ -42,6 +47,9 @@ class MyApp(QMainWindow):
         self.repet    = 1        # number of repetition of the same measurement run
         self.XYZ      = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot or no the X,Y,Z component of the magn. field
         
+        self.list_TXT_file = []
+        self.selected_file = ""
+        
         self.duration = 10       # duration [s] of the free run
         self.sampling = 0.7      # sampling time when running free
         self.SENSOR_NB_SAMPLE  = Param['SENSOR_NB_SAMPLE']
@@ -59,13 +67,13 @@ class MyApp(QMainWindow):
         self.terminal_cmd = ["lxterminal", "--geometry=250x30", "--command", 
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py; read '"]
 
-        self.plotROTOR_cmd = ["lxterminal", "--geometry=150x50", "--command",     
+        self.plotROTOR_cmd = ["lxterminal", "--geometry=60x10", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR.py "]
 
-        self.plotROTOR_CMAP_cmd = ["lxterminal", "--geometry=150x50", "--command",     
+        self.plotROTOR_CMAP_cmd = ["lxterminal", "--geometry=60x10", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py "]
         
-        self.plotFREE_cmd = ["lxterminal", "--geometry=150x50", "--command",     
+        self.plotFREE_cmd = ["lxterminal", "--geometry=60x10", "--command",     
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py '"]
 
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
@@ -159,14 +167,13 @@ class MyApp(QMainWindow):
 
         self.posWidgets = []
         for i in range(self.NB_MAX_ZPOS):
-            w = QLabel(f"Position #{i+1:2d}:")
+            w = QLabel(f"Position #{i+1:2d} [mm]:")
             sb = QSpinBox()
             self.posWidgets.append(sb)
             sb.setValue(0)
             sb.setRange(0, 130)
             sb.setSingleStep(1)
-            sb.setSuffix(" mm")
-            sb.valueChanged.connect(lambda x, n=i: self.ZposChanged(n, x))
+            sb.editingFinished.connect(lambda n=i: self.ZposChangedFinished(n))
             sb.setMinimumHeight(40)
             g.addWidget(w,  i+5, 1)
             g.addWidget(sb, i+5, 2)
@@ -183,6 +190,20 @@ class MyApp(QMainWindow):
         sb.setMinimumHeight(40)
         g.addWidget(w, self.NB_MAX_ZPOS+7, 1)
         g.addWidget(sb, self.NB_MAX_ZPOS+7, 2)
+        
+    def ZposChangedFinished(self, n):
+        
+        value = self.posWidgets[n].value()
+        if n >= 1 and value <= self.posWidgets[n-1].value() :
+            self.posWidgets[n].setValue(self.posWidgets[n-1].value())
+        
+        for n, pos in enumerate(self.posWidgets[1:], 1):
+            if pos.value() <= self.posWidgets[n-1].value():
+                pos.setValue(0)
+            
+            
+        
+        
 
     def __InitTab2(self):
         ''' To fill the "Run Free" tab'''
@@ -271,12 +292,14 @@ class MyApp(QMainWindow):
         g.addWidget(sb, 6, 2)
                 
     def __InitTab3(self):
-        '''To fill in the "Plot data file" tab'''
+        '''
+            To fill in the "Plot data file" tab
+        '''
+        
         V = QVBoxLayout()
         self.tab3.setLayout(V)
         
         H = QHBoxLayout()
-
         for label, callback in zip(('Plot ROTOR data', 'ColorMap ROTOR data', 'Plot FREE data'),
                                  (self.PlotROTOR, self.CmapROTOR, (self.PlotFREE))):
             b = QPushButton(label)
@@ -284,7 +307,6 @@ class MyApp(QMainWindow):
             b.setMinimumWidth(200)
             b.clicked.connect(callback)
             H.addWidget(b)
-        
         H.addStretch()
         
         h = QHBoxLayout()
@@ -298,8 +320,19 @@ class MyApp(QMainWindow):
         
         V.addLayout(H)
         
+        self.refresh_TXT_list()
+        a = ListFile(self.list_TXT_file, parent=self)
+        V.addWidget(a)
+        
         V.addStretch()
         
+    def refresh_TXT_list(self):
+        '''
+            To updat the list of the *.txt files in the TXT dirextory
+        '''
+        self.list_TXT_file = [f for f in os.listdir(self.TXT_dir)  if f.lower().endswith('.txt') and f.startswith('ROTOR')]    
+        self.list_TXT_file.sort(reverse=True)
+    
     def set_XYZ(self, state, lab):
         self.XYZ[lab] = state//2
         print(f'{self.XYZ=}')
@@ -329,20 +362,37 @@ class MyApp(QMainWindow):
         VL.addStretch()
         
     def PlotROTOR(self):
+        
+        self.refresh_TXT_list()
+        
         xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
         cmd = self.plotROTOR_cmd.copy()
+        cmd[-1] += f" --file ./TXT/{self.selected_file}"
         cmd[-1] += f" --xyz {xyz}; read'"
         print(f'{self.plotROTOR_cmd=}\n{cmd=}')
-        subprocess.run(cmd)
+        self.refresh_TXT_list()
+        ret = subprocess.run(cmd)
+        if ret.returncode in (1,2) : self.ErrorPopup(ret.returncode)        
         
     def CmapROTOR(self):
         xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
         cmd = self.plotROTOR_CMAP_cmd.copy()
+        cmd[-1] += f" --file ./TXT/{self.selected_file}"
         cmd[-1] += f" --xyz {xyz}; read'"
         print(f'{self.plotROTOR_CMAP_cmd=}\n{cmd=}')
-        subprocess.run(cmd)
+        self.refresh_TXT_list()
+        ret = subprocess.run(cmd, capture_output=True)
+        if ret.returncode in (1,2) : self.ErrorPopup(ret.returncode)
+
+    def ErrorPopup(self, ret_code):
+        message = [None, 
+                   'An unknown error occured....',
+                   'Cannot draw a Color Map with just one Z_pos = 0, sorry....']
+        QMessageBox.warning(self, 'Warning', f'{message[ret_code]}\n when using file: {self.selected_file}')
+
 
     def PlotFREE(self):
+        self.refresh_TXT_list()
         subprocess.run(self.plotFREE_cmd)
         
     def AppendSerialText(self, appendText, color):
@@ -509,7 +559,7 @@ if __name__ == '__main__':
 
     ps_axu = subprocess.getoutput("ps axu")
     # Debug: print(ps_au)
-    pa_axu = "debug"
+    ps_axu = "debug"
     if ps_axu.count('ROTOR_bench/PyQT5/main.py') >= 2:
         print("process <python3 .../ROTOR_bench/PyQT5/main.pyy> already running, tchao !")
     else:

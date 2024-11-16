@@ -13,7 +13,7 @@ from Tools import uniq_file_name_ROTOR, uniq_file_name_FREE
 
 class ROTOR_bench():
 
-    def __init__(self, stepper1, stepper2):
+    def __init__(self, stepper1, stepper2, init_serial=True):
 
         self.stepper1 = stepper1    # the stepper motor for rotating the shaft
         self.stepper2 = stepper2    # the stepper motor for the sensorZ motion
@@ -37,32 +37,33 @@ class ROTOR_bench():
         self.GPIOD_config_lines()
         self.GPIOD_init_lines()
 
-        # open the seriallink with the sensor:
-        self.open_Serial(5)
-        if self.serialPort is None:
-            print('[ERROR] cannot open any USB port, tchao!')
-            sys.exit()
+        if init_serial:
+            # open the seriallink with the sensor:
+            self.open_Serial(5)
+            if self.serialPort is None:
+                print('[ERROR] cannot open any USB port, tchao!')
+                sys.exit()
 
-        # noww let's configure the magnetic sensor:
-        ret = self.config_USBsensor()
-        if ret !=0:
-            print('[ERROR] while configuring the USBsensor, tchao!')
-            sys.exit()
-        else:
-            print('[INFO] Sensor configuration OK')
+            # noww let's configure the magnetic sensor:
+            ret = self.config_USBsensor()
+            if ret !=0:
+                print('[ERROR] while configuring the USBsensor, tchao!')
+                sys.exit()
+            else:
+                print('[INFO] Sensor configuration OK')
 
-        # Send someunused command to clean the serial buffer:
-        self.serialPort.write(b'HI')
-        sleep(1)
-        self.serialPort.read_all()
+            # Send someunused command to clean the serial buffer:
+            self.serialPort.write(b'HI')
+            sleep(1)
+            self.serialPort.read_all()
 
-        # Now get the sensor calibration data after the sensor calibration:
-        self.serialPort.write(b'PC')
-        sleep(1)
-        data = self.serialPort.read_all().decode().replace('\r', '')
-        print('[INFO] Configuration of the sensor USB25103:')
-        print(data)
-        self.calibration_data = '# ' + data.replace('\n', '\n# ') +'\n'
+            # Now get the sensor calibration data after the sensor calibration:
+            self.serialPort.write(b'PC')
+            sleep(1)
+            data = self.serialPort.read_all().decode().replace('\r', '')
+            print('[INFO] Configuration of the sensor USB25103:')
+            print(data)
+            self.calibration_data = '# ' + data.replace('\n', '\n# ') +'\n'
 
     def open_Serial(self, timeout:int = 1):
         '''

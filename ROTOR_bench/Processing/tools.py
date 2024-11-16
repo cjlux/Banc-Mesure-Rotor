@@ -97,6 +97,7 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
     plt.savefig(figPath)
     if show: plt.show()
     plt.close()
+    return 0
 
 def plot_magField_at_positions(A, field, list_pos, filename, 
                                figsize=(8,6), mode='', xyz=(1,1,1), show=True):
@@ -106,7 +107,6 @@ def plot_magField_at_positions(A, field, list_pos, filename,
     '''
     dirname = os.path.dirname(filename)
     filename = os.path.basename(filename)
-    print(f"plot file <{filename[:23]}...> [{mode:8s}] ", end='')
     
     nb_Zpos = len(list_pos)
     nb_comp, nb_angle_pos = field.shape
@@ -120,7 +120,7 @@ def plot_magField_at_positions(A, field, list_pos, filename,
         fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True, sharey=True)
         if nb_Zpos ==1 : axes = [axes]
         fig.suptitle(f"Rotor magnetic field", size=16)
-        fig.text(0.5, .92, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+        fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
                     horizontalalignment='center')
         
         magn_max = field.max()
@@ -144,15 +144,18 @@ def plot_magField_at_positions(A, field, list_pos, filename,
             if n == nb_Zpos-1:
                 ax.set_xlabel("rotor angle [°]")
             
-        plt.subplots_adjust(right=0.86, hspace=0.4)
+        plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
         XYZ = build_XYZ_name_with_tuple(xyz)
         figPath = os.path.join(dirname, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
         if show == False: print(figPath)
         plt.savefig(figPath)
         if show: plt.show()
         plt.close()
+        return 0
+    
     except:
         print("A problem occured when processing data file....")
+        return 1
         
         
 def colormap_magField(A, field, list_pos, filename, 
@@ -163,7 +166,6 @@ def colormap_magField(A, field, list_pos, filename,
     '''
     dirname = os.path.dirname(filename)
     filename = os.path.basename(filename)
-    print(f"plot file <{filename[:23]}...> [{mode:8s}] ", end='')
 
     nb_Zpos = len(list_pos)
     nb_angle_pos, nb_comp = field.shape
@@ -180,6 +182,7 @@ def colormap_magField(A, field, list_pos, filename,
         fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
                     horizontalalignment='center')
         
+        # build the list of required axes depending on xyz pattern:
         list_axes  = [None, None, None]
         num_axe = 0
         for n, todo in enumerate(xyz):
@@ -195,6 +198,7 @@ def colormap_magField(A, field, list_pos, filename,
 
         z_pos_labels = filename.split('_')[4:-1]
         z_pos_values = list(map(float, z_pos_labels))
+        print(z_pos_values)
         x = np.linspace(0, A[-1], len(A))
         y = np.array(z_pos_values)
         X, Y = np.meshgrid(x, y)
@@ -202,7 +206,8 @@ def colormap_magField(A, field, list_pos, filename,
         first_plot = True
         for ax, todo, magn, label in zip(list_axes, xyz, magnXYZ, mag_labels):
             if todo:
-                p = ax.pcolor(X, Y, magn.T, cmap='seismic', vmin=magn_min, vmax=magn_max)
+                p = ax.pcolormesh(x, y, magn.T, cmap='seismic', 
+                              shading='nearest', vmin=magn_min, vmax=magn_max)
                 ax.set_title(f"Magnetic field {label}", loc='left', fontsize=9)
                 ax.set_yticks(z_pos_values[::-1], z_pos_labels)
                 if first_plot: 
@@ -224,6 +229,8 @@ def colormap_magField(A, field, list_pos, filename,
         plt.savefig(figPath)
         if show: plt.show()
         plt.close()
-        
+        return 0
+    
     except:
         print("A problem occured when processing data file....")
+        return 1
