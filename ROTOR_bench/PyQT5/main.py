@@ -5,11 +5,13 @@ import sys, json, os
 sys.path.insert(0, sys.path[0].replace('PyQT5',''))
 #print(sys.path)
 
+import numpy as np
+
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QWidget,
                              QTabWidget, QVBoxLayout, QHBoxLayout, QDesktopWidget,
                              QDoubleSpinBox, QSpinBox, QLabel, QGridLayout, QPlainTextEdit,
-                             QSizePolicy, QCheckBox, QMessageBox)
+                             QSizePolicy, QCheckBox, QMessageBox, QComboBox)
 
 from PyQt5.QtGui import QIcon, QTextCursor, QFont
 from PyQt5.QtCore import QCoreApplication, QProcess, QDate, QTime, QSize
@@ -34,15 +36,21 @@ class MyApp(QMainWindow):
         self.tab3 = QWidget()    # the tab to run data plotting
         self.tab4 = QWidget()    # the tab to ...
         self.tab5 = QWidget()    # The Tools tab
-
+        
         # usefull widgets:
-        self.dateWidget = None   # For setting the date
-        self.timeWidget = None   # For setting the date
         self.display    = None   # the textedit zone to display the ouput of the running command        
         self.process    = None   # QProcess object for external app
+        self.list_files = None   # ListFile object : the list of *.txt files in ./TXT dir
+        self.ZPos_label = None   # QLabel object to display the ZPos list
+        
+        self.first_ZPos = None   # QSpinBox for the first Z position
+        self.ZPos_step  = None   # QSpinbox for the Z poistion step 
+        self.ZPos_nb    = None   # number of Z positions
+        
+        self.dict_plot_btn = {}
         
         self.workDist = 1
-        self.zPos     = []       # The list of the Z positions
+        self.ZPos     = []       # The list of the Z positions
         self.rotStep  = 1.2      # the step of the ROTOR rotation 
         self.repet    = 1        # number of repetition of the same measurement run
         self.XYZ      = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot or no the X,Y,Z component of the magn. field
@@ -74,7 +82,7 @@ class MyApp(QMainWindow):
         "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_ROTOR_CMAP.py "]
         
         self.plotFREE_cmd = ["lxterminal", "--geometry=60x10", "--command",     
-        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py '"]
+        "/usr/bin/bash -c 'source /home/rotor/rotor/bin/activate && cd /home/rotor/Banc-Mesure-Rotor/ && python ROTOR_bench/Processing/plot_FREE.py "]
 
         self.terminal_cmd2 = "source $HOME/rotor/bin/activate && cd $HOME/Banc-Mesure-Rotor/ && python ROTOR_bench/strike.py"
 
@@ -82,9 +90,7 @@ class MyApp(QMainWindow):
         self.show()            
     
     def InitUI(self):
-        
-        self.zPos = [0 for _ in range(self.NB_MAX_ZPOS)]
-        
+                
         self.resize(900, 700) 
         self.Center()       
         self.setWindowTitle('ROTOR mesurement bench')
@@ -124,7 +130,7 @@ class MyApp(QMainWindow):
         VL.addLayout(h)
         VL.addStretch()
 
-        g.setColumnMinimumWidth(1, 250)
+        g.setColumnMinimumWidth(1, 150)
         g.setColumnMinimumWidth(2, 150)
         g.setColumnMinimumWidth(3, 100)
         g.setColumnMinimumWidth(4, 200)
@@ -151,35 +157,65 @@ class MyApp(QMainWindow):
         b2.setIconSize(QSize(100,100))
         b2.clicked.connect(lambda s, mode='ByZPos': self.RunBench(s, mode))
         
-        g.addWidget(w, 1, 1)
+        g.addWidget(w,  1, 1)
         g.addWidget(sb, 1, 2)
-        
-        w = QLabel("Rotation step angle ")
-        sb = QDoubleSpinBox()
-        sb.setValue(1.2)
-        sb.setRange(1.2, 360)
-        sb.setSingleStep(1.2)
-        sb.setSuffix(" °")
-        sb.valueChanged.connect(self.RotStepChanged)
-        sb.setMinimumHeight(40)
-        g.addWidget(w,  2, 1)
-        g.addWidget(sb, 2, 2)
-
-        self.posWidgets = []
-        for i in range(self.NB_MAX_ZPOS):
-            w = QLabel(f"Position #{i+1:2d} [mm]:")
-            sb = QSpinBox()
-            self.posWidgets.append(sb)
-            sb.setValue(0)
-            sb.setRange(0, 130)
-            sb.setSingleStep(1)
-            sb.editingFinished.connect(lambda n=i: self.ZposChangedFinished(n))
-            sb.setMinimumHeight(40)
-            g.addWidget(w,  i+5, 1)
-            g.addWidget(sb, i+5, 2)
-
         g.addWidget(b1, 1, 4)
         g.addWidget(b2, 1, 5)
+        
+        w = QLabel("Rotation step angle ")
+        cb = QComboBox()
+        L2 = [f'{n*0.6:.2f}' for n in range(1,301) if divmod(360, 0.6*n)[1] <= 0.001]
+        cb.addItems(L2)
+        cb.activated[str].connect(self.RotStepChanged)
+        cb.setMinimumHeight(40)
+        g.addWidget(w,  3, 1)
+        g.addWidget(cb, 3, 2)
+        self.RotStepChanged(L2[0])
+
+        g.addWidget(QLabel(""), 4, 1)
+        g.addWidget(QLabel(""), 5, 1)
+
+        w = QLabel(f"First ZPos [mm]")
+        w.setToolTip('Choose a step angle...')
+        self.first_ZPos = QSpinBox()
+        sb = self.first_ZPos
+        sb.setToolTip('Choose a step angle...')
+        sb.setValue(10)
+        sb.setRange(0, 130)
+        sb.setSingleStep(1)
+        sb.valueChanged.connect(self.ZposEditingFinished)
+        sb.setMinimumHeight(40)
+        g.addWidget(w,  6, 1)
+        g.addWidget(sb, 6, 2)
+        
+        w = QLabel(f"ZPos step [mm]")
+        w.setToolTip('The step between each Z position...')
+        self.ZPos_step = QSpinBox()
+        sb = self.ZPos_step
+        sb.setToolTip('The step between each Z position...')
+        sb.setValue(10)
+        sb.setRange(1, 130)
+        sb.setSingleStep(1)
+        sb.valueChanged.connect(self.ZposEditingFinished)
+        sb.setMinimumHeight(40)
+        g.addWidget(w,  7, 1)
+        g.addWidget(sb, 7, 2)
+        
+        w = QLabel(f"Nb ZPos [mm]")
+        w.setToolTip('The total number of Z positions...')
+        self.ZPos_nb = QSpinBox()
+        sb = self.ZPos_nb
+        sb.setToolTip('The total number of Z positions...')
+        sb.setValue(1)
+        sb.setRange(1, 10)
+        sb.setSingleStep(1)
+        sb.valueChanged.connect(self.ZposEditingFinished)
+        sb.setMinimumHeight(40)
+        g.addWidget(w,  8, 1)
+        g.addWidget(sb, 8, 2)
+
+        g.addWidget(QLabel(""), 9, 1)
+        g.addWidget(QLabel(""), 10, 1)
         
         w = QLabel("Number of repetition: ")
         sb = QSpinBox()
@@ -188,23 +224,18 @@ class MyApp(QMainWindow):
         sb.setSingleStep(1)
         sb.valueChanged.connect(self.RepetChanged)
         sb.setMinimumHeight(40)
-        g.addWidget(w, self.NB_MAX_ZPOS+7, 1)
-        g.addWidget(sb, self.NB_MAX_ZPOS+7, 2)
+        g.addWidget(w, 11, 1)
+        g.addWidget(sb, 11, 2)
+                
+        self.ZPos_label = QLabel("ZPos: ")
+        w = self.ZPos_label
+        g.addWidget(w, 7, 4) 
         
-    def ZposChangedFinished(self, n):
-        
-        value = self.posWidgets[n].value()
-        if n >= 1 and value <= self.posWidgets[n-1].value() :
-            self.posWidgets[n].setValue(self.posWidgets[n-1].value())
-        
-        for n, pos in enumerate(self.posWidgets[1:], 1):
-            if pos.value() <= self.posWidgets[n-1].value():
-                pos.setValue(0)
-            
-            
-        
-        
+        self.ZposEditingFinished()
 
+    def RefreshZPosList(self):
+        pass
+    
     def __InitTab2(self):
         ''' To fill the "Run Free" tab'''
         
@@ -291,6 +322,7 @@ class MyApp(QMainWindow):
         g.addWidget(w, 6, 1)
         g.addWidget(sb, 6, 2)
                 
+
     def __InitTab3(self):
         '''
             To fill in the "Plot data file" tab
@@ -300,13 +332,34 @@ class MyApp(QMainWindow):
         self.tab3.setLayout(V)
         
         H = QHBoxLayout()
-        for label, callback in zip(('Plot ROTOR data', 'ColorMap ROTOR data', 'Plot FREE data'),
-                                 (self.PlotROTOR, self.CmapROTOR, (self.PlotFREE))):
+
+        b = QPushButton(icon=QIcon("./PyQT5/icons/refresh.png"),
+                        text='Refresh\nList')
+        b.setMinimumHeight(50)
+        b.setMinimumWidth(50)
+        b.clicked.connect(self.refresh_TXT_list)
+        H.addWidget(b)
+        H.addStretch()
+
+        self.dict_plot_btn['ROTOR'] = []
+        self.dict_plot_btn['FREE']  = []
+
+        for label, callback in zip(('Plot ROTOR data', 'Plot ROTOR PSD', 'ColorMap ROTOR data', 'Plot FREE data'),
+                                 (self.PlotROTOR, None, self.CmapROTOR, (self.PlotFREE))):
             b = QPushButton(label)
-            b.setMinimumHeight(40)
-            b.setMinimumWidth(200)
-            b.clicked.connect(callback)
+            b.setMinimumHeight(50)
+            b.setMinimumWidth(150)
+            if label == 'Plot ROTOR PSD':
+                b.clicked.connect(lambda: self.PlotROTOR(fft=True))
+            else:
+                b.clicked.connect(callback)
             H.addWidget(b)
+            if 'ROTOR' in label : 
+                self.dict_plot_btn['ROTOR'].append(b)
+            else:
+                self.dict_plot_btn['FREE'].append(b)
+            b.setEnabled(False)    
+            
         H.addStretch()
         
         h = QHBoxLayout()
@@ -321,8 +374,8 @@ class MyApp(QMainWindow):
         V.addLayout(H)
         
         self.refresh_TXT_list()
-        a = ListFile(self.list_TXT_file, parent=self)
-        V.addWidget(a)
+        self.list_files = ListFile(self.list_TXT_file, parent=self)
+        V.addWidget(self.list_files)
         
         V.addStretch()
         
@@ -330,9 +383,32 @@ class MyApp(QMainWindow):
         '''
             To updat the list of the *.txt files in the TXT dirextory
         '''
-        self.list_TXT_file = [f for f in os.listdir(self.TXT_dir)  if f.lower().endswith('.txt') and f.startswith('ROTOR')]    
+        self.list_TXT_file = [f for f in os.listdir(self.TXT_dir)  \
+            if f.lower().endswith('.txt') and (f.startswith('ROTOR') or f.startswith('FREE'))]    
         self.list_TXT_file.sort(reverse=True)
+        
+        if self.list_files: self.list_files.refresh(self.list_TXT_file)
+        
+        for key in self.dict_plot_btn.keys():
+            for btn in self.dict_plot_btn[key]:
+                    btn.setEnabled(False)
     
+    def select_file(self, file):
+        self.selected_file = file
+        
+        if 'ROTOR' in file:
+            tag = 'ROTOR'
+        elif 'FREE' in file:
+            tag = 'FREE'
+            
+        for key in self.dict_plot_btn.keys():
+            if key == tag:
+                for btn in self.dict_plot_btn[key]:
+                    btn.setEnabled(True)
+            else:
+                for btn in self.dict_plot_btn[key]:
+                    btn.setEnabled(False)
+                
     def set_XYZ(self, state, lab):
         self.XYZ[lab] = state//2
         print(f'{self.XYZ=}')
@@ -361,29 +437,29 @@ class MyApp(QMainWindow):
         VL.addWidget(b)
         VL.addStretch()
         
-    def PlotROTOR(self):
-        
-        self.refresh_TXT_list()
-        
+    def PlotROTOR(self, fft=False):
+                
         xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
         cmd = self.plotROTOR_cmd.copy()
+        if fft: cmd[-1] += " --fft"
         cmd[-1] += f" --file ./TXT/{self.selected_file}"
         cmd[-1] += f" --xyz {xyz}; read'"
         print(f'{self.plotROTOR_cmd=}\n{cmd=}')
-        self.refresh_TXT_list()
         ret = subprocess.run(cmd)
         if ret.returncode in (1,2) : self.ErrorPopup(ret.returncode)        
+
         
     def CmapROTOR(self):
+        
         xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
         cmd = self.plotROTOR_CMAP_cmd.copy()
         cmd[-1] += f" --file ./TXT/{self.selected_file}"
         cmd[-1] += f" --xyz {xyz}; read'"
         print(f'{self.plotROTOR_CMAP_cmd=}\n{cmd=}')
-        self.refresh_TXT_list()
         ret = subprocess.run(cmd, capture_output=True)
         if ret.returncode in (1,2) : self.ErrorPopup(ret.returncode)
 
+        
     def ErrorPopup(self, ret_code):
         message = [None, 
                    'An unknown error occured....',
@@ -392,8 +468,15 @@ class MyApp(QMainWindow):
 
 
     def PlotFREE(self):
-        self.refresh_TXT_list()
-        subprocess.run(self.plotFREE_cmd)
+
+        xyz = f"{self.XYZ['X']}{self.XYZ['Y']}{self.XYZ['Z']}"
+        cmd = self.plotFREE_cmd.copy()
+        cmd[-1] += f" --file ./TXT/{self.selected_file}"
+        cmd[-1] += f" --xyz {xyz}; read'"
+        print(f'{self.plotFREE_cmd=}\n{cmd=}')
+        ret = subprocess.run(cmd)
+        if ret.returncode in (1,2) : self.ErrorPopup(ret.returncode)    
+
         
     def AppendSerialText(self, appendText, color):
         self.display.moveCursor(QTextCursor.MoveOperaton.End)
@@ -409,9 +492,10 @@ class MyApp(QMainWindow):
         self.display.ensureCursorVisible()        
 
     def RunBench(self, state, mode):
-        zPos = [ z for z in self.zPos if z >= 0]
+        print(f'{self.ZPos=}')
+        zPos = [ z for z in self.ZPos if z >= 0]
         zPos = list(set(zPos)) # don't dupplicate Z position
-        if zPos[0] == 0 and self.zPos[0] != 0: zPos.remove(0)
+        if zPos[0] == 0 and self.ZPos[0] != 0: zPos.remove(0)
         # JLC: bug the set modifies the order!!!!
         zPos.sort()   # !!!!
 
@@ -485,45 +569,36 @@ class MyApp(QMainWindow):
         with open(self.tmp_launch_file_path, "w", encoding="utf8") as F:
             F.write(json.dumps(self.params))
 
-        subprocess.run(self.releaseMotors_cmd)
+        subprocess.run(self.terminal_cmd)
 
     def WorkingDistChanged(self, x):
-        self.workDist = x
-        
+        self.workDist = x        
         self.message(str(x))
-            
-    def ZposChanged(self, n, z):
-        print('start', n, z, self.zPos)
-        if z == 0:
-            print('a')
-            # nullify all the Zpos after 'n':
-            for i in range(n, len(self.posWidgets)):
-                self.posWidgets[i].setValue(0)
-                self.posWidgets[i].setMinimum(0)
-        else:
-            print('b')
-            if n >= 1:
-                prev_z_pos = self.zPos[n-1]
-                if z <= prev_z_pos:
-                    z = prev_z_pos+1
-                    self.posWidgets[n].setValue(z)
-                    self.posWidgets[n].setMinimum(prev_z_pos)
-                
-        self.zPos[n] = z
-        print('end: ', n, z, self.zPos)
 
+
+    def ZposEditingFinished(self):
+                
+        first_ZPos = self.first_ZPos.value()
+        ZPos_step  = self.ZPos_step.value()
+        Zpos_nb    = self.ZPos_nb.value()
+        
+        self.ZPos = [first_ZPos + n*ZPos_step for n in range(Zpos_nb)]
+        
+        self.ZPos_label.setText('ZPos: ' + ', '.join([str(z) for z in self.ZPos]))
+        
     def RepetChanged(self, x):
         self.repet = x
-        
+
     def RotStepChanged(self, x):
-        self.rotStep = x
-        
+        self.rotStep = float(x)
+        print(f'{self.rotStep=} °')
+
     def DurationChanged(self, x):
         self.duration = x
-        
+
     def SamplingChanged(self, x):
         if x < self.SENSOR_READ_DELAY: 
-                x = selBanc-Mesure-Rotor/ROTOR_benchf.SENSOR_READ_DELAY
+            x = self.SENSOR_READ_DELAY
         self.sampling = x     
         self.sampling_spinbox.setValue(x)   
 
@@ -539,7 +614,7 @@ class MyApp(QMainWindow):
             self.sampling_spinbox.setValue(x)
 
     def CheckZpos(self):
-        zPos = self.zPos
+        zPos = self.ZPos
         
         # zPos must be strictly incresing:
         for i in range(1, len(zPos)):

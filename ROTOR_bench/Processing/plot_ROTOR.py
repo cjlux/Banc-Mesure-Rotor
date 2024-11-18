@@ -6,12 +6,12 @@ import numpy as np
 import sys, os
 from os.path import join
 
-def plot_ROTOR(fille_path, xyz=(1,1,1), show=True):
+def plot_ROTOR(fille_path, xyz=(1,1,1), show=True, fft=False):
     
     DATA, list_pos = read_file_ROTOR(fille_path)
 
     if DATA.shape[1] == 5:
-        mode="byAngle"
+        mode="ByAngle"
         # re-arrange DATA to be an array with lines formated like:
         # "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
         # instead of:
@@ -28,7 +28,7 @@ def plot_ROTOR(fille_path, xyz=(1,1,1), show=True):
             newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
         DATA = newDATA
     else:
-        mode="byZPos"
+        mode="ByZPos"
 
     # transpose DATA to extract the different variables:
     A, magnField = DATA.T[0], DATA.T[1:]        
@@ -38,7 +38,7 @@ def plot_ROTOR(fille_path, xyz=(1,1,1), show=True):
         H = 4
     elif nb_Zpos == 2:
         H = 6
-    ret = plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=(10,H), mode=mode, show=show, xyz=xyz)
+    ret = plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=(10,H), mode=mode, show=show, xyz=xyz, fft=fft)
     return ret
     
     
@@ -48,6 +48,7 @@ def main(parser):
 
     all_file = args.all_file
     file     = args.file
+    FFT      = args.FFT
     data_dir = "./TXT" if not args.data_dir else args.data_dir
     xyz = "111" if not args.xyz else str(args.xyz)
  
@@ -58,7 +59,7 @@ def main(parser):
 
     ret = 0
     if file:
-        ret = plot_ROTOR(file, xyz=Txyz)
+        ret = plot_ROTOR(file, xyz=Txyz, fft=FFT)
     else:        
         #JLC_was: list_file = get_files_by_date(data_dir, 'ROTOR')
         list_file = [f for f in os.listdir(data_dir) \
@@ -82,12 +83,12 @@ def main(parser):
                     i = int(rep)
 
                 file_path = os.path.join(data_dir, list_file[i])
-                ret = plot_ROTOR(file_path, xyz=Txyz)
+                ret = plot_ROTOR(file_path, xyz=Txyz, fft=FFT)
                 
         else:
             for f in list_file:
                 f_path = os.path.join(data_dir, f)
-                ret = plot_ROTOR(f_path, xyz=Txyz, show=False)
+                ret = plot_ROTOR(f_path, xyz=Txyz, show=False, fft=FFT)
     
     return ret
         
@@ -105,5 +106,8 @@ if __name__ == "__main__":
 
     parser.add_argument('-a', '--all', action="store_true", dest='all_file', 
                          help="Optional, to draw the plots for all of the .txt in the directory")
+    parser.add_argument('-fft', '--fft', action="store_true", dest='FFT', 
+                         help="Wether to plot the spectral DSP or not")
+    
         
     sys.exit(main(parser))

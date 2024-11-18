@@ -21,7 +21,7 @@ class ListFile(QScrollArea):
         if self.listItem == None:
             self.listItem = ['0']*20
         self.listState = [False]*len(self.listItem)
-        self.itemChk = []
+        
         self.initUI()
         
     def initUI(self):
@@ -31,13 +31,31 @@ class ListFile(QScrollArea):
         
         for i, item in enumerate(self.listItem):
             b = QRadioButton(text=item)
-            self.itemChk.append(b)
             b.toggled.connect(lambda state, file=item: self.changeChk(state, file))
             layout.addWidget(b)
     
+    def refresh(self, items):
+        self.listItem = items
+        self.listState = [False]*len(self.listItem)
+        
+        container = self.widget()
+        layout = container.layout()
+        
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+              layout.removeWidget(child.widget())    
+              del child
+            
+        for i, item in enumerate(self.listItem):
+            b = QRadioButton(text=item)
+            b.toggled.connect(lambda state, file=item: self.changeChk(state, file))
+            layout.addWidget(b)
+        
     def changeChk(self, state, file):
         print(f"{state} : {file}")
-        if self.parent: self.parent.selected_file = file
+        if self.parent: 
+            self.parent.select_file(file)
                
 
 def main():

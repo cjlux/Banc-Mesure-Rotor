@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.fft import rfft
 import sys, os
 from os.path import join
 from stat import ST_CTIME
@@ -57,7 +58,7 @@ def read_file_FREE(fileName):
     DATA = np.array(DATA)
     return DATA
     
-def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
+def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True, xyz=(1,1,1)):
     '''
         To plot magnetic field versus time (free measurement).    
     '''
@@ -76,31 +77,38 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True):
     fig.suptitle(f"Rotor magnetic field", size=16)
     fig.text(0.5, .92, f"from file <{filename}>", size=10, color="gray",
                 horizontalalignment='center')
-    ax.plot(T, X, '-or', markersize=0.5, label='X')
-    ax.plot(T, Y, '-og', markersize=0.5, label='Y')
-    ax.plot(T, Z, '-ob', markersize=0.5, label='Z')
+    if xyz[0]: ax.plot(T, X, '-or', markersize=0.5, label='X')
+    if xyz[1]: ax.plot(T, Y, '-og', markersize=0.5, label='Y')
+    if xyz[2]: ax.plot(T, Z, '-ob', markersize=0.5, label='Z')
+    
     ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
     ymean = np.array(ax.get_ylim()).mean()
-    yp2p = np.ptp(np.array(ax.get_ylim()))
+    yp2p  = np.ptp(np.array(ax.get_ylim()))
     if stat:
-        ax.text(1.07*T.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
-        ax.text(1.07*T.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
-        ax.text(1.07*T.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
+        if xyz[0]: ax.text(1.07*T.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
+        if xyz[0]: ax.text(1.07*T.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
+        if xyz[0]: ax.text(1.07*T.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
+    
     ax.minorticks_on()
     ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
     ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
     ax.set_ylabel("[mT]")
     ax.set_xlabel("Time[s]")
     plt.subplots_adjust(right=0.84)
-    figPath = os.path.join(dirname, filename.replace('.txt', '.png'))
-    if show == False: print(figPath)
-    plt.savefig(figPath)
+    
+    png_dir = './PNG'
+    if not os.path.exists(png_dir): os.mkdir(png_dir)
+    XYZ = build_XYZ_name_with_tuple(xyz)
+    fig_path = os.path.join(png_dir, filename.replace('.txt', f'_FREE_{XYZ}.png'))
+    if show == False: print(fig_path)
+    plt.savefig(fig_path)
     if show: plt.show()
     plt.close()
     return 0
 
+
 def plot_magField_at_positions(A, field, list_pos, filename, 
-                               figsize=(8,6), mode='', xyz=(1,1,1), show=True):
+                               figsize=(8,6), mode='', xyz=(1,1,1), show=True, fft= False):
     '''
         To plot magnetic field versus angle, for diffrent Z positions
         of the magnetic sensor.
@@ -119,42 +127,96 @@ def plot_magField_at_positions(A, field, list_pos, filename,
     try:
         fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True, sharey=True)
         if nb_Zpos ==1 : axes = [axes]
-        fig.suptitle(f"Rotor magnetic field", size=16)
+        suptitle = ""
+        if fft: suptitle += "Spectrum of "
+        fig.suptitle(suptitle + "Rotor magnetic field", size=16)
         fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
                     horizontalalignment='center')
         
         magn_max = field.max()
-        magn_min = field.min()
-        
-        for n, (ax, Zpos) in enumerate(zip(axes, list_pos)):      
-            X, Y, Z = field[3*n:3*n+3]
-            if xyz[0]: ax.plot(A, X, '-or', markersize=0.5, label='X')
-            if xyz[1]: ax.plot(A, Y, '-og', markersize=0.5, label='Y')
-            if xyz[2]: ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
-            ax.set_title(f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm",
-                         loc='left', fontsize=9)
+        magn_min = field.min()                
+        ang_freq_done = False 
+                       
+        for n, (ax, Zpos) in enumerate(zip(axes, list_pos)):    
+            
+            X, Y, Z = field[3*n:3*n+3]  
+            title = ""
+            
+            if fft:
+                '''X = np.abs(rfft(X))
+                X /= X.max()
+                Y = np.abs(rfft(Y))
+                Y /= Y.max()
+                Z = np.abs(rfft(Z))
+                Z /= Z.max()'''
+                X = np.abs(rfft(X))
+                Y = np.abs(rfft(Y))
+                Z = np.abs(rfft(Z))
+                XYZmax = max(X.max(), Y.max(), Z.max())
+                X, Y, Z = X/XYZmax, Y/XYZmax, Z/XYZmax
+                title += "PSD "
+                if not ang_freq_done:
+                    nb_pt = len(X)
+                    f_sampling = 1/(A[1] - A[0])     # sampling frequency in rd^-1
+                    ang_freq = np.arange(nb_pt)*f_sampling
+                    A = ang_freq
+                    ang_freq_done = True
+            
+            if fft:
+                if xyz[0]: 
+                    markerline, stemlines, baseline = ax.stem(A, X, 'r', label='X')
+                    markerline.set_markerfacecolor('white')
+                    markerline.set_markersize(3.5)
+                    baseline.set_color('grey')
+                    baseline.set_linewidth(0.5)
+                if xyz[1]: 
+                    markerline, stemlines, baseline = ax.stem(A, Y, 'g', label='Y')
+                    markerline.set_markerfacecolor('white')
+                    markerline.set_markersize(3.5)
+                    baseline.set_color('grey')
+                    baseline.set_linewidth(0.5)
+                if xyz[2]: 
+                    markerline, stemlines, baseline = ax.stem(A, Z, 'b', label='Z')
+                    markerline.set_markerfacecolor('white')
+                    markerline.set_markersize(3.5)
+                    baseline.set_color('grey')
+                    baseline.set_linewidth(0.5)
+            else:
+                if xyz[0]: ax.plot(A, X, '-or', markersize=0.5, label='X')
+                if xyz[1]: ax.plot(A, Y, '-og', markersize=0.5, label='Y')
+                if xyz[2]: ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
+                
+            title += f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm"
+            ax.set_title(title, loc='left', fontsize=9)
             if n == 0: 
-                ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
-                ax.set_ylabel("[mT]")
+                if fft: ax.set_ylabel("Normalized PSD")
+                else:   ax.set_ylabel("[mT]")
+            ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
             ax.minorticks_on()
             ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
             ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-            ax.set_ylim(1.1*magn_min, 1.1*magn_max)
+            if fft: ax.set_ylim(0,1.1)
+            else:   ax.set_ylim(1.1*magn_min, 1.1*magn_max)
 
             if n == nb_Zpos-1:
-                ax.set_xlabel("rotor angle [°]")
+                if fft: ax.set_xlabel(r"Angular frequency [rd$^-1$]")
+                else:   ax.set_xlabel("rotor angle [°]")
             
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
+        
+        png_dir = './PNG'
+        if not os.path.exists(png_dir): os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
-        figPath = os.path.join(dirname, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
-        if show == False: print(figPath)
-        plt.savefig(figPath)
+        if fft: fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PSD_{XYZ}.png'))
+        else:   fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
+        if show == False: print(fig_path)
+        plt.savefig(fig_path)
         if show: plt.show()
         plt.close()
         return 0
     
-    except:
-        print("A problem occured when processing data file....")
+    except Exception as err:
+        print(f"Unexpected error {err=}, {type(err)=}")
         return 1
         
         
@@ -223,14 +285,17 @@ def colormap_magField(A, field, list_pos, filename,
         cbar.ax.set_ylabel('Magnetic field [mT]', rotation=270)
         
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
+
+        png_dir = './PNG'
+        if not os.path.exists(png_dir): os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
-        figPath = os.path.join(dirname, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
-        if show == False: print(figPath)
-        plt.savefig(figPath)
+        fig_path = os.path.join(png_dir, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
+        if show == False: print(fig_path)
+        plt.savefig(fig_path)
         if show: plt.show()
         plt.close()
         return 0
     
-    except:
-        print("A problem occured when processing data file....")
+    except Exception as err:
+        print(f"Unexpected error {err=}, {type(err)=}")
         return 1

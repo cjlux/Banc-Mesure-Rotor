@@ -145,7 +145,7 @@ class ROTOR_bench():
                      NBSTEP1:int=None,
                      Zpos:list=None):
 
-        assert MODE in ("byZPos", "FreeRun", "byAngle")
+        assert MODE in ("ByZPos", "FreeRun", "ByAngle")
         
         with open(file_name, "w", encoding="utf8") as fOut:
 
@@ -156,7 +156,7 @@ class ROTOR_bench():
             for k in Param.keys():
                 if'SENSOR' in k: fOut.write(f'# {k}: {Param[k]} \n')
 
-            if MODE in ("byZPos", "byAngle"):
+            if MODE in ("ByZPos", "ByAngle"):
                 # Write header for a "by Zpos" measurement strategy:
                 fOut.write(f'# working dist: {work_dist} mm\n')
                 fOut.write(f'# Rotation step angle: {rot_step}°\n')
@@ -164,16 +164,16 @@ class ROTOR_bench():
                 for n, p in enumerate(Zpos, 1):
                     fOut.write(f"# sensor pos #{n}: {p} mm\n")                
             
-            if MODE == "byZPos":
+            if MODE == "ByZPos":
                 # Write specific columns header:
                 line = "# byPos\n# angle[°]"
                 for n in range(1, nb_pos+1):
                     line += f"; X{n}_magn [mT]; Y{n}_magn [mT]; Z{n}_magn [mT]"
                 fOut.write(line + '\n')
 
-            elif MODE == "byAngle":
+            elif MODE == "ByAngle":
                 # Write specific columns header:
-                line  = "# byAngle\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
+                line  = "# ByAngle\n# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
                 fOut.write(line + '\n')
     
             elif MODE == "FreeRun":
@@ -393,7 +393,7 @@ class ROTOR_bench():
         '''Make the measurement: for each angle position the magnetic sensor is moved
            vertically along the Z axis to explore the magnetic field at the different Zpos.
         '''
-        MODE = "byZPos"
+        MODE = "ByZPos"
         
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
@@ -505,7 +505,7 @@ class ROTOR_bench():
            and the rotor is rotated again...
         '''
 
-        MODE = "byAngle"
+        MODE = "ByAngle"
         
         work_dist = parameters["WORK_DIST"]
         rot_step  = parameters['ROT_STEP_DEG']
