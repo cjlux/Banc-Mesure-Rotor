@@ -72,16 +72,17 @@ def uniq_file_name_ROTOR(now, work_dist, rot_step, Zpos_mm, repet, mode):
     Defines a uniq file name mixing date info and parameters info.
     '''
     assert mode in ("ByAngle", "ByZPos")
-    if mode == "ByAngle":
-        fileName = f'TXT/ROTORa_{now.strftime("%Y-%m-%d-%H-%M")}'
-    else:
-        fileName = f'TXT/ROTORz_{now.strftime("%Y-%m-%d-%H-%M")}'
+    fileName = f'TXT/ROTOR_{now.strftime("%Y-%m-%d-%H-%M")}'
     fileName += f'_WDIST-{work_dist:02d}'
-    fileName += f'_ROTSTEP-{rot_step:04.1f}'
+    fileName += f'_ROTSTEP-{rot_step:05.1f}'
     for z in Zpos_mm:
         fileName += f'_{z:03d}'
     n,m = repet
     fileName+= f"_{n}of{m}"
+    if mode == "ByAngle":
+        fileName += '-a'
+    else:
+        fileName += '-z'
     fileName += '.txt'
     
     return fileName
@@ -133,21 +134,26 @@ def touch_txt_by_date():
         if "2024-03-03-02-00" < date < "2024-10-27-03-00": m_epoch -=3600
         
         YMDhm     = f.split('_')[1]
-        WDIST     = int(f.split('_')[2].split('-')[1])
-        ROTSTEP   = float(f.split('_')[3].split('-')[1])
-        Zpos_nofN = '_'.join(f.replace('-a.txt', '').replace('-z.txt', '').split('_')[4:])
         
-        with open(f_path, 'r', encoding="utf8") as F:
-            data = F.read()
+        if 'ROTOR' in f:
+
+            with open(f_path, 'r', encoding="utf8") as F:
+                data = F.read()
         
-        if '# angle' in data:
-            new_name  = f'ROTOR_{YMDhm}_WDIST-{WDIST:02d}_ROTSTEP-{ROTSTEP:05.1f}_{Zpos_nofN}-z.txt'
-        else:
-            new_name  = f'ROTOR_{YMDhm}_WDIST-{WDIST:02d}_ROTSTEP-{ROTSTEP:05.1f}_{Zpos_nofN}-a.txt'
+            WDIST     = int(f.split('_')[2].split('-')[1])
+            ROTSTEP   = float(f.split('_')[3].split('-')[1])
+            Zpos_nofN = '_'.join(f.replace('-a','').replace('-z','').replace('.txt', '').split('_')[4:])
+            if '# angle' in data:
+                new_name  = f'ROTOR_{YMDhm}_WDIST-{WDIST:02d}_ROTSTEP-{ROTSTEP:05.1f}_{Zpos_nofN}-z.txt'
+            else:
+                new_name  = f'ROTOR_{YMDhm}_WDIST-{WDIST:02d}_ROTSTEP-{ROTSTEP:05.1f}_{Zpos_nofN}-a.txt'
+            
+            print(f'{f} => {new_name}')
+            new_f_path = os.path.join(working_dir, new_name)        
+            os.rename(f_path, new_f_path)
         
-        print(f'{f} => {new_name}')
-        new_f_path = os.path.join(working_dir, new_name)        
-        os.rename(f_path, new_f_path)
+        elif 'FREE' in f:
+            new_f_path = os.path.join(working_dir, f) 
 
         os.utime(new_f_path, (m_epoch, m_epoch))
         

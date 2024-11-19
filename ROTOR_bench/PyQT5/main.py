@@ -19,8 +19,6 @@ import subprocess
 from ROTOR_config import StepperMotor, Zaxis, Param
 
 from listFiles import ListFile
-from Processing.plot_ROTOR_CMAP import colormap_ROTOR
-from Processing.plot_ROTOR import plot_ROTOR
 
 class MyApp(QMainWindow):
 

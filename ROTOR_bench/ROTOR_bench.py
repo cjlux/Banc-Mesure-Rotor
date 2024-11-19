@@ -200,6 +200,7 @@ class ROTOR_bench():
         if verbose: print(f"[INFO] N_Hz: {N_Hz:.2f}, T_ms: {T_sec*1e3:.2f}")
 
         limit_state = self.limit_switch_line.get_value()
+        print(f'{limit_state=}')
         while limit_state != 1:
             # Send a pulse with period equals to Tms:
             t0 = time()
