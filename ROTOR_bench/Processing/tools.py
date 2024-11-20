@@ -75,7 +75,7 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True, xyz=(
     
     fig, ax = plt.subplots(1, 1, figsize=figsize)
     fig.suptitle(f"Rotor magnetic field", size=16)
-    fig.text(0.5, .92, f"from file <{filename}>", size=10, color="gray",
+    fig.text(0.5, .92, f"from <{filename}>", size=10, color="gray",
                 horizontalalignment='center')
     if xyz[0]: ax.plot(T, X, '-or', markersize=0.5, label='X')
     if xyz[1]: ax.plot(T, Y, '-og', markersize=0.5, label='Y')
@@ -130,7 +130,7 @@ def plot_magField_at_positions(A, field, list_pos, filename,
         suptitle = ""
         if fft: suptitle += "Spectrum of "
         fig.suptitle(suptitle + "Rotor magnetic field", size=16)
-        fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+        fig.text(0.5, .88, f"from <{filename}>", size=9, color="gray",
                     horizontalalignment='center')
         
         magn_max = field.max()
@@ -143,15 +143,7 @@ def plot_magField_at_positions(A, field, list_pos, filename,
             title = ""
             
             if fft:
-                '''X = np.abs(rfft(X))
-                X /= X.max()
-                Y = np.abs(rfft(Y))
-                Y /= Y.max()
-                Z = np.abs(rfft(Z))
-                Z /= Z.max()'''
-                X = np.abs(rfft(X))
-                Y = np.abs(rfft(Y))
-                Z = np.abs(rfft(Z))
+                X, Y, Z = np.abs(rfft(X)), np.abs(rfft(Y)), np.abs(rfft(Z))
                 XYZmax = max(X.max(), Y.max(), Z.max())
                 X, Y, Z = X/XYZmax, Y/XYZmax, Z/XYZmax
                 title += "PSD "
@@ -161,26 +153,14 @@ def plot_magField_at_positions(A, field, list_pos, filename,
                     ang_freq = np.arange(nb_pt)*f_sampling
                     A = ang_freq
                     ang_freq_done = True
-            
-            if fft:
-                if xyz[0]: 
-                    markerline, stemlines, baseline = ax.stem(A, X, 'r', label='X')
-                    markerline.set_markerfacecolor('white')
-                    markerline.set_markersize(3.5)
-                    baseline.set_color('grey')
-                    baseline.set_linewidth(0.5)
-                if xyz[1]: 
-                    markerline, stemlines, baseline = ax.stem(A, Y, 'g', label='Y')
-                    markerline.set_markerfacecolor('white')
-                    markerline.set_markersize(3.5)
-                    baseline.set_color('grey')
-                    baseline.set_linewidth(0.5)
-                if xyz[2]: 
-                    markerline, stemlines, baseline = ax.stem(A, Z, 'b', label='Z')
-                    markerline.set_markerfacecolor('white')
-                    markerline.set_markersize(3.5)
-                    baseline.set_color('grey')
-                    baseline.set_linewidth(0.5)
+
+                for psd, color, label, xyz_flag in zip((X, Y, Z), 'rgb', 'XYZ', xyz):
+                    if xyz_flag: 
+                        markerline, stemlines, baseline = ax.stem(A, psd, color, label=label)
+                        markerline.set_markerfacecolor('white')
+                        markerline.set_markersize(3.5)
+                        baseline.set_color('grey')
+                        baseline.set_linewidth(0.5)
             else:
                 if xyz[0]: ax.plot(A, X, '-or', markersize=0.5, label='X')
                 if xyz[1]: ax.plot(A, Y, '-og', markersize=0.5, label='Y')
@@ -241,7 +221,7 @@ def colormap_magField(A, field, list_pos, filename,
         fig, axes = plt.subplots(nb_plot, 1, figsize=figsize, sharex=True)
         if nb_plot == 1: axes = [axes]
         fig.suptitle(f"Rotor magnetic field", size=16)
-        fig.text(0.5, .88, f"from file <{filename}> (scan: {mode})", size=10, color="gray",
+        fig.text(0.5, .88, f"from <{filename}>", size=9, color="gray",
                     horizontalalignment='center')
         
         # build the list of required axes depending on xyz pattern:

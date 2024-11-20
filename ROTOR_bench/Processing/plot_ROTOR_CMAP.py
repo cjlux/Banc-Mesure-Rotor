@@ -5,7 +5,7 @@ except:
 import numpy as np
 import sys, os
 
-def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
+def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True, figsize=None):
     
     DATA, list_pos = read_file_ROTOR(fille_path)
     
@@ -36,9 +36,11 @@ def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True):
     # Extract the different variables:
     A, magnField = DATA[:, 0], DATA[:, 1:]  
     # plot the colormap:
-    heights = (None, 4, 6, 8)
-    height  = heights[sum(xyz)]
-    ret = colormap_magField(A, magnField, list_pos, fille_path, figsize=(10, height), mode=mode, show=show, xyz=xyz) 
+    if figsize is None:
+        heights = (None, 4, 6, 8)
+        height  = heights[sum(xyz)]
+        figsize = 10, height
+    ret = colormap_magField(A, magnField, list_pos, fille_path, figsize=figsize, mode=mode, show=show, xyz=xyz) 
     return ret
     
 def main(parser):
