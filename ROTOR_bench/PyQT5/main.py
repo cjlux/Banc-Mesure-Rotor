@@ -205,7 +205,7 @@ class MyApp(QMainWindow):
         sb = self.ZPos_nb
         sb.setToolTip('The total number of Z positions...')
         sb.setValue(1)
-        sb.setRange(1, 10)
+        sb.setRange(1, 20)
         sb.setSingleStep(1)
         sb.valueChanged.connect(self.ZposEditingFinished)
         sb.setMinimumHeight(40)
