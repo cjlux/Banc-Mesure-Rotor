@@ -179,7 +179,7 @@ def plot_magField_at_positions(A, field, list_pos, filename,
             else:   ax.set_ylim(1.1*magn_min, 1.1*magn_max)
 
             if n == nb_Zpos-1:
-                if fft: ax.set_xlabel(r"Angular frequency [rd$^-1$]")
+                if fft: ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
                 else:   ax.set_xlabel("rotor angle [°]")
             
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
