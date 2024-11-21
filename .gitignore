@@ -4,7 +4,12 @@ __pycache__/
 ROTOR_bench/*.png
 ROTOR_bench/*.txt
 ROTOR_bench/TXT/
+ROTOR_bench/TXT/
+ROTOR_bench/PNG/
+ROTOR_bench/Processing/TXT/
+ROTOR_bench/Processing/PNG/
 TXT/
+TXT*/
 *.png
 *.bkp
 .~lock*

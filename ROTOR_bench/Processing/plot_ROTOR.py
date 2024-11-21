@@ -6,7 +6,7 @@ import numpy as np
 import sys, os
 from os.path import join
 
-def plot_ROTOR(fille_path, xyz=(1,1,1), show=True, fft=False):
+def plot_ROTOR(fille_path, xyz=(1,1,1), figsize=None, show=True, fft=False):
     
     DATA, list_pos = read_file_ROTOR(fille_path)
 
@@ -33,12 +33,14 @@ def plot_ROTOR(fille_path, xyz=(1,1,1), show=True, fft=False):
     # transpose DATA to extract the different variables:
     A, magnField = DATA.T[0], DATA.T[1:]        
     # plot the data
-    H, nb_Zpos = 8, len(list_pos)
-    if nb_Zpos == 1:
-        H = 4
-    elif nb_Zpos == 2:
-        H = 6
-    ret = plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=(10,H), mode=mode, show=show, xyz=xyz, fft=fft)
+    if not figsize:
+        H, nb_Zpos = 8, len(list_pos)
+        if nb_Zpos == 1:
+            H = 4
+        elif nb_Zpos == 2:
+            H = 6
+        figsize = (10, H)
+    ret = plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=figsize, mode=mode, show=show, xyz=xyz, fft=fft)
     return ret
     
     
