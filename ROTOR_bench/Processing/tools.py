@@ -96,7 +96,7 @@ def plot_magField(T, field, filename, figsize=(8,6), stat=None, show=True, xyz=(
     ax.set_xlabel("Time[s]")
     plt.subplots_adjust(right=0.84)
     
-    png_dir = './PNG'
+    png_dir = dirname.replace('TXT', 'PNG')
     if not os.path.exists(png_dir): os.mkdir(png_dir)
     XYZ = build_XYZ_name_with_tuple(xyz)
     fig_path = os.path.join(png_dir, filename.replace('.txt', f'_FREE_{XYZ}.png'))
@@ -184,7 +184,7 @@ def plot_magField_at_positions(A, field, list_pos, filename,
             
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
         
-        png_dir = './PNG'
+        png_dir = dirname.replace('TXT', 'PNG')
         if not os.path.exists(png_dir): os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
         if fft: fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PSD_{XYZ}.png'))
@@ -266,7 +266,7 @@ def colormap_magField(A, field, list_pos, filename,
         
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
 
-        png_dir = './PNG'
+        png_dir = dirname.replace('TXT', 'PNG')
         if not os.path.exists(png_dir): os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
         fig_path = os.path.join(png_dir, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
