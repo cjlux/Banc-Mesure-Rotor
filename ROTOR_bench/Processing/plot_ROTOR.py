@@ -6,9 +6,9 @@ import numpy as np
 import sys, os
 from os.path import join
 
-def plot_ROTOR(fille_path, xyz=(1,1,1), figsize=None, show=True, fft=False):
+def plot_ROTOR(file_path, xyz=(1,1,1), figsize=None, show=True, fft=False):
     
-    DATA, list_pos = read_file_ROTOR(fille_path)
+    DATA, list_pos = read_file_ROTOR(file_path)
 
     if DATA.shape[1] == 5:
         mode="ByAngle"
@@ -40,7 +40,7 @@ def plot_ROTOR(fille_path, xyz=(1,1,1), figsize=None, show=True, fft=False):
         elif nb_Zpos == 2:
             H = 6
         figsize = (10, H)
-    ret = plot_magField_at_positions(A, magnField, list_pos, fille_path, figsize=figsize, mode=mode, show=show, xyz=xyz, fft=fft)
+    ret = plot_magField_at_positions(A, magnField, list_pos, file_path, figsize=figsize, mode=mode, show=show, xyz=xyz, fft=fft)
     return ret
     
     
