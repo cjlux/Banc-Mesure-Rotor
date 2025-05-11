@@ -25,10 +25,10 @@ class MagneticPlotCanvas(FigureCanvas):
         '''
         print(f'MagneticPlotCanvas.plot_magField_at_positions')
         
-        dir_name   = self.main.data_dir
-        file_name  = self.main.selected_file.name        
+        dir_name  = self.main.ROTOR_B_data_dir
+        file_name = self.main.ROTOR_B_txt_file.name       
         nb_Zpos    = len(self.main.list_pos)
-        nb_comp, _ = self.main.ROTOR_magn_field.shape
+        nb_comp, _ = self.main.ROTOR_B_magn_field.shape
         assert(nb_comp // 3 == nb_Zpos)
         xyz = self.main.convert_XYZ_to_tuple()
         fft = self.main.plot_fft
@@ -40,7 +40,7 @@ class MagneticPlotCanvas(FigureCanvas):
         fig, axes = self.fig, self.ax
         if nb_Zpos ==1 : axes = [axes]
 
-        angles, magn_field, list_pos = self.main.angle_values, self.main.ROTOR_magn_field, self.main.list_pos
+        angles, magn_field, list_pos = self.main.angle_values, self.main.ROTOR_B_magn_field, self.main.list_pos
         
         suptitle = "" if not fft else "Spectrum of "
         fig.suptitle(suptitle + "Rotor magnetic field", size=16)
@@ -119,8 +119,8 @@ class MagneticPlotCanvas(FigureCanvas):
         '''
         print(f'MagneticPlotCanvas.plot_magField')
         
-        dir_name  = self.main.data_dir
-        file_name = self.main.selected_file.name       
+        dir_name  = self.main.ROTOR_B_data_dir
+        file_name = self.main.ROTOR_B_txt_file.name       
         xyz = self.main.convert_XYZ_to_tuple()
 
         self.fig.clear()
@@ -129,7 +129,7 @@ class MagneticPlotCanvas(FigureCanvas):
         self.ax = self.fig.add_subplot(111)
         
         ax, fig = self.ax, self.fig
-        T, magn_field = self.main.time_values, self.main.ROTOR_magn_field
+        T, magn_field = self.main.time_values, self.main.ROTOR_B_magn_field
 
         X, Y, Z = magn_field
                 
@@ -179,10 +179,10 @@ class MagneticPlotCanvas(FigureCanvas):
         '''
         print(f'MagneticPlotCanvas.colormap_magField')
         
-        dir_name   = self.main.data_dir
-        file_name  = self.main.selected_file.name        
+        dir_name  = self.main.ROTOR_B_data_dir
+        file_name = self.main.ROTOR_B_txt_file.name       
         nb_Zpos    = len(self.main.list_pos)
-        _, nb_comp = self.main.ROTOR_magn_field.shape
+        _, nb_comp = self.main.ROTOR_B_magn_field.shape
         assert(nb_comp // 3 == nb_Zpos)
         xyz = self.main.convert_XYZ_to_tuple()
 
@@ -200,7 +200,7 @@ class MagneticPlotCanvas(FigureCanvas):
 
         self.ax = self.fig.subplots(nb_plot, 1, sharex=True)        
         fig, axes = self.fig, self.ax
-        angles, magn_field = self.main.angle_values, self.main.ROTOR_magn_field
+        angles, magn_field = self.main.angle_values, self.main.ROTOR_B_magn_field
 
         if nb_plot == 1: axes = [axes]
         

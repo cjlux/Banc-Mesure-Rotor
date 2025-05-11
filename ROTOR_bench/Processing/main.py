@@ -4,8 +4,9 @@ import numpy as np
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QFileDialog,
-    QTabWidget, QMainWindow, QLabel, QCheckBox, QScrollArea, QGroupBox
+    QTabWidget, QMainWindow, QLabel, QCheckBox, QScrollArea, QGroupBox, QMessageBox
 )
+from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from tools import read_file_ROTOR, read_file_FREE
@@ -15,22 +16,24 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        self.XYZ                = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components
-        self.dict_plot_btn      = {}
-        self.data_dir           = None
-        self.selected_file      = None   # the selected file to plot
-        self.curr_plt_func      = None   # The current active plot function
-        self.ROTOR_magn_field   = None   # The ROTOR magnetic field
-        self.angle_values       = None   # The angles of the ROTOR data file  
-        self.time_values        = None   # The time values of the FREE data file
-        self.list_pos           = None   # The list of the Z positions found in the ROTOR data file
-        self.plot_fft           = False  # whether the plos is a DSP or not
+        self.XYZ                  = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components
+        self.dict_plot_btn        = {}
+        self.ROTOR_B_data_dir     = None    # the directory containing the ROTOR data files
+        self.ROTOR_L_data_dir     = None    # the directory containing the LILLE ROTOR data files
+        self.ROTOR_B_txt_file     = None    # the selected ROTOR_B file to plot
+        self.ROTOR_L_txt_file     = None    # the selected ROTOR_L file to plot
+        self.curr_plt_func        = None    # The current active plot function
+        self.ROTOR_B_magn_field   = None    # The ROTOR_B magnetic field
+        self.angle_values         = None    # The angles of the ROTOR data file  
+        self.time_values          = None    # The time values of the FREE data file
+        self.list_pos             = None    # The list of the Z positions found in the ROTOR data file
+        self.plot_fft             = False   # whether the plos is a DSP or not
         
-        self.file_tab           = None   # The tab to choose a directory and list .txt files
-        self.plot_tab           = None   # the tab to draw the plots"
-        self.plot_txt_csv       = None   # The tab to superpose a .txt and a .csv plots
+        self.file_tab             = None    # The tab to choose a directory and list .txt files
+        self.plot_tab             = None    # the tab to draw the plots"
+        self.plot_txt_csv         = None    # The tab to superpose a .txt and a .csv plots
         
-        self.btn_free_stat      = None   # The button to display the statistics in the FREE data plot  
+        self.btn_free_stat        = None    # The button to display the statistics in the FREE data plot  
         
         self.setWindowTitle("ROTOR bench data plot")
 
@@ -51,26 +54,43 @@ class MainWindow(QMainWindow):
         '''
         self.file_tab = QWidget()
         self.tabs.addTab(self.file_tab, "Choose Directory")
-        VBox = QVBoxLayout()
-        self.file_tab.setLayout(VBox)
+        
         HBox = QHBoxLayout()
-        self.folder_label = QLabel("No folder selected.")
-        self.select_button = QPushButton("Choose a folder")
-        self.select_button.clicked.connect(self.select_folder)            
-        HBox.addWidget(self.select_button)
-        HBox.addStretch()
-        HBox.addWidget(self.folder_label)
-        VBox.addLayout(HBox)
+        self.file_tab.setLayout(HBox)
+        
+        V = QVBoxLayout()
+        btn = QPushButton("ROTOR data directory")
+        btn.clicked.connect(self.select_ROTOR_B_dir)            
+        V.addWidget(btn)
+        scroll_area = QScrollArea()
+        self.ROTOR_B_file_list_widget = QGroupBox("ROTOR *.TXT files")
+        self.ROTOR_B_file_list_layout = QVBoxLayout()
+        self.ROTOR_B_file_list_widget.setLayout(self.ROTOR_B_file_list_layout)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.ROTOR_B_file_list_widget)
+        V.addWidget(scroll_area)
+        
+        HBox.addLayout(V)
+        
+        self.LILLE_choose_dir = QVBoxLayout()
+        V = self.LILLE_choose_dir
+        self.button_LILLE_data_dir = QPushButton("LILLE rotor bench folder")
+        btn = self.button_LILLE_data_dir
+        btn.clicked.connect(self.select_ROTOR_L_dir)            
+        V.addWidget(btn)
+        scroll_area = QScrollArea()
+        self.ROTOR_L_file_list_widget = QGroupBox("LILLE rotor *.CSV files")
+        self.ROTOR_L_file_list_layout = QVBoxLayout()
+        self.ROTOR_L_file_list_widget.setLayout(self.ROTOR_L_file_list_layout)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.ROTOR_L_file_list_widget)
+        V.addWidget(scroll_area)
 
-        self.scroll_area = QScrollArea()
-        self.file_list_widget = QGroupBox("*.txt files")
-        self.file_list_layout = QVBoxLayout()
-        self.file_list_widget.setLayout(self.file_list_layout)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.file_list_widget)
-        VBox.addWidget(self.scroll_area)
-
-
+        HBox.addLayout(V)
+        
+        self.button_LILLE_data_dir.setEnabled(False)
+        self.ROTOR_L_file_list_widget.setEnabled(False)
+        
     def __init_tab_Visualisation(self):
         '''
         Tab_2: data plots
@@ -146,7 +166,7 @@ class MainWindow(QMainWindow):
         return xyz
 
     def activate_plotButtons(self):
-        file = self.selected_file.name
+        file = self.ROTOR_B_txt_file.name
         if 'ROTOR' in file:
             tag = 'ROTOR'
         elif 'FREE' in file:
@@ -166,8 +186,12 @@ class MainWindow(QMainWindow):
         To plot the ROTOR data.
         '''
         
-        DATA, list_pos = read_file_ROTOR(self.selected_file)
+        DATA, list_pos = read_file_ROTOR(self.ROTOR_B_txt_file)
 
+        if colormap and len(list_pos) <  2:
+            self.ErrorPopup('''The ROTOR data file does not contain enough Z positions to plot a colormap''')
+            return
+        
         self.plot_fft = fft
         self.list_pos = list_pos
         
@@ -193,12 +217,12 @@ class MainWindow(QMainWindow):
         
         # plot the data
         if colormap:
-            self.angle_values, self.ROTOR_magn_field = DATA[:, 0], DATA[:, 1:] 
+            self.angle_values, self.ROTOR_B_magn_field = DATA[:, 0], DATA[:, 1:] 
             self.canvas.colormap_magField()
             self.curr_plt_func = self.canvas.colormap_magField
         else:
             # transpose DATA to extract the different variables:
-            self.angle_values, self.ROTOR_magn_field = DATA.T[0], DATA.T[1:]        
+            self.angle_values, self.ROTOR_B_magn_field = DATA.T[0], DATA.T[1:]        
             self.canvas.plot_magField_at_positions()
             self.curr_plt_func = self.canvas.plot_magField_at_positions
             
@@ -207,71 +231,90 @@ class MainWindow(QMainWindow):
     
     def plot_FREE(self):
     
-        DATA = read_file_FREE(self.selected_file)
+        DATA = read_file_FREE(self.ROTOR_B_txt_file)
 
         # transpose DATA to extract the different variables:
-        self.time_values, self.ROTOR_magn_field = DATA.T[0], DATA.T[1:]            
+        self.time_values, self.ROTOR_B_magn_field = DATA.T[0], DATA.T[1:]            
 
         # plot the data
         self.canvas.plot_magField()
         self.curr_plt_func = self.canvas.plot_magField
         return 
-
         
-    def colormap_ROTOR(self):
-
-        DATA, list_pos = read_file_ROTOR(self.selected_file)
-        self.list_pos = list_pos
-
-        
-    def select_folder(self):
-        data_dir = QFileDialog.getExistingDirectory(self, "Choose a directory for the *.txt ROTOR bench files")
+    def select_ROTOR_B_dir(self):
+        data_dir = QFileDialog.getExistingDirectory(self, "Directory for the *.txt ROTOR bench files")
         if data_dir:
-            self.data_dir = Path(data_dir)
-            self.folder_label.setText("Working directory : {}".format(data_dir))
-            self.update_file_list()
+            self.ROTOR_B_data_dir = Path(data_dir)
+            self.ROTOR_B_file_list_widget.setTitle(f'*.TXT files in <{data_dir}>')
+            self.update_ROTOR_B_file_list()
 
+    def select_ROTOR_L_dir(self):
+        data_dir = QFileDialog.getExistingDirectory(self, "Directory for the *.CSV LILLE ROTOR bench files")
+        if data_dir:
+            self.ROTOR_L_data_dir = Path(data_dir)
+            self.ROTOR_L_file_list_widget.setTitle(f'*.CSV files in <{data_dir}>')
+            self.update_ROTOR_L_file_list()
 
-    def update_file_list(self):
+    def update_ROTOR_B_file_list(self):
         # Vider la liste existante
-        for i in reversed(range(self.file_list_layout.count())):
-            widget = self.file_list_layout.itemAt(i).widget()
+        for i in reversed(range(self.ROTOR_B_file_list_layout.count())):
+            widget = self.ROTOR_B_file_list_layout.itemAt(i).widget()
+            if widget and not isinstance(widget, QPushButton):
+                widget.setParent(None)
+
+        # Ajouter une checkbox par fichier .txt
+        for file_path in sorted(self.ROTOR_B_data_dir.iterdir()):
+            if file_path.name.lower().endswith(".txt"):
+                checkbox = QRadioButton(file_path.name)
+                checkbox.toggled.connect(lambda state, path=file_path: self.process_ROTOR_B_file(path))
+                self.ROTOR_B_file_list_layout.addWidget(checkbox)
+
+
+    def update_ROTOR_L_file_list(self):
+        # Vider la liste existante
+        for i in reversed(range(self.ROTOR_L_file_list_layout.count())):
+            widget = self.ROTOR_L_file_list_layout.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
 
         # Ajouter une checkbox par fichier .txt
-        for file_path in sorted(self.data_dir.iterdir()):
-            if file_path.name.lower().endswith(".txt"):
+        for file_path in sorted(self.ROTOR_L_data_dir.iterdir()):
+            if file_path.name.lower().endswith(".csv"):
                 checkbox = QRadioButton(file_path.name)
-                checkbox.toggled.connect(lambda state, path=file_path: self.process_file(path))
-                self.file_list_layout.addWidget(checkbox)
+                checkbox.toggled.connect(lambda state, path=file_path: self.process_ROTOR_L_file(path))
+                self.ROTOR_L_file_list_layout.addWidget(checkbox)
+    
 
+    def process_ROTOR_L_file(self, filepath):
+        pass
 
-    def process_file(self, filepath):
+    def process_ROTOR_B_file(self, filepath):
         
-        self.selected_file = Path(filepath)
-        #print(f'{self.selected_file=}, {filepath=}')
+        self.ROTOR_B_txt_file = Path(filepath)
+        #print(f'{self.ROTOR_B_txt_file=}, {filepath=}')
+        
+        file_name = self.ROTOR_B_txt_file.name
+        if file_name.startswith("FREE") or file_name.startswith("ROTOR"):
+            self.activate_plotButtons()
+            self.button_LILLE_data_dir.setEnabled(True)
+            self.ROTOR_L_file_list_widget.setEnabled(True)
 
-        self.activate_plotButtons()
-        self.tabs.setCurrentIndex(1)
-        file_name = self.selected_file.name
-        if file_name.startswith("FREE"):
-            self.plot_FREE()
-        elif file_name.startswith("ROTOR"):
-            self.plot_ROTOR()
+            self.tabs.setCurrentIndex(1)
+        
+            if file_name.startswith("FREE"):
+                self.plot_FREE()
+            elif file_name.startswith("ROTOR"):
+                self.plot_ROTOR()
         else:
-            self.folder_label.setText("Fichier non reconnu : {}".format(file_name))
-            return
+            self.ErrorPopup('''File name {<>} does not start with 
+                            'ROTOR_...' or 'FREE... or is corrupted''')
         
+        return
 
-    def plot_file(self, filepath):
-        try:
-            angles, x_vals, y_vals, z_vals = parse_data_file(filepath)
-            self.canvas.plot_data(angles, x_vals, y_vals, z_vals, title)
-            self.tabs.setCurrentWidget(self.plot_tab)
-        except Exception as e:
-            self.folder_label.setText("Erreur lors de la lecture : {}".format(str(e)))
+    def ErrorPopup(self, message):
+        QMessageBox.warning(self, 'Error', f'{message}')
 
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
