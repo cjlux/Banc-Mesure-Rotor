@@ -43,12 +43,12 @@ def read_file_ROTOR(file_path):
     DATA = np.array(DATA)
     return DATA, list_pos
 
-def read_file_CSV_from_LilleTestBench(fileName):
+def read_file_CSV_from_LilleTestBench(file_path):
     
     # discover the correct encoding to read the CSV file:
     for code in ('utf8', 'cp1252'):
         try:
-            with open(fileName, 'r', encoding=code) as F:
+            with open(file_path, 'r', encoding=code) as F:
                 lines = F.readlines()
             break
         except:
@@ -68,9 +68,9 @@ def read_file_CSV_from_LilleTestBench(fileName):
     DATA = np.array(DATA)
     return DATA
 
-def read_file_FREE(fileName):
+def read_file_FREE(file_path):
     
-    with open(fileName, 'r', encoding='utf8') as F:
+    with open(file_path, 'r', encoding='utf8') as F:
         lines = F.readlines()
     
     # now read the sensor data lines:
