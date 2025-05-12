@@ -1,7 +1,7 @@
 try:
-    from .tools import read_file_ROTOR, read_file_CSV_from_LilleTestBench, plot_ROTOR_CSV_magField_at_positions
+    from .tools import read_file_ROTOR, read_file_ROTOR_L, plot_ROTOR_CSV_magField_at_positions
 except:
-    from tools import read_file_ROTOR, read_file_CSV_from_LilleTestBench, plot_ROTOR_CSV_magField_at_positions
+    from tools import read_file_ROTOR, read_file_ROTOR_L, plot_ROTOR_CSV_magField_at_positions
     
 import numpy as np
 import sys, os
@@ -28,7 +28,7 @@ def plot_CSV_ROTOR(CSV_num:int,
     print(f'{ROT_file=}, {CSV_file=}')
                     
     ROTOR_DATA, list_pos = read_file_ROTOR(ROT_file)
-    CSVbench_DATA        = read_file_CSV_from_LilleTestBench(CSV_file)
+    CSVbench_DATA        = read_file_ROTOR_L(CSV_file)
     
     if ROTOR_DATA.shape[1] == 5:
         mode="ByAngle"

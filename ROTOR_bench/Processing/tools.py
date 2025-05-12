@@ -43,7 +43,7 @@ def read_file_ROTOR(file_path):
     DATA = np.array(DATA)
     return DATA, list_pos
 
-def read_file_CSV_from_LilleTestBench(file_path):
+def read_file_ROTOR_L(file_path):
     
     # discover the correct encoding to read the CSV file:
     for code in ('utf8', 'cp1252'):
