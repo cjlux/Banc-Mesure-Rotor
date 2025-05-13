@@ -1,4 +1,5 @@
 import os, sys
+from shutil import rmtree
 from pathlib import Path
 import numpy as np
 
@@ -95,7 +96,24 @@ class MainWindow(QMainWindow):
         """
         print("Cleaning PNG directories...")
         # Add your logic here
-
+        PNG_dirs = []
+        for root, dirs, files in Path.cwd().walk():
+            if 'PNG' in dirs:
+                PNG_dirs.append(Path(root, 'PNG'))
+        
+        if PNG_dirs:
+            for dir in PNG_dirs:
+                rel_dir = dir.relative_to(Path.cwd().parent)
+                OK = QMessageBox.question(self, 'Warning', f'Do you want to delete the directory:\n<{rel_dir}> ?')
+                if OK == QMessageBox.Yes:
+                    if dir.exists(): rmtree(dir)
+                    print(f'Deleted directory: {dir}')
+        else:
+            QMessageBox.information(self, 'Info', 'No PNG directories found')
+            print('No PNG directories found')
+        
+        return
+            
     def __init_tab_ChoseFolder(self):
         '''
             Tab_1 : Choose Directory
@@ -277,12 +295,14 @@ class MainWindow(QMainWindow):
         
         self.set_state('ROTOR_B_L', False)
 
+
     def set_state(self, key, state):
         '''
         Enable or disable the widgets in the dictionary dico.
         '''
         for widget in self.dict_plot_widgets[key]:
             widget.setEnabled(state)
+                
                 
     def set_XYZ_B(self, state, lab):
         self.XYZ_B[lab] = state//2
@@ -344,6 +364,7 @@ class MainWindow(QMainWindow):
             DATA = newDATA
         
         return DATA
+
 
     def extract_magnetic_field(self, DATA, list_pos, Zpos):
         '''
@@ -420,16 +441,18 @@ class MainWindow(QMainWindow):
             
         return
 
+
     def save_ROTOR_B(self):
-        fig = self.canvas_B.figure
-        
-        png_dir = Path(self.ROTOR_B_data_dir, 'PNG')
+        '''
+        Save the current plot of the ROTOR_B data in a PNG file.  
+        '''
+        fig       = self.canvas_B.figure
+        png_dir   = Path(self.ROTOR_B_data_dir, 'PNG')
         file_name = self.ROTOR_B_txt_file.name
         
         if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
         
         XYZ = build_XYZ_name_with_tuple(self.convert_XYZ_B_to_tuple())
-        
         
         param = self.curr_plt_info_B['param']
         assert param in ['fft', 'color', 'plot', 'free'], f"Unknown self.curr_plt_info_B['param']: <{param}>"
@@ -450,13 +473,13 @@ class MainWindow(QMainWindow):
                                                        "PNG files (*.png)")
             if file_name:
                 fig.savefig(file_name)
-                QMessageBox.information(self, 'Success', f'Plot saved as {file_name}')
         else:
             QMessageBox.warning(self, 'Warning', 'No plot to save')
         return
     
     def save_ROTOR_B_L(self):
         pass
+    
     
     def plot_FREE(self):
     
@@ -533,6 +556,7 @@ class MainWindow(QMainWindow):
             self.ROTOR_L_data_dir = Path(data_dir)
             self.ROTOR_L_file_list_widget.setTitle(f'*.CSV files in <{data_dir}>')
             self.update_ROTOR_L_file_list()
+
 
     def select_ROTOR_L_dir(self):
         data_dir = QFileDialog.getExistingDirectory(self, "Directory for the *.CSV LILLE ROTOR bench files")

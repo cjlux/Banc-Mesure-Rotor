@@ -357,25 +357,27 @@ def plot_ROTOR_CSV_magField_at_positions(angles1, field1, Zpos, filename1,
     title = f'Magnetic field at Zpos={Zpos:3d} mm'
     fig.suptitle(title, fontsize=15)
         
-    lab_TXT, lab_CSV = ('X', 'Y', 'Z'), ('Radial', 'Axial', 'Tang')
-    mag_field = ((X, R), (Y, A), (Z, T))
-     
-    for n, ((B1, B2), lab1, lab2) in enumerate(zip(mag_field, lab_TXT, lab_CSV)):
-        if xyz[n]: 
+    lab_B   = {'X':'X', 'Y':'Y', 'Z':'Z'}
+    lab_L   = {'X':'rad',     'Y':'axial',     'Z':'tan'}
+    field_B = {'X': X,           'Y':Y,           'Z':Z}
+    field_L = {'X': R,           'Y':A,           'Z':T}
+    colors  = {'X':'red',        'Y':'green',     'Z': 'blue'}
+    XYZ_B_L = {'X': xyz[0], 'Y': xyz[1], 'Z': xyz[2]}
+    angles_B, angles_L = angles1, angles2
+    n = 0
+    for c in ('X', 'Y', 'Z'):
+        if XYZ_B_L[c]: 
             ax = axes[n]
-            ax.plot(angles1, B1, '-om', markersize=0.5, label=f'{lab1} ROTOR')
-            ax.plot(angles2, B2, '-ob', markersize=0.5, label=f'{lab2} CSV')
-            '''ymax = max(B1.max(), B2.max())
-            ymin = min(B1.min(), B2.min())
-            if verbose: print(f'{ymin=}, {ymax=}')
-            ax.set_ylim(ymin, ymax)'''
+            ax.plot(angles_B, field_B[c], '-o', markersize=0.5, color=colors[c], label=f'ROTOR_B {lab_B[c]}')
+            ax.plot(angles_L, field_L[c], ':o', markersize=0.5, color=colors[c], label=f'ROTOR_L {lab_L[c]}')
             ax.set_ylabel("[mT]")        
-            ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
+            ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
             ax.minorticks_on()
             ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
             ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-            #ax.set_ylim(1.1*magn_min, 1.1*magn_max)
+            n += 1
     ax.set_xlabel("rotor angle [°]")
+
     plt.subplots_adjust(hspace=0.2, right=0.88, top=0.88, bottom=0.12)
     
     png_dir = Path(data_dir, 'PNG')

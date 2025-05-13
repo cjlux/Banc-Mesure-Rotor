@@ -14,4 +14,6 @@ TXT*/
 *.bkp
 .~lock*
 !Docs/Images/*.png
+Sand[bB]ox/
+
 
