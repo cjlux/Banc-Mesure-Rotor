@@ -31,7 +31,7 @@ class MagneticPlotCanvas(FigureCanvas):
         nb_comp, _ = self.main.ROTOR_B_magn_field.shape
         assert(nb_comp // 3 == nb_Zpos)
         xyz = self.main.convert_XYZ_B_to_tuple()
-        fft = self.main.plot_fft
+        fft = self.main.curr_plt_info_B['param'] == 'fft'
 
         self.fig.clear()
         self.fig.subplots_adjust(top=0.9, bottom=0.065, left=0.06, right=0.89, hspace=0.2, wspace=0.2)
@@ -98,18 +98,9 @@ class MagneticPlotCanvas(FigureCanvas):
             if n == nb_Zpos-1:
                 if fft: ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
                 else:   ax.set_xlabel("rotor angle [°]")
-        
-        png_dir = Path(dir_name, 'PNG')
-        if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
-        XYZ = build_XYZ_name_with_tuple(xyz)
-        if fft:
-            fig_path = Path(png_dir, file_name.replace('.txt', f'_PSD_{XYZ}.png'))
-        else:
-            fig_path = Path(png_dir, file_name.replace('.txt', f'_PLOT_{XYZ}.png'))            
-        fig.savefig(fig_path)
-                    
+                            
         self.draw()
-        return 0
+        return 
 
     def plot_magField(self):
         '''
@@ -161,14 +152,8 @@ class MagneticPlotCanvas(FigureCanvas):
         ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
         ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
 
-        png_dir = Path(dir_name, 'PNG')
-        if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
-        XYZ = build_XYZ_name_with_tuple(xyz)
-        fig_path = Path(png_dir, file_name.replace('.txt', f'_FREE_{XYZ}.png'))
-        fig.savefig(fig_path)
-
         self.draw()
-        return 0
+        return 
 
     def colormap_magField(self):
         '''
@@ -242,13 +227,8 @@ class MagneticPlotCanvas(FigureCanvas):
         cbar = fig.colorbar(p, cax=cax, shrink=0.8)    #, location='right', anchor=(1.5, 0.5))
         cbar.ax.set_ylabel('Magnetic field [mT]', rotation=270)
 
-        png_dir = Path(dir_name, 'PNG')
-        if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
-        XYZ = build_XYZ_name_with_tuple(xyz)
-        fig_path = Path(png_dir, file_name.replace('.txt', f'_CMAP_{XYZ}.png'))
-        fig.savefig(fig_path)
-
         self.draw()
+
         return
     
     def plot_ROTOR_B_L_for_Zpos(self):
