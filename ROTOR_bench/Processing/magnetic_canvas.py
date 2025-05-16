@@ -264,10 +264,14 @@ class MagneticPlotCanvas(FigureCanvas):
         angles_B, magn_field_B, = self.main.angles_B, self.main.ROTOR_B_magn_field
         angles_L, magn_field_L  = self.main.angles_L, self.main.ROTOR_L_magn_field
         
-        Zpos = self.main.ROTOR_B_selected_Zpos
-        title = f'Magnetic field at Zpos={Zpos:3d} mm'
-        fig.suptitle(title, fontsize=16)
-        fig.text(0.5, .92, f"from <{file_B_name}> and <{file_L_name}>", size=9, color="gray", horizontalalignment='center')
+        Zpos_B = self.main.ROTOR_B_sel_Zpos
+        Zpos_L = self.main.ROTOR_L_sel_Zpos
+        shift  = self.main.ROTOR_L_sel_Angle
+        title = f'Magnetic field ROTOR_B@Zpos:{Zpos_B}mm & ROTOR_L@Zpos:{Zpos_L}mm,shift:{shift}°'
+        fig.suptitle(title, fontsize=15)
+        message = f'<{file_B_name}@{Zpos_B}mm and '
+        message += f'<{file_L_name}@{Zpos_L}mm_shifted:{shift}°>'
+        fig.text(0.5, .92, message, size=9, color="gray", horizontalalignment='center')
                             
         X, Y, Z = magn_field_B
         R, T, A = magn_field_L * 1e3 # Lille rotor bench: Radial, Tangent, Axial are in Tesla
@@ -293,4 +297,4 @@ class MagneticPlotCanvas(FigureCanvas):
         ax.set_xlabel("rotor angle [°]")
         
         self.draw()
-        return 
+        return
