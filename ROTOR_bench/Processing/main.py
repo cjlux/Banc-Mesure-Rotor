@@ -419,7 +419,7 @@ class MainWindow(QMainWindow):
             # copy X,Y,Z for all Zpos:
             nb_val = 3 # the 3 components X, Y and Z
             for n in range(len(list_pos)):
-                newDATA[ : , 1 + n*nb_val : 1 + (n+1)*nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
+                newDATA[:, 1+n*nb_val:1+(n+1)*nb_val] = DATA[n*nb_row:(n+1)*nb_row, 2:]
             DATA = newDATA
         
         return DATA
@@ -430,33 +430,28 @@ class MainWindow(QMainWindow):
         Reshape DATA to be a 2D array with shape (nb_angles, 1 + 3*nb_Zpos),
         and extract the magnetic field data for a given Z position.
         
-        DATA is reshaped to be an array with lines formated like:
+        DATA is already an array with lines formated like:
             "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
-        instead of:
-            "# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
         '''
-        if DATA.shape[1] == 5:
-            nb_col = 1 + 3 #  angle col + (X , Y, Z)
-            nb_row = int(len(DATA)/len(list_pos))
-            newDATA = np.ndarray((nb_row, nb_col), dtype=float)
+        
+        i_Zpos = list_pos.index(f'{Zpos:03d}')
+        print(f'i_Zpos: {i_Zpos}', flush=True)
 
-            # copy angle column
-            newDATA[ :, 0] = DATA[ : nb_row, 1]
-            # copy X,Y,Z for all Zpos:
-            nb_val = 3 # the 3 components X, Y and Z
-
-        # Extract data for position Zpos:
+        # copy X,Y,Z for all Zpos:
+        nb_val = 3                  # the 3 components X, Y and Z
+        new_nb_col = 1 + nb_val     # the angle col + the 3 components X, Y and Z
+        nb_row = DATA.shape[0]
+        newDATA = np.ndarray((nb_row, new_nb_col), dtype=float)
+        # Extract angle column:
+        newDATA[:, 0] = DATA[:nb_row, 0]
+        # Extract X, Y, Z data for position Zpos:
         try:
-            index_Zpos = list_pos.index(f'{Zpos:03d}')
-            for n in range(len(list_pos)):
-                if n != index_Zpos: continue
-                newDATA[ : , 1 : 1 + nb_val] = DATA[n*nb_row : (n+1)*nb_row, 2:]
+            newDATA[:, 1:1+nb_val] = DATA[:, 1+i_Zpos*nb_val:1+(i_Zpos+1)*nb_val]
             DATA = newDATA
         except:
-            message = f'Zpos: {Zpos} not found in the list of Zpos:\n{list_pos}. Try another value'
+            message = f'index of {Zpos:03d} not found in the list of Zpos:\n{list_pos}. Try another value'
             QMessageBox.warning(self, 'Warning', message)
-            return None
-           
+                       
         return DATA
         
     
@@ -594,6 +589,7 @@ class MainWindow(QMainWindow):
         # Get the ROTOR_B data from the file or from the cache:    
         if self.last_ROTOR_B_txt_file.name != self.ROTOR_B_txt_file.name: 
             ROTOR_B_data, list_pos = read_file_ROTOR(self.ROTOR_B_txt_file)
+            ROTOR_B_data = self.ROTOR_B_reshape_magnetic_field(ROTOR_B_data, list_pos)
             self.last_ROTOR_B_txt_file = self.ROTOR_B_txt_file
             self.last_ROTOR_B_data = ROTOR_B_data
             self.last_list_pos = list_pos
@@ -605,12 +601,13 @@ class MainWindow(QMainWindow):
         ROTOR_B_data = self.ROTOR_B_extract_magnetic_field(ROTOR_B_data, list_pos, Zpos)
         
         # Get the ROTOR_L data from the file or from the cache:
-        if self.last_ROTOR_L_txt_file.name != self.ROTOR_L_txt_file.name:            
-            ROTOR_L_data = read_file_ROTOR_L(self.ROTOR_L_txt_file)
-            self.last_ROTOR_L_txt_file = self.ROTOR_L_txt_file
-            self.last_ROTOR_L_data = ROTOR_L_data
-        else:
-            ROTOR_L_data = self.last_ROTOR_L_data
+        if self.ROTOR_L_txt_file is not None:
+            if self.last_ROTOR_L_txt_file.name != self.ROTOR_L_txt_file.name:            
+                ROTOR_L_data = read_file_ROTOR_L(self.ROTOR_L_txt_file)
+                self.last_ROTOR_L_txt_file = self.ROTOR_L_txt_file
+                self.last_ROTOR_L_data = ROTOR_L_data
+            else:
+                ROTOR_L_data = self.last_ROTOR_L_data
         
         # Extract the data of the ROTOR_L corresponding to the selected Zpos:
         Zpos = self.ROTOR_L_Zpos.value()
@@ -753,17 +750,22 @@ class MainWindow(QMainWindow):
         '''
         # Clear existing buttons
         self.ROTOR_B_Zpos_combo.clear()
+        
         # Add new buttons
         if self.list_pos:
             done = False
             for zpos in self.list_pos:
                 self.ROTOR_B_Zpos_combo.addItem(zpos)
-        val = 0
-        self.ROTOR_B_sel_Zpos = val
-        self.ROTOR_B_Zpos_combo.setCurrentIndex(val)
-        # set the Zpos SpinBox for ROTOR_L to the selected value:
-        self.ROTOR_L_Zpos.setValue(val)
-        self.ROTOR_L_sel_Zpos = val
+                if not done:
+                    # Select the first Zpos by default
+                    value = int(zpos)
+                    self.ROTOR_B_Zpos_combo.setCurrentIndex(0)
+                    self.ROTOR_B_sel_Zpos = value
+                    # set the Zpos SpinBox for ROTOR_L to the selected value:
+                    self.ROTOR_L_Zpos.setValue(value)
+                    self.ROTOR_L_sel_Zpos = value
+                    done = True
+        
         
 
     def zpos_R_selected(self, index):
@@ -771,6 +773,8 @@ class MainWindow(QMainWindow):
         Handle Zpos selection.
         '''
         selected_zpos = self.ROTOR_B_Zpos_combo.itemText(index)
+        if selected_zpos == '': return
+        
         self.ROTOR_B_sel_Zpos = int(selected_zpos)
         print(f"Selected ROTOR_B Zpos: {self.ROTOR_B_sel_Zpos}")
         # set the Zpos SpinBox for ROTOR_L to the selected value:
