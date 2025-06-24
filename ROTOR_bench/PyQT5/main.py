@@ -1,4 +1,8 @@
 #
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
+#
 # widget QTabWidget: création d'onglets dans la fenêtre principale
 #
 import sys, json, os

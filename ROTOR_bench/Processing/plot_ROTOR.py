@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 try:
     from .tools import read_file_ROTOR, plot_magField_at_positions
 except:

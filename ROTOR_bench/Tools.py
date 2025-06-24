@@ -1,5 +1,5 @@
 #
-# Copyright 2024 Jean-Luc.CHARLES@mailo.com
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
 #
     
 def get_RotStep():

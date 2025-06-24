@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 from tools import get_files_by_date, read_file_FREE, plot_magField
 import matplotlib.pyplot as plt
 import numpy as np

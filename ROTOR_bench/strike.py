@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 import sys, os, json
 from ROTOR_bench import ROTOR_bench
 from ROTOR_config import StepperMotor

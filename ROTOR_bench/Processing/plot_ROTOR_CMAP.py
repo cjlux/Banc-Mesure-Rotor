@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 try:
     from .tools import read_file_ROTOR, colormap_magField
 except:

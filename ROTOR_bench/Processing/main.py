@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 import os, sys
 from shutil import rmtree
 from pathlib import Path

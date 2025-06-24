@@ -1,3 +1,7 @@
+#
+# Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
+#
+
 from PyQt5.QtWidgets import (QWidget, QScrollArea, QApplication, QVBoxLayout, QRadioButton)
 from PyQt5.QtCore import Qt, QSize
 from PyQt5 import QtWidgets, uic
