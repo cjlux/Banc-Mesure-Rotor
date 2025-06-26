@@ -10,7 +10,7 @@ import numpy as np
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QFileDialog,
     QTabWidget, QMainWindow, QLabel, QCheckBox, QScrollArea, QGroupBox, QMessageBox, QButtonGroup, 
-    QAction, QSpinBox, QComboBox
+    QAction, QSpinBox, QSlider, QComboBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction
@@ -300,19 +300,18 @@ class MainWindow(QMainWindow):
         self.ROTOR_R_layout.addWidget(cb)
         
         self.ROTOR_L_group_box = QGroupBox('')
-        self.HBox = QHBoxLayout()
-        self.ROTOR_L_group_box.setLayout(self.HBox)
+        HBox = QHBoxLayout()
+        self.ROTOR_L_group_box.setLayout(HBox)
         H.addWidget(self.ROTOR_L_group_box)
         self.ROTOR_L_group_box.setFixedHeight(45)
 
-
         lab = QLabel('ROTOR_L')
         self.dict_plot_widgets['ROTOR_B_L'].append(lab)
-        self.HBox.addWidget(lab)
+        HBox.addWidget(lab)
         
         # The SpinBox to choose the Zpos in the ROTOR_B_L data
         lab = QLabel('Zpos (mm)')
-        self.HBox.addWidget(lab)
+        HBox.addWidget(lab)
         self.ROTOR_L_Zpos = QSpinBox()
         sb = self.ROTOR_L_Zpos
         sb.setRange(-7, 144)
@@ -322,13 +321,13 @@ class MainWindow(QMainWindow):
         sb.setFixedHeight(23)
         sb.setToolTip('Select the Zpos to plot')
         sb.valueChanged.connect(lambda value: self.zpos_L_changed(value))
-        self.HBox.addWidget(sb)
+        HBox.addWidget(sb)
         self.dict_plot_widgets['ROTOR_B_L'].append(lab)
         self.dict_plot_widgets['ROTOR_B_L'].append(sb)
         
         # The SpinBox to choose the angle shift in the ROTOR_B_L data
         lab = QLabel('angle shift (°)')
-        self.HBox.addWidget(lab)
+        HBox.addWidget(lab)
         sb = QSpinBox()
         sb.setRange(0, 360)
         sb.setSingleStep(1)
@@ -337,7 +336,7 @@ class MainWindow(QMainWindow):
         sb.setFixedHeight(23)
         sb.setToolTip('Select the angle shift to apply to the plot of ROTOR_L')
         sb.valueChanged.connect(lambda value: self.angle_shift_L_changed(value))
-        self.HBox.addWidget(sb)
+        HBox.addWidget(sb)
         self.dict_plot_widgets['ROTOR_B_L'].append(sb)
         
         H.addStretch()        
@@ -555,10 +554,10 @@ class MainWindow(QMainWindow):
         Zpos_L = self.ROTOR_L_sel_Zpos
         shift  = self.ROTOR_L_sel_Angle
 
-        file_name  = f'{file_name_B}@{Zpos_B}mm__'
-        file_name += f'{file_name_L}@{Zpos_L}mm_shift:{shift}__{XYZ}.png>'
+        file_name  = f'{file_name_B}@Zpos-{Zpos_B}mm___'
+        file_name += f'{file_name_L}@Zpos-{Zpos_L}mm_shift-{shift}_{XYZ}.png'
 
-        fig_path = Path(png_dir, file_name.replace('.txt', f''))
+        fig_path = Path(png_dir, file_name)
 
         if fig:
             file_name, _ = QFileDialog.getSaveFileName(self, 
@@ -730,9 +729,9 @@ class MainWindow(QMainWindow):
         file_name = self.ROTOR_B_txt_file.name
         if file_name.startswith("FREE") or file_name.startswith("ROTOR"):
             self.activate_plotButtons()
-            self.button_LILLE_data_dir.setEnabled(True)
+            #self.button_LILLE_data_dir.setEnabled(True)
             self.ROTOR_L_file_list_widget.setEnabled(True)
-            self.tabs.setCurrentIndex(1)
+            #self.tabs.setCurrentIndex(1)
             if file_name.startswith("FREE"):
                 self.plot_FREE()
                 self.set_state('ROTOR_B_L', False)
@@ -811,6 +810,6 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.resize(1400, 900)
+    window.resize(1500, 900)
     window.show()
     sys.exit(app.exec_())

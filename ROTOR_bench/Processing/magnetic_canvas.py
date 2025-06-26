@@ -271,11 +271,11 @@ class MagneticPlotCanvas(FigureCanvas):
         Zpos_B = self.main.ROTOR_B_sel_Zpos
         Zpos_L = self.main.ROTOR_L_sel_Zpos
         shift  = self.main.ROTOR_L_sel_Angle
-        title = f'Magnetic field ROTOR_B@Zpos:{Zpos_B}mm & ROTOR_L@Zpos:{Zpos_L}mm,shift:{shift}°'
+        title = f'Magnetic field: ROTOR_B Zpos:{Zpos_B}mm & ROTOR_L Zpos:{Zpos_L}mm,shift:{shift}°'
         fig.suptitle(title, fontsize=15)
         message = f'<{file_B_name}@{Zpos_B}mm and '
         message += f'<{file_L_name}@{Zpos_L}mm_shifted:{shift}°>'
-        fig.text(0.5, .92, message, size=9, color="gray", horizontalalignment='center')
+        #fig.text(0.5, .92, message, size=9, color="gray", horizontalalignment='center')
                             
         X, Y, Z = magn_field_B
         R, T, A = magn_field_L * 1e3 # Lille rotor bench: Radial, Tangent, Axial are in Tesla
@@ -293,7 +293,7 @@ class MagneticPlotCanvas(FigureCanvas):
                 ax.plot(angles_B, field_B[c], '-o', markersize=0.5, color=colors[c], label=f'ROTOR_B {lab_B[c]}')
                 ax.plot(angles_L, field_L[c], ':o', markersize=0.5, color=colors[c], label=f'ROTOR_L {lab_L[c]}')
                 ax.set_ylabel("[mT]")        
-                ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
+                ax.legend(bbox_to_anchor=(1.13, 1), loc="upper right")
                 ax.minorticks_on()
                 ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
                 ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
