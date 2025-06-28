@@ -765,8 +765,9 @@ class MainWindow(QMainWindow):
                     self.ROTOR_B_Zpos_combo.setCurrentIndex(0)
                     self.ROTOR_B_sel_Zpos = value
                     # set the Zpos SpinBox for ROTOR_L to the selected value:
-                    self.ROTOR_L_Zpos.setValue(value)
-                    self.ROTOR_L_sel_Zpos = value
+                    if self.ROTOR_L_txt_file is not None:
+                        self.ROTOR_L_Zpos.setValue(value)
+                        self.ROTOR_L_sel_Zpos = value
                     done = True
         
         
@@ -780,9 +781,11 @@ class MainWindow(QMainWindow):
         
         self.ROTOR_B_sel_Zpos = int(selected_zpos)
         print(f"Selected ROTOR_B Zpos: {self.ROTOR_B_sel_Zpos}")
+        
         # set the Zpos SpinBox for ROTOR_L to the selected value:
-        self.ROTOR_L_Zpos.setValue(self.ROTOR_B_sel_Zpos)
-        self.ROTOR_L_sel_Zpos = self.ROTOR_B_sel_Zpos
+        if self.ROTOR_L_txt_file is not None:
+            self.ROTOR_L_Zpos.setValue(self.ROTOR_B_sel_Zpos)
+            self.ROTOR_L_sel_Zpos = self.ROTOR_B_sel_Zpos
         
         self.plot_ROTOR()
         
