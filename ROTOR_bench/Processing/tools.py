@@ -10,9 +10,10 @@ from os.path import join
 from pathlib import Path
 from stat import ST_CTIME
 
-def build_XYZ_name_with_tuple(xyz):
+def build_XYZ_name_with_tuple(xyz:tuple|dict):
     labels = ("X", "Y", "Z")
     label = ""
+    if isinstance(xyz, dict): xyz = tuple(xyz.values())
     for x, lab in zip(xyz, labels):
         if x: label+= lab
     return label
@@ -24,12 +25,38 @@ def get_files_by_date(directory, PREFIX):
     files.sort()
     return  [f for s, f in files]
   
+def read_file_SIMUL_ROTOR(file_path):
+    
+    with open(file_path, 'r', encoding='utf8') as F:
+        lines = F.readlines()
+
+    try:
+        # process the name of the file like <Bsimul_r-71_d-1-5-10.txt>
+        file_name = Path(file_path).name
+        list_dist = file_name.replace('.txt', '').split('d-')[1].split('-')
+        
+        # now read the sensor data lines:
+        DATA = []
+        for line in lines:
+            # skip comments:
+            if line[0] == "#": continue            
+            # transform strings into numbers:
+            data = [float(x) for x in line.strip().split()]
+            DATA.append(data)
+        DATA = np.array(DATA)
+        
+    except Exception as err:
+        print(f"Unexpected error {err=} occurs when reading file <{file_name}>")
+        DATA, list_dist = None, None
+    
+    return DATA, list_dist
+    
 def read_file_ROTOR(file_path):
     
     with open(file_path, 'r', encoding='utf8') as F:
         lines = F.readlines()
 
-    # process the name of the fie <ROTOR_YYYY-MM-DD_hh_mm_ss_ROTSTEP-aa_ZZZ_ZZZ-...txt>
+    # process the name of the file <ROTOR_YYYY-MM-DD_hh_mm_ss_ROTSTEP-aa_ZZZ_ZZZ-...txt>
     # Example: <ROTOR_2024-07-09-13-59_WDIST-12_ROTSTEP-4.8_000_030_060_090_1of1.txt
     file_name = Path(file_path).name
     list_pos = file_name.replace('.txt', '').split('_')[4:-1]

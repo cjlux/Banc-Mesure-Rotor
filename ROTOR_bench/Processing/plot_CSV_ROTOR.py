@@ -20,7 +20,7 @@ def plot_CSV_ROTOR(CSV_num:int,
                    show:bool=True,
                    verbose=0):
     '''
-    To plot the data from the Lille bench (.csv file) and the ROTOR data (.txt file)
+    To plot the ROTOR data (.txt file) and the data from the Lille bench (.csv file) 
     '''
     
     file_list = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f[-4:] in ('.csv','.txt')]

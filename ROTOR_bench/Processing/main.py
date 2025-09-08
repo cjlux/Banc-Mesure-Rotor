@@ -2,83 +2,89 @@
 # Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
 #
 
-import os, sys
+import sys
 from shutil import rmtree
 from pathlib import Path
 import numpy as np
+import json
 
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QFileDialog,
-    QTabWidget, QMainWindow, QLabel, QCheckBox, QScrollArea, QGroupBox, QMessageBox, QButtonGroup, 
-    QAction, QSpinBox, QSlider, QComboBox
-)
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog,
+    QTabWidget, QMainWindow, QLabel, QCheckBox, QGroupBox, QMessageBox,  
+    QAction, QSpinBox, QComboBox, QWidgetAction, QCheckBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-from tools import read_file_ROTOR, read_file_FREE, read_file_ROTOR_L, build_XYZ_name_with_tuple
+from tools import read_file_ROTOR, read_file_FREE, read_file_ROTOR_L, read_file_SIMUL_ROTOR, build_XYZ_name_with_tuple
 from magnetic_canvas import MagneticPlotCanvas
+from files_tab import FilesTab
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         
-        self.XYZ_B                = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B plots
-        self.XYZ_B_L              = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B_L plots
-        self.dict_plot_widgets    = {}
-        self.ROTOR_B_data_dir     = Path('')  # the directory containing the ROTOR data files
-        self.ROTOR_B_txt_file     = None      # the selected ROTOR_B file to plot
-        self.ROTOR_B_magn_field   = None      # The ROTOR_B magnetic field
-        self.ROTOR_B_sel_Zpos     = None      # the selected Z position in the ROTOR_B file
-        self.ROTOR_L_data_dir     = Path('')  # the directory containing the LILLE ROTOR data files
-        self.ROTOR_L_txt_file     = None      # the selected ROTOR_L file to plot
-        self.ROTOR_L_magn_field   = None      # The ROTOR_B magnetic field
-        self.ROTOR_L_sel_Zpos     = None      # the selected Z position in the ROTOR_L file
-        self.ROTOR_L_sel_Angle    = 0         # the selected angle in the ROTOR_L file
-        self.angles_B             = None      # The angles of the ROTOR data file
-        self.angles_L             = None      # The angles of the LILLE data file
-        self.curr_plt_info_B      = {}        # Dictionnary of infos on the current plot for the ROTOR_B tab
-        self.curr_plt_info_B_L    = {}        # Dictionnary of infos on the current plot for the ROTOR_B_L tab
-        self.time_values          = None      # The time values of the FREE data file
-        self.list_pos             = None      # The list of the Z positions found in the ROTOR data file
-        self.plot_fft             = False     # whether the plos is a DSP or not
-        
-        self.file_tab             = None      # The tab to choose a directory and list .txt files
-        self.plot_tab             = None      # the tab to draw the plots"
-        self.plot_txt_csv         = None      # The tab to superpose a .txt and a .csv plots
-        
-        self.btn_free_stat        = None      # The button to display the statistics in the FREE data plot
-        self.ROTOR_L_Zpos         = None      # The SpinBox to choose the Zpos in the ROTOR_L data  
-        self.ROTOR_L_ShiftAngle   = None      # The SpinBox to choose the angle shift in the ROTOR_L data
-        
-        self.last_ROTOR_L_txt_file = Path('') # The last read ROTOR_L file to avoid re-reading it
-        self.last_ROTOR_L_data     = None     # The last read ROTOR_L data to avoid re-reading it
-        self.last_ROTOR_B_txt_file = Path('') # The last read ROTOR_B file to avoid re-reading it
-        self.last_ROTOR_B_data     = None     # The last read ROTOR_B data to avoid re-reading it   
-        self.last_list_pos         = None     # The last read list of Z positions to avoid re-reading it
+        self.saved_options_file    = Path('ROTOR_bench/Processing/saved_options.json')
+        self.XYZ_B                 = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B plots
+        self.XYZ_B_L               = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B_L plots
+        self.default_XYZ           = {'X': 1, 'Y': 0, 'Z':1} # The default values for XYZ_B and XYZ_B_L
+        self.dict_plot_widgets     = {}
+        self.ROTOR_B_data_dir      = Path('_') # the directory containing the ROTOR data files
+        self.ROTOR_B_txt_file      = None      # the selected ROTOR_B file to plot (Path)
+        self.ROTOR_B_mag_field     = None      # The ROTOR_B magnetic field
+        self.ROTOR_B_sel_Zpos      = None      # the selected Z position in the ROTOR_B file
+        self.ROTOR_L_data_dir      = Path('_') # the directory containing the LILLE ROTOR data files
+        self.ROTOR_L_txt_file      = None      # the selected ROTOR_L file to plot
+        self.ROTOR_L_mag_field     = None      # The ROTOR_B magnetic field
+        self.ROTOR_L_sel_Zpos      = None      # the selected Z position in the ROTOR_L file
+        self.ROTOR_L_sel_Angle     = 0         # the selected angle in the ROTOR_L file
+        self.SIMUL_data_dir        = Path('_') # the directory containing the SIMULATION data files
+        self.SIMUL_txt_file        = None      # the selected SIMULATION file to plot
+        self.angles_B              = None      # The angles of the ROTOR data file
+        self.angles_L              = None      # The angles of the LILLE data file
+        self.curr_plt_info_B       = {}        # Dictionary of infos on the current plot for the ROTOR_B tab
+        self.curr_plt_info_B_L     = {}        # Dictionary of infos on the current plot for the ROTOR_B_L tab
+        self.time_values           = None      # The time values of the FREE data file
+        self.list_pos              = None      # The list of the Z positions found in the ROTOR data file
+        self.list_simul_distances  = []        # The list of distances found in the SIMUL data file
+        self.plot_fft              = False     # Flag: whether the plot is a DSP or not
+        self.disp_fileName         = True      # Flag: whether to display the file name in the plot title
+        self.plot_X_component      = True      # Flag: whether to plot the X component of the magnetic field
+        self.plot_Y_component      = True      # Flag: whether to plot the Y component of the magnetic field
+        self.plot_Z_component      = True      # Flag: whether to plot the Z component of the magnetic field 
+        self.last_ROTOR_L_txt_file = Path('_') # The last read ROTOR_L file to avoid re-reading it (Path)
+        self.last_ROTOR_L_data     = None      # The last read ROTOR_L data to avoid re-reading it
+        self.last_ROTOR_B_txt_file = Path('_') # The last read ROTOR_B file to avoid re-reading it (Path)
+        self.last_ROTOR_B_data     = None      # The last read ROTOR_B data to avoid re-reading it   
+        self.last_list_pos         = None      # The last read list of Z positions to avoid re-reading it
         
         self.setWindowTitle("ROTOR bench data plot")
 
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
 
-        self.curr_plt_info_B = {'func': None, 'param': None}
+        self.curr_plt_info_B   = {'func': None, 'param': None}
         self.curr_plt_info_B_L = {'func': None, 'param': None}        
 
         # Create the menu bar
         self.create_menu_bar()
 
         # Initialize tabs
-        self.__init_tab_ChoseFolder()
+        self.file_tab = FilesTab(self)
+        self.tabs.addTab(self.file_tab, "Choose Directory \& files")
         self.__init_tab_ROTOR_B_Plots()
         self.__init_tab_ROTOR_B_L_Plots()
+        self.__init_tab_SIMUL_Plots()
         
         # Select the first tab by default
         self.tabs.setCurrentIndex(0)        
         
+        # Load options from JSON
+        self.load_options_from_json()
+        
     def create_menu_bar(self):
         """
-        Create the menu bar with File, Parameters, and Tools menus.
+        Create the menu bar with File, Options, and Tools menus.
         """
         menu_bar = self.menuBar()
 
@@ -88,20 +94,94 @@ class MainWindow(QMainWindow):
         quit_action.triggered.connect(self.close)  # Close the application
         file_menu.addAction(quit_action)
 
-        # Parameters menu
-        parameters_menu = menu_bar.addMenu("Parameters")
-        # Add actions to the Parameters menu as needed
-
+        # Options menu
+        options_menu = menu_bar.addMenu("Options")
+        
+        # Add action for the flag to display file names in plot titles
+        disp_filename_action = QWidgetAction(self)
+        btn = QCheckBox("Show file names in plot titles")
+        btn.setChecked(self.disp_fileName)
+        btn.setStyleSheet("QCheckBox { padding-left: 5px; }")  #
+        btn.toggled.connect(self.on_radio_btn_disp_filename)  # <-- Connect signal to slot
+        disp_filename_action.setDefaultWidget(btn)
+        options_menu.addAction(disp_filename_action)
+        
+        # Add action for the flag to display the X component
+        disp_X_action = QWidgetAction(self)
+        btn = QCheckBox("Plot X component by default")
+        btn.setChecked(self.default_XYZ['X'])
+        btn.setStyleSheet("QCheckBox { padding-left: 5px; }")  # <-- Add left padding
+        btn.toggled.connect(lambda state, button=btn: self.on_disp_XYZ_component(button, X=state))
+        disp_X_action.setDefaultWidget(btn)
+        options_menu.addAction(disp_X_action)
+        
+        # Add action for the flag to display the Y component
+        disp_Y_action = QWidgetAction(self)
+        btn = QCheckBox("Plot Y component by default")
+        btn.setChecked(self.default_XYZ['Y'])
+        btn.setStyleSheet("QCheckBox { padding-left: 5px; }")  # <-- Add left padding
+        btn.toggled.connect(lambda state, button=btn: self.on_disp_XYZ_component(button, Y=state))
+        disp_Y_action.setDefaultWidget(btn)
+        options_menu.addAction(disp_Y_action)
+        
+        # Add action for the flag to display the Z component
+        disp_Z_action = QWidgetAction(self)
+        btn = QCheckBox("Plot Z component by default")
+        btn.setChecked(self.default_XYZ['Z'])
+        btn.setStyleSheet("QCheckBox { padding-left: 5px; }")  # <-- Add left padding
+        btn.toggled.connect(lambda state, button=btn: self.on_disp_XYZ_component(button, Z=state))
+        disp_Z_action.setDefaultWidget(btn)
+        options_menu.addAction(disp_Z_action)
+        
+        # Add "Save options" action
+        save_options_action = QAction("Save options", self)
+        save_options_action.triggered.connect(self.save_options_to_json)
+        options_menu.addAction(save_options_action)
+        
         # Tools menu
         tools_menu = menu_bar.addMenu("Tools")
         clean_png_action = QAction("Clean PNG directories", self)
         clean_png_action.triggered.connect(self.clean_png_directories)  # Connect to a method
         tools_menu.addAction(clean_png_action)
 
+    def on_radio_btn_disp_filename(self, checked):
+        """
+        Slot to handle the toggling of the button.
+        """
+        if checked:
+            print("Show file names in plot titles: Enabled")
+            self.disp_fileName = True
+        else:
+            print("Show file names in plot titles: Disabled")
+            self.disp_fileName = False
+
+    def on_disp_XYZ_component(self, w, X=None, Y=None, Z=None):
+        """
+        Slot to handle the toggling of the button.
+        """
+        message = f'You must select at least one component X,Y, or Z'
+        if X is not None: 
+            if X + self.default_XYZ['Y'] + self.default_XYZ['Z'] == 0:
+                QMessageBox.warning(self, 'Warning', message)            
+                w.setChecked(True)
+            else:
+                self.default_XYZ['X'] = int(X)
+        if Y is not None: 
+            if Y + self.default_XYZ['X'] + self.default_XYZ['Z'] == 0:
+                QMessageBox.warning(self, 'Warning', message)            
+                w.setChecked(True)
+            else:
+                self.default_XYZ['Y'] = int(Y)
+        if Z is not None: 
+            if Z + self.default_XYZ['X'] + self.default_XYZ['Y'] == 0:
+                QMessageBox.warning(self, 'Warning', message)            
+                w.setChecked(True)
+            else:
+                self.default_XYZ['Z'] = int(Z)
+        
     def clean_png_directories(self):
         """
         Placeholder method for cleaning PNG directories.
-        Implement the logic for cleaning PNG directories here.
         """
         print("Cleaning PNG directories...")
         # Add your logic here
@@ -123,51 +203,6 @@ class MainWindow(QMainWindow):
         
         return
             
-    def __init_tab_ChoseFolder(self):
-        '''
-            Tab_1 : Choose Directory
-        '''
-        self.file_tab = QWidget()
-        self.tabs.addTab(self.file_tab, "Choose Directory")
-                
-        HBox = QHBoxLayout()
-        self.file_tab.setLayout(HBox)
-        
-        V = QVBoxLayout()
-        btn = QPushButton("ROTOR data directory")
-        btn.setMinimumHeight(40)
-        btn.clicked.connect(self.select_ROTOR_B_dir)            
-        V.addWidget(btn)
-        
-        self.ROTOR_B_file_list_widget = QGroupBox("ROTOR *.TXT files")
-        self.ROTOR_B_file_list_layout = QVBoxLayout(self.ROTOR_B_file_list_widget)
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.ROTOR_B_file_list_widget)
-        V.addWidget(scroll_area)
-        
-        HBox.addLayout(V)
-        
-        self.LILLE_choose_dir = QVBoxLayout()
-        V = self.LILLE_choose_dir
-        self.button_LILLE_data_dir = QPushButton("LILLE rotor bench folder")
-        btn = self.button_LILLE_data_dir
-        btn.setMinimumHeight(40)
-        btn.clicked.connect(self.select_ROTOR_L_dir)
-        V.addWidget(btn)
-        
-        self.ROTOR_L_file_list_widget = QGroupBox("LILLE rotor *.CSV files")
-        self.ROTOR_L_file_list_layout = QVBoxLayout(self.ROTOR_L_file_list_widget)
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setWidget(self.ROTOR_L_file_list_widget)
-        V.addWidget(scroll_area)
-
-        HBox.addLayout(V)
-        
-        self.button_LILLE_data_dir.setEnabled(False)
-        self.ROTOR_L_file_list_widget.setEnabled(False)
-        
     def __init_tab_ROTOR_B_Plots(self):
         '''
         Tab_2: data plots
@@ -184,16 +219,16 @@ class MainWindow(QMainWindow):
         self.dict_plot_widgets['ROTOR'] = []
         self.dict_plot_widgets['FREE'] = []
 
-        labels    = ('Plot ROTOR data', 'Plot ROTOR PSD', 'ColorMap ROTOR data', 'Plot FREE data')
+        labels    = ('ROTOR data', 'ROTOR PSD', 'ROTOR ColorMap', 'FREE data')
         callbacks = (self.plot_ROTOR, None, None, self.plot_FREE)
         for label, callback in zip(labels, callbacks):
             btn = QPushButton(label)
             btn.setMinimumHeight(40)
             btn.setMinimumWidth(120)
             btn.setCheckable(False)
-            if label == 'Plot ROTOR PSD':
+            if label == 'ROTOR PSD':
                 btn.clicked.connect(lambda: self.plot_ROTOR(fft=True))
-            elif label == 'ColorMap ROTOR data':
+            elif label == 'ROTOR ColorMap':
                 btn.clicked.connect(lambda: self.plot_ROTOR(colormap=True))
             else:
                 btn.clicked.connect(callback)
@@ -203,10 +238,11 @@ class MainWindow(QMainWindow):
             else:
                 self.dict_plot_widgets['FREE'].append(btn)
             btn.setEnabled(False)    
-
-        btn = QPushButton('Save Current Plot')
+        
+        H.addStretch()
+        btn = QPushButton('Save Plot')
         btn.setMinimumHeight(40)
-        btn.setMinimumWidth(120)
+        btn.setMinimumWidth(80)
         btn.setCheckable(False)
         btn.clicked.connect(self.save_ROTOR_B)
         H.addWidget(btn)
@@ -223,10 +259,10 @@ class MainWindow(QMainWindow):
         self.btn_free_stat = btn
         H.addWidget(btn)
         
-        etiqs, colors = ('X (radial)', 'Y (axial)', 'Z (tang)'), ('red', 'green', 'blue')
+        etiqs, colors = ('Radial (X)', 'Axial (Y)', 'tang. (Z)'), ('red', 'green', 'blue')
         for etiq, lab, color in zip(etiqs, ('X', 'Y', 'Z'), colors):
             btn = QCheckBox(etiq)
-            btn.toggle()
+            btn.setChecked(self.default_XYZ[lab])
             btn.setStyleSheet(f'color: {color}')
             btn.stateChanged.connect(lambda state, label=lab: self.set_XYZ_B(state, label))
             self.dict_plot_widgets['ROTOR'].append(btn)
@@ -257,20 +293,10 @@ class MainWindow(QMainWindow):
 
         # The Button to plot the ROTOR_B data        
         btn = QPushButton('ROTOR B & L')
-        btn.setMinimumHeight(40)
-        btn.setMinimumWidth(120)
+        btn.setMinimumHeight(45)
+        btn.setMinimumWidth(90)
         btn.setCheckable(False)
         btn.clicked.connect(self.plot_ROTOR_B_L)
-        H.addWidget(btn)
-        btn.setEnabled(False)    
-        self.dict_plot_widgets['ROTOR_B_L'].append(btn)
-
-        # The button to save the current plot as a PNG file
-        btn = QPushButton('Save Current Plot')
-        btn.setMinimumHeight(40)
-        btn.setMinimumWidth(120)
-        btn.setCheckable(False)
-        btn.clicked.connect(self.save_ROTOR_B_L)
         H.addWidget(btn)
         btn.setEnabled(False)    
         self.dict_plot_widgets['ROTOR_B_L'].append(btn)
@@ -312,13 +338,14 @@ class MainWindow(QMainWindow):
         # The SpinBox to choose the Zpos in the ROTOR_B_L data
         lab = QLabel('Zpos (mm)')
         HBox.addWidget(lab)
-        self.ROTOR_L_Zpos = QSpinBox()
+        self.ROTOR_L_Zpos = FastStepSpinBox()
         sb = self.ROTOR_L_Zpos
         sb.setRange(-7, 144)
         sb.setSingleStep(1)
+        sb.setFastStep(10)
         sb.setValue(0)
         sb.setEnabled(False)
-        sb.setFixedHeight(23)
+        sb.setFixedHeight(25)
         sb.setToolTip('Select the Zpos to plot')
         sb.valueChanged.connect(lambda value: self.zpos_L_changed(value))
         HBox.addWidget(sb)
@@ -328,22 +355,35 @@ class MainWindow(QMainWindow):
         # The SpinBox to choose the angle shift in the ROTOR_B_L data
         lab = QLabel('angle shift (°)')
         HBox.addWidget(lab)
-        sb = QSpinBox()
+        sb = FastStepSpinBox()
         sb.setRange(0, 360)
         sb.setSingleStep(1)
+        sb.setFastStep(10)
         sb.setValue(0)
         sb.setEnabled(False)
-        sb.setFixedHeight(23)
+        sb.setFixedHeight(25)
         sb.setToolTip('Select the angle shift to apply to the plot of ROTOR_L')
         sb.valueChanged.connect(lambda value: self.angle_shift_L_changed(value))
         HBox.addWidget(sb)
+        self.dict_plot_widgets['ROTOR_B_L'].append(lab)
         self.dict_plot_widgets['ROTOR_B_L'].append(sb)
         
+        H.addStretch()
+        # The button to save the current plot as a PNG file
+        btn = QPushButton('Save Plot')
+        btn.setMinimumHeight(45)
+        btn.setMinimumWidth(80)
+        btn.setCheckable(False)
+        btn.clicked.connect(self.save_ROTOR_B_L)
+        H.addWidget(btn)
+        btn.setEnabled(False)    
+        self.dict_plot_widgets['ROTOR_B_L'].append(btn)
+        
         H.addStretch()        
-        etiqs, colors = ('X (radial)', 'Y (axial)', 'Z (tang)'), ('red', 'green', 'blue')
+        etiqs, colors = ('Radial (X)', 'Axial (Y)', 'tang (Z)'), ('red', 'green', 'blue')
         for etiq, lab, color in zip(etiqs, ('X', 'Y', 'Z'), colors):            
             btn = QCheckBox(etiq)
-            btn.toggle()
+            btn.setChecked(self.default_XYZ[lab])
             btn.setStyleSheet(f'color: {color}')            
             btn.stateChanged.connect(lambda state, label=lab: self.set_XYZ_B_L(state, label))
             H.addWidget(btn)
@@ -358,9 +398,27 @@ class MainWindow(QMainWindow):
         self.set_state('ROTOR_B_L', False)
 
 
+    def __init_tab_SIMUL_Plots(self):
+        """
+        Tab for displaying axial and radial components of simulated magnetic field
+        for different rotor-sensor distances.
+        """
+        self.simul_tab = QWidget()
+        self.tabs.addTab(self.simul_tab, "SIMUL Magnetic Field")
+
+        VBox = QVBoxLayout()
+        self.simul_tab.setLayout(VBox)
+
+        # Matplotlib canvas
+        self.canvas_S = MagneticPlotCanvas(self)
+        VBox.addWidget(self.canvas_S)
+        self.simul_toolbar = NavigationToolbar(self.canvas_S, self)
+        VBox.addWidget(self.simul_toolbar)
+
+        
     def set_state(self, key, state):
         '''
-        Enable or disable the widgets in the dictionary dico.
+        Enable or disable the widgets in the dictionary:
         '''
         for widget in self.dict_plot_widgets[key]:
             widget.setEnabled(state)
@@ -378,17 +436,12 @@ class MainWindow(QMainWindow):
         if self.curr_plt_info_B_L['func']: self.curr_plt_info_B_L['func']()
 
 
-    def convert_XYZ_B_to_tuple(self):
-        xyz = (self.XYZ_B['X'], self.XYZ_B['Y'], self.XYZ_B['Z'])
-        return xyz
-
-
-    def convert_XYZ_B_L_to_tuple(self):
-        xyz = (self.XYZ_B_L['X'], self.XYZ_B_L['Y'], self.XYZ_B_L['Z'])
-        return xyz
-
-
     def activate_plotButtons(self):
+        '''
+        Activate the plot buttons depending on the selected file (ROTOR or FREE)
+        '''
+        if self.ROTOR_B_txt_file is None : return
+        
         file = self.ROTOR_B_txt_file.name
         if 'ROTOR' in file:
             tag = 'ROTOR'
@@ -407,17 +460,17 @@ class MainWindow(QMainWindow):
     def ROTOR_B_reshape_magnetic_field(self, DATA, list_pos):
         '''
         Reshape the DATA of a ROTOR_B file to be a 2D array with shape (nb_angles, 1 + 3*nb_Zpos).
-        DATA is reshaped to be an array with lines formated like:
-            "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
+        DATA is reshaped to be an array with lines formatted like:
+            "# angle[°]; X1_mag [mT]; Y1_mag [mT]; Z1_mag [mT]; X2_mag [mT]; Y2_mag [mT]; Z2_mag [mT];..."
         instead of:
-            "# ZPos#; a[°]; X1_magn[mT]; Y1_magn[mT]; Z1_magn[mT]"
+            "# ZPos#; a[°]; X1_mag[mT]; Y1_mag[mT]; Z1_mag[mT]"
         '''
         if DATA.shape[1] == 5:
             nb_col = 1 + 3 * len(list_pos) #  angle col + (X , Y, Z) * nb_Zpo
             nb_row = int(len(DATA)/len(list_pos))
             newDATA = np.ndarray((nb_row, nb_col), dtype=float)
 
-            # copy angle columngit config pull.rebase false
+            # copy angle column
             newDATA[ :, 0] = DATA[ : nb_row, 1]
             # copy X,Y,Z for all Zpos:
             nb_val = 3 # the 3 components X, Y and Z
@@ -433,12 +486,12 @@ class MainWindow(QMainWindow):
         Reshape DATA to be a 2D array with shape (nb_angles, 1 + 3*nb_Zpos),
         and extract the magnetic field data for a given Z position.
         
-        DATA is already an array with lines formated like:
-            "# angle[°]; X1_magn [mT]; Y1_magn [mT]; Z1_magn [mT]; X2_magn [mT]; Y2_magn [mT]; Z2_magn [mT];..."
+        DATA is already an array with lines formatted like:
+            "# angle[°]; X1_mag [mT]; Y1_mag [mT]; Z1_mag [mT]; X2_mag [mT]; Y2_mag [mT]; Z2_mag [mT];..."
         '''
         
         i_Zpos = list_pos.index(f'{Zpos:03d}')
-        print(f'i_Zpos: {i_Zpos}', flush=True)
+        # JLC-debug: print(f'i_Zpos: {i_Zpos}', flush=True)
 
         # copy X,Y,Z for all Zpos:
         nb_val = 3                  # the 3 components X, Y and Z
@@ -462,6 +515,8 @@ class MainWindow(QMainWindow):
         '''
         To plot the ROTOR data.
         '''
+        if self.ROTOR_B_txt_file is None : return
+    
         DATA, list_pos = read_file_ROTOR(self.ROTOR_B_txt_file)
         DATA = self.ROTOR_B_reshape_magnetic_field(DATA, list_pos)
         
@@ -474,7 +529,7 @@ class MainWindow(QMainWindow):
         self.list_pos = list_pos
 
         # Check there is at least one component to plot
-        xyz = self.convert_XYZ_B_to_tuple()
+        xyz = tuple(self.XYZ_B.values())
         if sum(xyz) == 0:
             message = f'You must select at least one component X,Y, or Z'
             QMessageBox.warning(self, 'Warning', message)
@@ -482,13 +537,13 @@ class MainWindow(QMainWindow):
  
         # plot the data
         if colormap:
-            self.angles_B, self.ROTOR_B_magn_field = DATA[:, 0], DATA[:, 1:] 
+            self.angles_B, self.ROTOR_B_mag_field = DATA[:, 0], DATA[:, 1:] 
             self.curr_plt_info_B['func']  = lambda: self.plot_ROTOR(colormap=True)
             self.curr_plt_info_B['param'] = 'color'
             self.canvas_B.colormap_magField()
         else:
             # transpose DATA to extract the different variables:
-            self.angles_B, self.ROTOR_B_magn_field = DATA.T[0], DATA.T[1:]        
+            self.angles_B, self.ROTOR_B_mag_field = DATA.T[0], DATA.T[1:]        
             self.curr_plt_info_B['func'] = self.plot_ROTOR
             if fft:
                 self.curr_plt_info_B['param'] = 'fft'
@@ -503,13 +558,15 @@ class MainWindow(QMainWindow):
         '''
         Save the current plot of the ROTOR_B data in a PNG file.  
         '''
+        if self.ROTOR_B_txt_file is None : return
+        
         fig       = self.canvas_B.figure
         png_dir   = Path(self.ROTOR_B_data_dir, 'PNG')
         file_name = self.ROTOR_B_txt_file.name
         
         if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
         
-        XYZ = build_XYZ_name_with_tuple(self.convert_XYZ_B_to_tuple())
+        XYZ = build_XYZ_name_with_tuple(self.XYZ_B)
         
         param = self.curr_plt_info_B['param']
         assert param in ['fft', 'color', 'plot', 'free'], f"Unknown self.curr_plt_info_B['param']: <{param}>"
@@ -538,17 +595,19 @@ class MainWindow(QMainWindow):
         '''
         Save the current plot of the ROTOR_B_L data in a PNG file.  
         '''
+        if self.ROTOR_B_txt_file is None or self.ROTOR_L_txt_file is None: return       
+        
         fig         = self.canvas_B_L.figure
         data_dir_B  = self.ROTOR_B_data_dir.name
         data_dir_L  = self.ROTOR_L_data_dir.name
         file_name_B = self.ROTOR_B_txt_file.name
         file_name_L = self.ROTOR_L_txt_file.name
         
-        assert(data_dir_B == data_dir_L), f"ROTOR_B and ROTOR_L data directories must be the same: <{dir_name_B}> != <{dir_name_L}>"
+        assert(data_dir_B == data_dir_L), f"ROTOR_B and ROTOR_L data directories must be the same: <{data_dir_B}> != <{data_dir_L}>"
         png_dir   = Path(data_dir_B, 'PNG')
         if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
         
-        XYZ = build_XYZ_name_with_tuple(self.convert_XYZ_B_to_tuple())
+        XYZ = build_XYZ_name_with_tuple(self.XYZ_B_L)
         
         Zpos_B = self.ROTOR_B_sel_Zpos
         Zpos_L = self.ROTOR_L_sel_Zpos
@@ -569,13 +628,16 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.warning(self, 'Warning', 'No plot to save')
         return
-    
-    
+        
     def plot_FREE(self):
-    
+        '''
+        To plot the data from the FREE bench (.txt file)
+        '''
+        if self.ROTOR_B_txt_file is None : return
+        
         DATA = read_file_FREE(self.ROTOR_B_txt_file)
         # transpose DATA to extract the different variables:
-        self.time_values, self.ROTOR_B_magn_field = DATA.T[0], DATA.T[1:]            
+        self.time_values, self.ROTOR_B_mag_field = DATA.T[0], DATA.T[1:]            
 
         # plot the data
         self.canvas_B.plot_magField()
@@ -589,8 +651,14 @@ class MainWindow(QMainWindow):
         '''
         To plot the data from the Lille bench (.csv file) and the ROTOR data (.txt file)
         '''
+        
+        if self.ROTOR_B_txt_file is None or self.ROTOR_L_txt_file is None:
+            message = f'You must select both a ROTOR_B file and a ROTOR_L file to plot'
+            QMessageBox.warning(self, 'Warning', message)
+            return
+        
         # Get the ROTOR_B data from the file or from the cache:    
-        if self.last_ROTOR_B_txt_file.name != self.ROTOR_B_txt_file.name: 
+        if self.last_ROTOR_B_txt_file is None or self.last_ROTOR_B_txt_file.name != self.ROTOR_B_txt_file.name: 
             ROTOR_B_data, list_pos = read_file_ROTOR(self.ROTOR_B_txt_file)
             ROTOR_B_data = self.ROTOR_B_reshape_magnetic_field(ROTOR_B_data, list_pos)
             self.last_ROTOR_B_txt_file = self.ROTOR_B_txt_file
@@ -604,16 +672,16 @@ class MainWindow(QMainWindow):
         ROTOR_B_data = self.ROTOR_B_extract_magnetic_field(ROTOR_B_data, list_pos, Zpos)
         
         # Get the ROTOR_L data from the file or from the cache:
-        if self.ROTOR_L_txt_file is not None:
-            if self.last_ROTOR_L_txt_file.name != self.ROTOR_L_txt_file.name:            
-                ROTOR_L_data = read_file_ROTOR_L(self.ROTOR_L_txt_file)
-                self.last_ROTOR_L_txt_file = self.ROTOR_L_txt_file
-                self.last_ROTOR_L_data = ROTOR_L_data
-            else:
-                ROTOR_L_data = self.last_ROTOR_L_data
+        if self.last_ROTOR_L_txt_file.name != self.ROTOR_L_txt_file.name:            
+            ROTOR_L_data = read_file_ROTOR_L(self.ROTOR_L_txt_file)
+            self.last_ROTOR_L_txt_file = self.ROTOR_L_txt_file
+            self.last_ROTOR_L_data = ROTOR_L_data
+        else:
+            ROTOR_L_data = self.last_ROTOR_L_data
         
         # Extract the data of the ROTOR_L corresponding to the selected Zpos:
-        Zpos = self.ROTOR_L_Zpos.value()
+        self.ROTOR_L_sel_Zpos = self.ROTOR_L_Zpos.value()
+        Zpos = self.ROTOR_L_sel_Zpos
         try:
             i_range = np.where(ROTOR_L_data.T[2] == int(Zpos))
             ROTOR_L_data  = ROTOR_L_data[i_range]
@@ -632,11 +700,11 @@ class MainWindow(QMainWindow):
         ROTOR_L_data = new_ROTOR_L_data
 
         # transpose DATA to extract the different variables:
-        self.angles_B, self.ROTOR_B_magn_field = ROTOR_B_data.T[0], ROTOR_B_data.T[1:]       
-        self.angles_L, self.ROTOR_L_magn_field = ROTOR_L_data.T[1], ROTOR_L_data.T[3:]
+        self.angles_B, self.ROTOR_B_mag_field = ROTOR_B_data.T[0], ROTOR_B_data.T[1:]       
+        self.angles_L, self.ROTOR_L_mag_field = ROTOR_L_data.T[1], ROTOR_L_data.T[3:]
         
         # Check there is currently at least one component to plot
-        xyz = self.convert_XYZ_B_L_to_tuple()
+        xyz = tuple(self.XYZ_B_L.values())
         if sum(xyz) == 0:
             message = f'You must select at least one component X,Y, or Z'
             QMessageBox.warning(self, 'Warning', message)
@@ -649,103 +717,23 @@ class MainWindow(QMainWindow):
 
         return 
     
-            
-    def select_ROTOR_B_dir(self):
-        data_dir = QFileDialog.getExistingDirectory(self, "Directory for the *.txt ROTOR bench files")
-        if data_dir:
-            self.ROTOR_B_data_dir = Path(data_dir)
-            self.ROTOR_B_file_list_widget.setTitle(f'*.TXT files in <{data_dir}>')
-            self.update_ROTOR_B_file_list()
-            
-            # Replicate the data directory for the LILLE ROTOR files:
-            self.ROTOR_L_data_dir = Path(data_dir)
-            self.ROTOR_L_file_list_widget.setTitle(f'*.CSV files in <{data_dir}>')
-            self.update_ROTOR_L_file_list()
-
-
-    def select_ROTOR_L_dir(self):
-        data_dir = QFileDialog.getExistingDirectory(self, "Directory for the *.CSV LILLE ROTOR bench files")
-        if data_dir:
-            self.ROTOR_L_data_dir = Path(data_dir)
-            self.ROTOR_L_file_list_widget.setTitle(f'*.CSV files in <{data_dir}>')
-            self.update_ROTOR_L_file_list()
-
-
-    def update_ROTOR_B_file_list(self):
-        # Vider la liste existante
-        for i in reversed(range(self.ROTOR_B_file_list_layout.count())):
-            widget = self.ROTOR_B_file_list_layout.itemAt(i).widget()
-            if widget and not isinstance(widget, QPushButton):
-                widget.setParent(None)
-                del widget
-
-        # Ajouter une checkbox par fichier .txt
-        for file_path in sorted(self.ROTOR_B_data_dir.iterdir()):
-            if file_path.name.lower().endswith(".txt"):
-                checkbox = QRadioButton(file_path.name)
-                checkbox.toggled.connect(lambda state, path=file_path: self.process_ROTOR_B_file(path))
-                self.ROTOR_B_file_list_layout.addWidget(checkbox)
-        self.ROTOR_B_file_list_layout.addStretch()
-
-    def update_ROTOR_L_file_list(self):
-        # Vider la liste existante
-        for i in reversed(range(self.ROTOR_L_file_list_layout.count())):
-            widget = self.ROTOR_L_file_list_layout.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
-                del widget
-
-        # Ajouter une checkbox par fichier .csv
-        for file_path in sorted(self.ROTOR_L_data_dir.iterdir()):
-            if file_path.name.lower().endswith(".csv"):
-                rb = QRadioButton(file_path.name)
-                rb.pressed.connect(lambda path=file_path, btn=rb: self.process_ROTOR_L_file(path, btn))
-                self.ROTOR_L_file_list_layout.addWidget(rb)
-        self.ROTOR_L_file_list_layout.addStretch()
-    
-
-    def process_ROTOR_L_file(self, filepath, button):
-        '''
-        Process the selected ROTOR CSV file.
-        '''
+    def plot_SIMUL_components(self):
+        """
+        Plot axial and radial components from the selected SIMUL file in FilesTab.
+        """
+        if self.SIMUL_txt_file is None: return
         
-        if self.ROTOR_B_txt_file.name.startswith('ROTOR'):
-            button.setChecked(True)
-            self.ROTOR_L_txt_file = Path(filepath)    
-            self.tabs.setCurrentIndex(2)
-            self.set_state('ROTOR_B_L', True)
-            self.plot_ROTOR_B_L()
-        else:
-            message = f'Please select a ROTOR data file first'
-            QMessageBox.warning(self, 'Warning', message)
-            return
+        DATA, list_dist = read_file_SIMUL_ROTOR(self.SIMUL_txt_file)
+        if DATA is None:
+            return -1
         
-
-    def process_ROTOR_B_file(self, filepath):
-        
-        self.ROTOR_B_txt_file = Path(filepath)
-        #print(f'{self.ROTOR_B_txt_file=}, {filepath=}')
-        
-        file_name = self.ROTOR_B_txt_file.name
-        if file_name.startswith("FREE") or file_name.startswith("ROTOR"):
-            self.activate_plotButtons()
-            #self.button_LILLE_data_dir.setEnabled(True)
-            self.ROTOR_L_file_list_widget.setEnabled(True)
-            #self.tabs.setCurrentIndex(1)
-            if file_name.startswith("FREE"):
-                self.plot_FREE()
-                self.set_state('ROTOR_B_L', False)
-                self.set_state('FREE', True)
-            elif file_name.startswith("ROTOR"):
-                self.plot_ROTOR()
-                self.update_zpos_combo()
-                self.set_state('ROTOR_B_L', False)
-                self.set_state('ROTOR', True)
-        else:
-            message = f'File name <{file_name}> does not start with\nROTOR_... or FREE_... or is corrupted'
-            QMessageBox.warning(self, 'Warning', message)
-        
+        self.list_simul_distances = list_dist
+        # plot the data
+        # transpose DATA to extract the different variables:
+        self.angles_S, self.SIMUL_mag_field = DATA.T[0], DATA.T[1:]        
+        self.canvas_S.plot_SIMUL_magField()
         return
+
 
     def update_zpos_combo(self):
         '''
@@ -780,7 +768,7 @@ class MainWindow(QMainWindow):
         if selected_zpos == '': return
         
         self.ROTOR_B_sel_Zpos = int(selected_zpos)
-        print(f"Selected ROTOR_B Zpos: {self.ROTOR_B_sel_Zpos}")
+        # JLC_Debug: print(f"Selected ROTOR_B Zpos: {self.ROTOR_B_sel_Zpos}")
         
         # set the Zpos SpinBox for ROTOR_L to the selected value:
         if self.ROTOR_L_txt_file is not None:
@@ -794,7 +782,7 @@ class MainWindow(QMainWindow):
         Handle Zpos selection in the ROTOR_L data (LILLE rotor bench).
         '''
         self.ROTOR_L_sel_Zpos = value
-        print(f"Selected ROTOR_L Zpos: {self.ROTOR_L_sel_Zpos}")
+        # JLC_Debug: print(f"Selected ROTOR_L Zpos: {self.ROTOR_L_sel_Zpos}")
         
         self.plot_ROTOR_B_L()   
     
@@ -804,11 +792,62 @@ class MainWindow(QMainWindow):
         Handle angle shift selection in the ROTOR_L data (LILLE rotor bench).
         '''
         self.ROTOR_L_sel_Angle = value
-        print(f"Selected ROTOR_L angle shift: {self.ROTOR_L_sel_Angle}")
+        # JLC_Debug: print(f"Selected ROTOR_L angle shift: {self.ROTOR_L_sel_Angle}")
         
         # Update the plot with the new angle shift
         self.plot_ROTOR_B_L()   
         
+    def save_options_to_json(self):
+        """
+        Save the current menu Options choices to saved_options.json.
+        """
+        options = {
+            "disp_fileName": self.disp_fileName,
+            "default_XYZ": self.default_XYZ.copy()
+        }
+        try:
+            with open(self.saved_options_file, "w") as f:
+                json.dump(options, f, indent=4)
+            QMessageBox.information(self, "Options Saved", "Options have been saved to saved_options.json")
+        except Exception as e:
+            QMessageBox.warning(self, "Save Error", f"Could not save options:\n{e}")
+    
+    def load_options_from_json(self):
+        """
+        Load the menu Options choices from saved_options.json.
+        """
+        try:
+            with open(self.saved_options_file, "r") as f:
+                options = json.load(f)
+            self.disp_fileName = options.get("disp_fileName", True)
+            self.default_XYZ = options.get("default_XYZ", {'X': 1, 'Y': 0, 'Z': 1})
+            
+            self.XYZ_B = self.default_XYZ.copy()
+            self.XYZ_B_L = self.default_XYZ.copy()
+            
+        except Exception:
+            pass  # Ignore if file doesn't exist or is invalid
+
+        
+class FastStepSpinBox(QSpinBox):
+    """A subclass of QSpinbox that allows fast stepping when Shift is held."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_step = 1
+        self.fast_step = 5
+        self.setSingleStep(self.default_step)
+        self._fast_mode = False
+        
+    def setFastStep(self, step):
+        self.fast_step = step
+
+    def stepBy(self, steps):
+        modifiers = QApplication.keyboardModifiers()
+        # Use fast step if Shift is held, otherwise default
+        step = self.fast_step if modifiers & Qt.ShiftModifier else self.default_step
+        self.setSingleStep(step)
+        super().stepBy(steps)
+
     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
