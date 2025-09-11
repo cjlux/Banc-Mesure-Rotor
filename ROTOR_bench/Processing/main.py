@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.saved_options_file    = Path('ROTOR_bench/Processing/saved_options.json')
         self.XYZ_B                 = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B plots
         self.XYZ_B_L               = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for ROTOR_B_L plots
+        self.XYZ_SIMUL             = {'X': 1, 'Y': 1, 'Z':1} # Wether to plot the X,Y,Z components for SIMULATION plots
         self.default_XYZ           = {'X': 1, 'Y': 0, 'Z':1} # The default values for XYZ_B and XYZ_B_L
         self.dict_plot_widgets     = {}
         self.ROTOR_B_data_dir      = Path('_') # the directory containing the ROTOR data files
@@ -44,6 +45,7 @@ class MainWindow(QMainWindow):
         self.angles_L              = None      # The angles of the LILLE data file
         self.curr_plt_info_B       = {}        # Dictionary of infos on the current plot for the ROTOR_B tab
         self.curr_plt_info_B_L     = {}        # Dictionary of infos on the current plot for the ROTOR_B_L tab
+        self.curr_plt_info_SIMUL   = {}        # Dictionary of infos on the current plot for the SIMUL tab
         self.time_values           = None      # The time values of the FREE data file
         self.list_pos              = None      # The list of the Z positions found in the ROTOR data file
         self.list_simul_distances  = []        # The list of distances found in the SIMUL data file
@@ -405,9 +407,25 @@ class MainWindow(QMainWindow):
         """
         self.simul_tab = QWidget()
         self.tabs.addTab(self.simul_tab, "SIMUL Magnetic Field")
+        
+        self.dict_plot_widgets['SIMUL'] = []
 
         VBox = QVBoxLayout()
         self.simul_tab.setLayout(VBox)
+
+        H = QHBoxLayout()
+        H.addStretch()
+
+        etiqs, colors = ('Radial (X)', 'Axial (Y)', 'tang. (Z)'), ('red', 'green', 'blue')
+        for etiq, lab, color in zip(etiqs, ('X', 'Y', 'Z'), colors):
+            btn = QCheckBox(etiq)
+            btn.setChecked(self.default_XYZ[lab])
+            btn.setStyleSheet(f'color: {color}')
+            btn.stateChanged.connect(lambda state, label=lab: self.set_XYZ_SIMUL(state, label))
+            self.dict_plot_widgets['SIMUL'].append(btn)
+            btn.setEnabled(True) 
+            H.addWidget(btn)
+        VBox.addLayout(H)
 
         # Matplotlib canvas
         self.canvas_S = MagneticPlotCanvas(self)
@@ -426,15 +444,15 @@ class MainWindow(QMainWindow):
                 
     def set_XYZ_B(self, state, lab):
         self.XYZ_B[lab] = state//2
-        #print(f'{self.XYZ=}')
         if self.curr_plt_info_B['func']: self.curr_plt_info_B['func']()
-        
-        
+                
     def set_XYZ_B_L(self, state, lab):
         self.XYZ_B_L[lab] = state//2
-        #print(f'{self.XYZ=}')
         if self.curr_plt_info_B_L['func']: self.curr_plt_info_B_L['func']()
 
+    def set_XYZ_SIMUL(self, state, lab):
+        self.XYZ_SIMUL[lab] = state//2
+        if self.curr_plt_info_SIMUL['func']: self.curr_plt_info_SIMUL['func']()
 
     def activate_plotButtons(self):
         '''
@@ -726,12 +744,22 @@ class MainWindow(QMainWindow):
         DATA, list_dist = read_file_SIMUL_ROTOR(self.SIMUL_txt_file)
         if DATA is None:
             return -1
-        
+                
+        # Check there is currently at least one component to plot
+        xyz = tuple(self.XYZ_SIMUL.values())
+        if sum(xyz) == 0:
+            message = f'You must select at least one component X,Y, or Z'
+            QMessageBox.warning(self, 'Warning', message)
+            return
+
         self.list_simul_distances = list_dist
         # plot the data
         # transpose DATA to extract the different variables:
         self.angles_S, self.SIMUL_mag_field = DATA.T[0], DATA.T[1:]        
         self.canvas_S.plot_SIMUL_magField()
+        
+        self.curr_plt_info_SIMUL['func'] = self.canvas_S.plot_SIMUL_magField
+        
         return
 
 
@@ -822,8 +850,9 @@ class MainWindow(QMainWindow):
             self.disp_fileName = options.get("disp_fileName", True)
             self.default_XYZ = options.get("default_XYZ", {'X': 1, 'Y': 0, 'Z': 1})
             
-            self.XYZ_B = self.default_XYZ.copy()
-            self.XYZ_B_L = self.default_XYZ.copy()
+            self.XYZ_B     = self.default_XYZ.copy()
+            self.XYZ_B_L   = self.default_XYZ.copy()
+            self.XYZ_SIMUL = self.default_XYZ.copy()
             
         except Exception:
             pass  # Ignore if file doesn't exist or is invalid

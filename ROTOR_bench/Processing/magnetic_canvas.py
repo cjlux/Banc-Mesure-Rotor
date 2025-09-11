@@ -170,6 +170,7 @@ class MagneticPlotCanvas(FigureCanvas):
         nb_Zpos    = len(self.main.list_pos)
         _, nb_comp = self.main.ROTOR_B_mag_field.shape
         assert(nb_comp // 3 == nb_Zpos)
+        
         xyz = tuple(self.main.XYZ_B.values())
 
         self.fig.clear()
@@ -305,6 +306,13 @@ class MagneticPlotCanvas(FigureCanvas):
         self.fig.clear()
         self.fig.subplots_adjust(top=0.9, bottom=0.065, left=0.06, right=0.89, hspace=0.2, wspace=0.2)
         
+        # Check how many magnetic field components to plot:
+        xyz = tuple(self.main.XYZ_SIMUL.values())
+        nb_plot = sum(xyz)
+        if nb_plot == 0: 
+            self.draw()
+            return
+
         dir_name   = self.main.SIMUL_data_dir
         file_name  = self.main.SIMUL_txt_file
         nb_dist    = len(self.main.list_simul_distances)
@@ -312,6 +320,11 @@ class MagneticPlotCanvas(FigureCanvas):
         self.ax = self.fig.subplots(nb_dist, 1, sharex=True, sharey=True)
         fig, axes = self.fig, self.ax
         if nb_dist ==1 : axes = [axes]
+        
+        # compute the number of componets of the magnetic field that have been read in the file:
+        nb_comp_magn_field = self.main.SIMUL_mag_field.shape[0]//nb_dist
+        # we expect 2 or 3 components: radial (X), tangential (Z) and possibly axial (Y)
+        assert(nb_comp_magn_field in (2,3))   
         
         angles, magn_field, list_dist = self.main.angles_S, self.main.SIMUL_mag_field, self.main.list_simul_distances
         
@@ -322,13 +335,25 @@ class MagneticPlotCanvas(FigureCanvas):
         magn_max, magn_min = magn_field.max(), magn_field.min()                
                        
         for n, (ax, dist) in enumerate(zip(axes, list_dist)):  
-            X, Z = magn_field[2*n:2*n+2]  
+            Y = None
+            if nb_comp_magn_field == 2:
+                X, Z = magn_field[2*n:2*n+2]  
+            elif nb_comp_magn_field == 3:
+                X, Z, Y = magn_field[3*n:3*n+3]
+                
             title = ""
 
-            ax.plot(angles, X, '-or', markersize=0.5, label='radial (X)')
-            ax.plot(angles, Z, '-ob', markersize=0.5, label='tang. (Z)')
+            if xyz[0]: ax.plot(angles, X, '-or', markersize=0.5, label='radial (X)')
+            if xyz[1]: 
+                if Y is not None:
+                    ax.plot(angles, Y, '-og', markersize=0.5, label='axial (Y)')
+                else:
+                    ax.plot(np.NaN, np.NaN, '-og', markersize=0.5, label='axial (Y)')
+                    print(f"Warning: no axial (Y) component in the SIMUL data file <{self.main.SIMUL_txt_file.name}>.")
+            
+            if xyz[2]:  ax.plot(angles, Z, '-ob', markersize=0.5, label='tang. (Z)')
                 
-            title += f"Magnetic field at distance #{n+1}: {int(dist):3d} mm"
+            title += f"Simulated Magnetic Field at distance #{n+1}: {int(dist):3d} mm from rotor surface"
             ax.set_title(title, loc='left', fontsize=9)
             if n == 0: ax.set_ylabel("[mT]")
             ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
