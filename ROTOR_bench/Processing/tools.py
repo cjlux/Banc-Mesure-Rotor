@@ -59,13 +59,16 @@ def read_file_ROTOR(file_path):
     # process the name of the file <ROTOR_YYYY-MM-DD_hh_mm_ss_ROTSTEP-aa_ZZZ_ZZZ-...txt>
     # Example: <ROTOR_2024-07-09-13-59_WDIST-12_ROTSTEP-4.8_000_030_060_090_1of1.txt
     file_name = Path(file_path).name
-    list_pos = file_name.replace('.txt', '').split('_')[4:-1]
-    
+    if file_name.startswith('ROTOR_'):
+        list_pos = file_name.replace('.txt', '').split('_')[4:-1]
+    else:
+        list_pos = []
+        
     # now read the sensor data lines:
     DATA = []
     for line in lines:
-      # skip comments:
-      if line[0] == "#": continue
+      # skip comments or empty lines:
+      if line[0] == "#" or line == '\n': continue
       
       # transform strings into numbers:
       data = [float(x) for x in line.strip().split(';')]

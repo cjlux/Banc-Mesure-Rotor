@@ -5,4 +5,7 @@ trash/
 sandbox/
 Sandbox/
 */Sandbox/
-
+octave_workspace/
+*.pyc
+*.pyo
+*.pyd
