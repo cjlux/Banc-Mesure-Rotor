@@ -39,6 +39,7 @@ class FilesTab(QWidget):
         
         btn = QPushButton("Select ROTOR data directory")
         btn.setMinimumHeight(40)
+        btn.setStyleSheet("background-color: #eee8aa;")  # Darker ivory
         btn.clicked.connect(self.select_ROTOR_B_dir)
         H.addWidget(btn)
         
@@ -47,6 +48,7 @@ class FilesTab(QWidget):
         btn.setFixedWidth(40)
         btn.setIconSize(QSize(30,30))
         btn.setToolTip('Copy the ROTOR_B directory path as the LILLE ROTOR directory')
+        btn.setStyleSheet("background-color: #ccffcc;")  # Light green
         btn.clicked.connect(lambda: self.dupplicate_ROTOR_dir(source='ROTOR_B', target='LILLE'))
         H.addWidget(btn)
         V.addLayout(H)
@@ -65,16 +67,17 @@ class FilesTab(QWidget):
         H = QHBoxLayout()
         
         self.button_L_data_dir = QPushButton("Select LILLE rotor bench directory")
-        btn = self.button_L_data_dir
-        btn.setMinimumHeight(40)
-        btn.clicked.connect(self.select_ROTOR_L_dir)
-        H.addWidget(btn)
+        self.button_L_data_dir.setMinimumHeight(40)
+        self.button_L_data_dir.setStyleSheet("background-color: #eee8aa;")  # Darker ivory
+        self.button_L_data_dir.clicked.connect(self.select_ROTOR_L_dir)
+        H.addWidget(self.button_L_data_dir)
         
         btn = QPushButton(QIcon('ROTOR_bench/Processing/icon/rightDbleArrow-2.png'), '')
         btn.setMinimumHeight(40)
         btn.setFixedWidth(40)
         btn.setIconSize(QSize(30,30))
         btn.setToolTip('Copy the LILLE ROTOR directory path as the SIMULATION rotor directory')
+        btn.setStyleSheet("background-color: #ccffcc;")  # Light green
         btn.clicked.connect(lambda: self.dupplicate_ROTOR_dir(source='LILLE', target='SIMUL'))
         H.addWidget(btn)
         V.addLayout(H)
@@ -92,10 +95,10 @@ class FilesTab(QWidget):
         V = QVBoxLayout()
         
         self.button_S_data_dir = QPushButton("Select SIMULATION rotor directory")
-        btn = self.button_S_data_dir
-        btn.setMinimumHeight(40)
-        btn.clicked.connect(self.select_SIMUL_dir)
-        V.addWidget(btn)
+        self.button_S_data_dir.setMinimumHeight(40)
+        self.button_S_data_dir.setStyleSheet("background-color: #eee8aa;")  # Darker ivory
+        self.button_S_data_dir.clicked.connect(self.select_SIMUL_dir)
+        V.addWidget(self.button_S_data_dir)
         
         self.ROTOR_S_file_list_widget = QGroupBox("SIMULATION rotor *.TXT files")
         self.ROTOR_S_file_list_layout = QVBoxLayout(self.ROTOR_S_file_list_widget)
@@ -383,4 +386,3 @@ class FilesTab(QWidget):
         else:
             message = f'Please select a Bsimu...txt file'
             QMessageBox.warning(self, 'Warning', message)
-            

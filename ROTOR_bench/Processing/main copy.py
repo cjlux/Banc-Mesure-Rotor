@@ -9,11 +9,8 @@ import numpy as np
 import json
 
 from PyQt5.QtWidgets import (QApplication, QTabWidget, QMainWindow, QCheckBox, 
-                             QMessageBox, QAction, QWidgetAction, QCheckBox, QColorDialog, QMenu, QWidget, QHBoxLayout, QVBoxLayout)
+                             QMessageBox, QAction, QWidgetAction, QCheckBox)
 from PyQt5.QtWidgets import QAction
-from PyQt5.QtWidgets import QLabel, QPushButton
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
 
 from files_tab import FilesTab
 from RotorBdxTab import RotorBdxTab
@@ -21,7 +18,6 @@ from RotorSimulTab import RotorSimulTab
 from RotorLilleTab import RotorLilleTab
 from RotorSuperposed import RotorSuperposedTab
 from WebBrowserTab import WebBrowserTab
-from magnetic_canvas import MagneticPlotCanvas
 
 class MainWindow(QMainWindow):
     ''' 
@@ -147,50 +143,6 @@ class MainWindow(QMainWindow):
         btn_Z.toggled.connect(lambda state, button=btn_Z: self.on_disp_XYZ_component(button, Z=state))
         disp_Z_action.setDefaultWidget(btn_Z)
         components_menu.addAction(disp_Z_action)
-
-        # Submenu for color selection
-        color_menu = QMenu("Magnetic field colors", self)
-
-        # Helper to create color actions with colored labels
-        def add_color_action(label, canvas_attr, comp):
-            widget_action = QWidgetAction(self)
-            color_label = QLabel(label)
-            color_label.setStyleSheet(f"color: {getattr(MagneticPlotCanvas, canvas_attr)[comp]};")
-            color_label.setMinimumWidth(140)
-            btn = QPushButton("Change")
-            btn.setMaximumWidth(70)
-            def choose_color():
-                dialog_title = f"Choose color for {label}"
-                initial_color = QColor(getattr(MagneticPlotCanvas, canvas_attr)[comp])
-                color = QColorDialog.getColor(initial_color, self, dialog_title)
-                if color.isValid():
-                    getattr(MagneticPlotCanvas, canvas_attr)[comp] = color.name()
-                    color_label.setStyleSheet(f"color: {color.name()};")
-                    self.redraw_all_canvases()
-            btn.clicked.connect(choose_color)
-            hbox = QHBoxLayout()
-            hbox.addWidget(color_label)
-            hbox.addWidget(btn)
-            hbox.setContentsMargins(0, 0, 0, 0)
-            widget = QWidget()
-            widget.setLayout(hbox)
-            widget_action.setDefaultWidget(widget)
-            color_menu.addAction(widget_action)
-
-        # ROTOR Bdx colors
-        add_color_action("ROTOR_Bdx X color", "colors_B", "X")
-        add_color_action("ROTOR_Bdx Y color", "colors_B", "Y")
-        add_color_action("ROTOR_Bdx Z color", "colors_B", "Z")
-        # ROTOR LILLE colors
-        add_color_action("ROTOR_LILLE X color", "colors_L", "X")
-        add_color_action("ROTOR_LILLE Y color", "colors_L", "Y")
-        add_color_action("ROTOR_LILLE Z color", "colors_L", "Z")
-        # SIMULATION colors
-        add_color_action("SIMULATION X color", "colors_S", "X")
-        add_color_action("SIMULATION Y color", "colors_S", "Y")
-        add_color_action("SIMULATION Z color", "colors_S", "Z")
-
-        options_menu.addMenu(color_menu)
 
         # "Save options" action
         save_options_action = QAction("Save options", self)
@@ -337,10 +289,7 @@ class MainWindow(QMainWindow):
         '''
         options = {
             "disp_fileName": self.disp_fileName,
-            "default_XYZ": self.default_XYZ.copy(),
-            "colors_B": MagneticPlotCanvas.colors_B.copy(),
-            "colors_L": MagneticPlotCanvas.colors_L.copy(),
-            "colors_S": MagneticPlotCanvas.colors_S.copy()
+            "default_XYZ": self.default_XYZ.copy()
         }
         try:
             with open(self.saved_options_file, "w") as f:
@@ -348,7 +297,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Options Saved", "Options have been saved to saved_options.json")
         except Exception as e:
             QMessageBox.warning(self, "Save Error", f"Could not save options:\n{e}")
-
+    
     def load_options_from_json(self):
         '''
         Load the menu Options choices from saved_options.json.
@@ -356,39 +305,15 @@ class MainWindow(QMainWindow):
         try:
             with open(self.saved_options_file, "r") as f:
                 options = json.load(f)
+                
             self.disp_fileName = options.get("disp_fileName", True)
             self.default_XYZ   = options.get("default_XYZ", {'X': 1, 'Y': 0, 'Z': 1})
-            # Load colors if present
-            if "colors_B" in options:
-                MagneticPlotCanvas.colors_B.update(options["colors_B"])
-            if "colors_L" in options:
-                MagneticPlotCanvas.colors_L.update(options["colors_L"])
-            if "colors_S" in options:
-                MagneticPlotCanvas.colors_S.update(options["colors_S"])
+            
+           
         except Exception:
             pass  # Ignore if file doesn't exist or is invalid
 
-    def redraw_all_canvases(self):
-        """
-        Redraw all MagneticPlotCanvas instances in your tabs.
-        """
-        try:
-            self.rotor_bdx_tab.canvas_B.plot_magField_at_positions()
-        except Exception:
-            pass
-        try:
-            self.rotor_lille_tab.canvas_L.plot_ROTOR_L_for_Zpos()
-        except Exception:
-            pass
-        try:
-            self.simul_tab.canvas_S.plot_SIMUL_magField()
-        except Exception:
-            pass
-        try:
-            self.all_fields_tab.canvas_B_L.plot_ROTOR_B_L_S_for_Zpos()
-        except Exception:
-            pass
-
+    
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
