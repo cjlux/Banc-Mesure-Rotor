@@ -9,10 +9,8 @@ import numpy as np
 import json
 
 from PyQt5.QtWidgets import (QApplication, QTabWidget, QMainWindow, QCheckBox, 
-                             QMessageBox, QAction, QWidgetAction, QCheckBox, QColorDialog, QMenu, QWidget, QHBoxLayout, QVBoxLayout)
-from PyQt5.QtWidgets import QAction
+                             QMessageBox, QAction, QWidgetAction, QColorDialog, QMenu, QWidget, QHBoxLayout)
 from PyQt5.QtWidgets import QLabel, QPushButton
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 
 from files_tab import FilesTab
@@ -218,19 +216,21 @@ class MainWindow(QMainWindow):
         '''
         Slot to handle the toggling of the button.
         '''
-        message = f'You must select at least one component X,Y, or Z'
+        message = 'You must select at least one component X,Y, or Z'
         if X is not None: 
             if X + self.default_XYZ['Y'] + self.default_XYZ['Z'] == 0:
                 QMessageBox.warning(self, 'Warning', message)            
                 w.setChecked(True)
             else:
                 self.default_XYZ['X'] = int(X)
+                
         if Y is not None: 
             if Y + self.default_XYZ['X'] + self.default_XYZ['Z'] == 0:
                 QMessageBox.warning(self, 'Warning', message)            
                 w.setChecked(True)
             else:
                 self.default_XYZ['Y'] = int(Y)
+                
         if Z is not None: 
             if Z + self.default_XYZ['X'] + self.default_XYZ['Y'] == 0:
                 QMessageBox.warning(self, 'Warning', message)            
@@ -254,7 +254,8 @@ class MainWindow(QMainWindow):
                 rel_dir = dir.relative_to(Path.cwd().parent)
                 OK = QMessageBox.question(self, 'Warning', f'Do you want to delete the directory:\n<{rel_dir}> ?')
                 if OK == QMessageBox.Yes:
-                    if dir.exists(): rmtree(dir)
+                    if dir.exists(): 
+                        rmtree(dir)
                     print(f'Deleted directory: {dir}')
         else:
             QMessageBox.information(self, 'Info', 'No PNG directories found')
@@ -309,7 +310,8 @@ class MainWindow(QMainWindow):
         i_Zpos = -1
         for item in list_pos:
             i_Zpos += 1
-            if int(item) == Zpos: break
+            if int(item) == Zpos:
+                break
         assert(i_Zpos >= 0)
         
         # copy X,Y,Z for all Zpos:

@@ -8,7 +8,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from magnetic_canvas import MagneticPlotCanvas
 from FastSpinBox import FastStepSpinBox
 
-from tools import read_file_ROTOR_L, build_XYZ_name_with_tuple
+from tools import build_XYZ_name_with_tuple
 
 class RotorLilleTab(QWidget):
     '''
@@ -24,10 +24,11 @@ class RotorLilleTab(QWidget):
         checkboxes for selecting components, and a matplotlib canvas for visualization.
         '''
         super().__init__()
-        self.main = main_window  # Reference to MainWindow for shared state and callbacks
-        self.XYZ  = main_window.default_XYZ  # Wether to plot the X,Y,Z components for ROTOR_B plots
         
-        self.ROTOR_L_sel_Zpos = 0  # The Zpos selected in the Lille ROTOR data
+        self.main = main_window                     # Reference to MainWindow for shared state and callbacks
+        self.XYZ  = main_window.default_XYZ.copy() # Wether to plot the X,Y,Z components for ROTOR_B plots
+        
+        self.ROTOR_L_sel_Zpos = 0                   # The Zpos selected in the Lille ROTOR data
         
         # Main layout
         VBox = QVBoxLayout()

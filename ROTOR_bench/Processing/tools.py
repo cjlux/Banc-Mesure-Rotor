@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.fft import rfft
-import sys, os
+import os
 from os.path import join
 from pathlib import Path
 from stat import ST_CTIME
@@ -13,9 +13,11 @@ from stat import ST_CTIME
 def build_XYZ_name_with_tuple(xyz:tuple|dict):
     labels = ("X", "Y", "Z")
     label = ""
-    if isinstance(xyz, dict): xyz = tuple(xyz.values())
+    if isinstance(xyz, dict):
+        xyz = tuple(xyz.values())
     for x, lab in zip(xyz, labels):
-        if x: label+= lab
+        if x: 
+            label+= lab
     return label
 
 def get_files_by_date(directory, PREFIX):
@@ -39,7 +41,8 @@ def read_file_SIMUL_ROTOR(file_path):
         DATA = []
         for line in lines:
             # skip comments:
-            if line[0] == "#": continue            
+            if line[0] == "#":
+                continue            
             # transform strings into numbers:
             data = [float(x) for x in line.strip().split()]
             DATA.append(data)
@@ -68,7 +71,8 @@ def read_file_ROTOR(file_path):
     DATA = []
     for line in lines:
       # skip comments or empty lines:
-      if line[0] == "#" or line == '\n': continue
+      if line[0] == "#" or line == '\n':
+          continue
       
       # transform strings into numbers:
       data = [float(x) for x in line.strip().split(';')]
@@ -92,7 +96,8 @@ def read_file_ROTOR_L(file_path):
     DATA = []
     for line in lines:
         # skip comments:
-        if line[0] == "#": continue
+        if line[0] == "#":
+            continue
         line = line.replace(',','.')
         try:
             r, phi, z, Bradial, Btang, Baxial = map(float, line.split(';'))
@@ -111,7 +116,8 @@ def read_file_FREE(file_path):
     DATA = []
     for line in lines:
       # skip comments:
-      if line == '\n' or line[0] == "#": continue
+      if line == '\n' or line[0] == "#":
+          continue
       # transform strings into numbers:
       data = [float(x) for x in line.strip().split(';')]
       DATA.append(data)
@@ -138,27 +144,33 @@ def plot_magField(angle, field, filename, figsize=(8,6), stat=None, show=True, x
 
     X, Y, Z = field
     sigmaX, sigmaY, sigmaZ = X.std(), Y.std(), Z.std()
-    if stat == None:
+    if stat is None:
         if sigmaX > 0.5 or sigmaY > 0.5 or sigmaZ > 0.5:
             stat = False
         else:
             stat = True
     
     fig, ax = plt.subplots(1, 1, figsize=figsize)
-    fig.suptitle(f"Rotor magnetic field", size=16)
+    fig.suptitle("Rotor magnetic field", size=16)
     fig.text(0.5, .92, f"from <{filename}>", size=10, color="gray",
                 horizontalalignment='center')
-    if xyz[0]: ax.plot(angle, X, '-or', markersize=0.5, label='X')
-    if xyz[1]: ax.plot(angle, Y, '-og', markersize=0.5, label='Y')
-    if xyz[2]: ax.plot(angle, Z, '-ob', markersize=0.5, label='Z')
+    if xyz[0]:
+        ax.plot(angle, X, '-or', markersize=0.5, label='X')
+    if xyz[1]:
+        ax.plot(angle, Y, '-og', markersize=0.5, label='Y')
+    if xyz[2]:
+        ax.plot(angle, Z, '-ob', markersize=0.5, label='Z')
     
     ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
     ymean = np.array(ax.get_ylim()).mean()
     yp2p  = np.ptp(np.array(ax.get_ylim()))
     if stat:
-        if xyz[0]: ax.text(1.07*angle.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
-        if xyz[0]: ax.text(1.07*angle.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
-        if xyz[0]: ax.text(1.07*angle.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
+        if xyz[0]:
+            ax.text(1.07*angle.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
+        if xyz[0]:
+            ax.text(1.07*angle.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
+        if xyz[0]:
+            ax.text(1.07*angle.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
     
     ax.minorticks_on()
     ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
@@ -168,12 +180,15 @@ def plot_magField(angle, field, filename, figsize=(8,6), stat=None, show=True, x
     plt.subplots_adjust(right=0.84)
     
     png_dir = dirname.replace('TXT', 'PNG')
-    if not os.path.exists(png_dir): os.mkdir(png_dir)
+    if not os.path.exists(png_dir):
+        os.mkdir(png_dir)
     XYZ = build_XYZ_name_with_tuple(xyz)
     fig_path = os.path.join(png_dir, filename.replace('.txt', f'_FREE_{XYZ}.png'))
-    if show == False: print(fig_path)
+    if not show:
+        print(fig_path)
     plt.savefig(fig_path)
-    if show: plt.show()
+    if show:
+        plt.show()
     plt.close()
     return 0
 
@@ -192,13 +207,16 @@ def plot_magField_at_positions(A, field, list_pos, filename, figsize=(8,6), mode
 
     # Check how many magnetic field components to plot:
     nb_plot = sum(xyz)
-    if nb_plot == 0: return
+    if nb_plot == 0:
+        return
 
     try:
         fig, axes = plt.subplots(nb_Zpos, 1, figsize=figsize, sharex=True, sharey=True)
-        if nb_Zpos ==1 : axes = [axes]
+        if nb_Zpos == 1:
+            axes = [axes]
         suptitle = ""
-        if fft: suptitle += "Spectrum of "
+        if fft:
+            suptitle += "Spectrum of "
         fig.suptitle(suptitle + "Rotor magnetic field", size=16)
         fig.text(0.5, .88, f"from <{filename}>", size=9, color="gray",
                     horizontalalignment='center')
@@ -232,36 +250,50 @@ def plot_magField_at_positions(A, field, list_pos, filename, figsize=(8,6), mode
                         baseline.set_color('grey')
                         baseline.set_linewidth(0.5)
             else:
-                if xyz[0]: ax.plot(A, X, '-or', markersize=0.5, label='X')
-                if xyz[1]: ax.plot(A, Y, '-og', markersize=0.5, label='Y')
-                if xyz[2]: ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
+                if xyz[0]:
+                    ax.plot(A, X, '-or', markersize=0.5, label='X')
+                if xyz[1]:
+                    ax.plot(A, Y, '-og', markersize=0.5, label='Y')
+                if xyz[2]:
+                    ax.plot(A, Z, '-ob', markersize=0.5, label='Z')
                 
             title += f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm"
             ax.set_title(title, loc='left', fontsize=9)
             if n == 0: 
-                if fft: ax.set_ylabel("Normalized PSD")
-                else:   ax.set_ylabel("[mT]")
+                if fft:
+                    ax.set_ylabel("Normalized PSD")
+                else:
+                    ax.set_ylabel("[mT]")
             ax.legend(bbox_to_anchor=(1.15, 1), loc="upper right")
             ax.minorticks_on()
             ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
             ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
-            if fft: ax.set_ylim(0,1.1)
-            else:   ax.set_ylim(1.1*magn_min, 1.1*magn_max)
+            if fft:
+                ax.set_ylim(0,1.1)
+            else:
+                ax.set_ylim(1.1*magn_min, 1.1*magn_max)
 
             if n == nb_Zpos-1:
-                if fft: ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
-                else:   ax.set_xlabel("rotor angle [°]")
+                if fft:
+                    ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
+                else:
+                    ax.set_xlabel("rotor angle [°]")
             
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
         
         png_dir = dirname.replace('TXT', 'PNG')
-        if not os.path.exists(png_dir): os.mkdir(png_dir)
+        if not os.path.exists(png_dir):
+            os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
-        if fft: fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PSD_{XYZ}.png'))
-        else:   fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
-        if show == False: print(fig_path)
+        if fft:
+            fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PSD_{XYZ}.png'))
+        else:
+            fig_path = os.path.join(png_dir, filename.replace('.txt', f'_PLOT_{XYZ}.png'))
+        if not show:
+            print(fig_path)
         plt.savefig(fig_path)
-        if show: plt.show()
+        if show:
+            plt.show()
         plt.close()
         return 0
     
@@ -285,12 +317,14 @@ def colormap_magField(A, field, list_pos, filename,
     
     # Check how many magnetic field components to plot:
     nb_plot = sum(xyz)
-    if nb_plot == 0: return
+    if nb_plot == 0:
+        return
 
     try:
         fig, axes = plt.subplots(nb_plot, 1, figsize=figsize, sharex=True)
-        if nb_plot == 1: axes = [axes]
-        fig.suptitle(f"Rotor magnetic field", size=16)
+        if nb_plot == 1:
+            axes = [axes]
+        fig.suptitle("Rotor magnetic field", size=16)
         fig.text(0.5, .88, f"from <{filename}>", size=9, color="gray",
                     horizontalalignment='center')
         
@@ -337,12 +371,15 @@ def colormap_magField(A, field, list_pos, filename,
         plt.subplots_adjust(hspace=0.37, right=0.87, top=0.8, bottom=0.12)
 
         png_dir = dirname.replace('TXT', 'PNG')
-        if not os.path.exists(png_dir): os.mkdir(png_dir)
+        if not os.path.exists(png_dir):
+            os.mkdir(png_dir)
         XYZ = build_XYZ_name_with_tuple(xyz)
         fig_path = os.path.join(png_dir, filename.replace('.txt', f'_CMAP_{XYZ}.png'))
-        if show == False: print(fig_path)
+        if not show:
+            print(fig_path)
         plt.savefig(fig_path)
-        if show: plt.show()
+        if show:
+            plt.show()
         plt.close()
         return 0
     
@@ -366,19 +403,19 @@ def plot_ROTOR_CSV_magField_at_positions(angles1, field1, Zpos, filename1,
     
     # Check how many magnetic field components to plot:
     nb_plot = sum(xyz)
-    if nb_plot == 0: return
+    if nb_plot == 0:
+        return
 
-    if not figsize: figsize = (11, 8)
+    if not figsize:
+        figsize = (11, 8)
     fig, axes = plt.subplots(nb_plot, 1, figsize=figsize, sharex=True, sharey=False)
-    if nb_plot ==1 : axes = [axes]
+    if nb_plot ==1 :
+        axes = [axes]
     suptitle = ""
     fig.suptitle(suptitle + "Rotor magnetic field", size=16)
     fig.text(0.5, .90, f"from <{filename_ROTOR}>\n and <{filename_CSV}>", size=9, color="gray",
                 horizontalalignment='center')
-    
-    magn_max = max(field1.max(), field2.max())
-    magn_min = min(field1.min(), field2.min())
-                   
+                       
     X, Y, Z = field1  
     R, T, A = field2 * 1e3 # Lille rotor bench: Radial, Tangent, Axial are in Tesla
     
@@ -416,13 +453,14 @@ def plot_ROTOR_CSV_magField_at_positions(angles1, field1, Zpos, filename1,
     
     png_dir = Path(data_dir, 'PNG')
     print(f'{png_dir=}')
-    if not png_dir.exists(): png_dir.mkdir()
+    if not png_dir.exists():
+        png_dir.mkdir()
     
-    XYZ = build_XYZ_name_with_tuple(xyz)
     fig_file_name = filename_ROTOR + '__' + filename_CSV + '__.png'
     fig_path = Path(png_dir, fig_file_name)
     print(f'Image file saved as <{fig_path.name}> in <{fig_path.parent}')
     plt.savefig(fig_path)
-    if show: plt.show()
+    if show:
+        plt.show()
     plt.close()
     return 0

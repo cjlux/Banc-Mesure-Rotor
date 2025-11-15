@@ -25,7 +25,7 @@ class RotorBdxTab(QWidget):
         super().__init__()
         
         self.main = main_window              # Reference to MainWindow for shared state and callbacks
-        self.XYZ  = main_window.default_XYZ  # Wether to plot the X,Y,Z components for ROTOR_B plots
+        self.XYZ  = main_window.default_XYZ.copy()  # Wether to plot the X,Y,Z components for ROTOR_B plots
         self.btn_free_stat  = None           # the Checkbox button to display or not statistics for FREE data
         self.list_pos       = None           # List of Z positions for ROTOR Bdx found when reading data file
         self.canvas         = None           # The MagneticPlotCanvas for plotting
@@ -108,7 +108,8 @@ class RotorBdxTab(QWidget):
         Set which components (X, Y, Z) to plot for ROTOR_B and FREE data and replots the data.
         '''
         self.XYZ[lab] = state//2
-        if self.main.curr_plt_info_B['func']: self.main.curr_plt_info_B['func']()
+        if self.main.curr_plt_info_B['func']:
+            self.main.curr_plt_info_B['func']()
 
 
     def activate_plotButtons(self):
@@ -132,11 +133,11 @@ class RotorBdxTab(QWidget):
         '''
         Plot the ROTOR_B magnetic field using the selected file and options.
         '''
-        if self.main.ROTOR_B_txt_file is None : return
-                        
+        if self.main.ROTOR_B_txt_file is None:
+            return            
                             
         if colormap and len(self.list_pos) <  2:
-            message = f'Data file must have at least 2 Zpos to plot a colormap\nPlease select another file'''
+            message = 'Data file must have at least 2 Zpos to plot a colormap\nPlease select another file'''
             QMessageBox.warning(self, 'Warning', message)
             self.list_pos = []
             return
@@ -144,7 +145,7 @@ class RotorBdxTab(QWidget):
         # Check there is at least one component to plot
         xyz = tuple(self.XYZ.values())
         if sum(xyz) == 0:
-            message = f'You must select at least one component X,Y, or Z'
+            message = 'You must select at least one component X,Y, or Z'
             QMessageBox.warning(self, 'Warning', message)
             return        
  
@@ -173,7 +174,8 @@ class RotorBdxTab(QWidget):
         '''
         To plot the data from the FREE bench (.txt file)
         '''
-        if self.main.ROTOR_B_txt_file is None : return
+        if self.main.ROTOR_B_txt_file is None:
+            return
         
         DATA = read_file_FREE(self.main.ROTOR_B_txt_file)
         self.main.ROTOR_B_DATA = DATA
@@ -190,13 +192,15 @@ class RotorBdxTab(QWidget):
         '''
         Save the current plot of the ROTOR_B data in a PNG file.  
         '''
-        if self.main.ROTOR_B_txt_file is None : return
+        if self.main.ROTOR_B_txt_file is None:
+            return
         
         fig       = self.canvas.figure
         png_dir   = Path(self.main.ROTOR_B_data_dir, 'PNG')
         file_name = self.main.ROTOR_B_txt_file.name
         
-        if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
+        if not png_dir.exists():
+            png_dir.mkdir(exist_ok=True)
         
         XYZ = build_XYZ_name_with_tuple(self.XYZ)
         
@@ -214,7 +218,8 @@ class RotorBdxTab(QWidget):
 
         if fig:
             file_name, _ = QFileDialog.getSaveFileName(self, "Save plot", str(fig_path), "PNG files (*.png)")
-            if file_name: fig.savefig(file_name)
+            if file_name: 
+                fig.savefig(file_name)
         else:
             QMessageBox.warning(self, 'Warning', 'No plot to save')
         return

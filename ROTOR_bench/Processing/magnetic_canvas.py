@@ -2,15 +2,12 @@
 # Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
 #
 
-import os, sys
-from pathlib import Path
 import numpy as np
 from numpy.fft import rfft
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, QFileDialog, QMessageBox)
+from PyQt5.QtWidgets import (QMessageBox)
 
 class MagneticPlotCanvas(FigureCanvas):
     '''
@@ -58,7 +55,8 @@ class MagneticPlotCanvas(FigureCanvas):
 
         self.ax = self.fig.subplots(nb_Zpos, 1, sharex=True, sharey=True)
         fig, axes = self.fig, self.ax
-        if nb_Zpos ==1 : axes = [axes]
+        if nb_Zpos ==1:
+            axes = [axes]
         
         suptitle = "" if not fft else "Spectrum of "
         fig.suptitle(suptitle + "Rotor magnetic field", size=16)
@@ -92,26 +90,35 @@ class MagneticPlotCanvas(FigureCanvas):
                         baseline.set_color('grey')
                         baseline.set_linewidth(0.5)
             else:
-                if xyz[0]: ax.plot(angles, X, '-o', color=colors['X'], markersize=0.5, label='radial (X)')
-                if xyz[1]: ax.plot(angles, Y, '-o', color=colors['Y'], markersize=0.5, label='axial (Y)')
-                if xyz[2]: ax.plot(angles, Z, '-o', color=colors['Z'], markersize=0.5, label='tang. (Z)')
+                if xyz[0]:
+                    ax.plot(angles, X, '-o', color=colors['X'], markersize=0.5, label='radial (X)')
+                if xyz[1]:
+                    ax.plot(angles, Y, '-o', color=colors['Y'], markersize=0.5, label='axial (Y)')
+                if xyz[2]:
+                    ax.plot(angles, Z, '-o', color=colors['Z'], markersize=0.5, label='tang. (Z)')
                 
             title += f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm"
             ax.set_title(title, loc='left', fontsize=9)
             if n == 0: 
-                if fft: ax.set_ylabel("Normalized PSD")
-                else:   ax.set_ylabel("[mT]")
+                if fft:
+                    ax.set_ylabel("Normalized PSD")
+                else:
+                    ax.set_ylabel("[mT]")
             ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
             ax.minorticks_on()
             ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
             ax.grid(which='minor', color='xkcd:light grey', linestyle='--', alpha=0.5)
 
-            if fft: ax.set_ylim(0,1.1)
-            else:   ax.set_ylim(1.1*magn_min, 1.1*magn_max)
+            if fft:
+                ax.set_ylim(0,1.1)
+            else:
+                ax.set_ylim(1.1*magn_min, 1.1*magn_max)
 
             if n == nb_Zpos-1:
-                if fft: ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
-                else:   ax.set_xlabel("rotor angle [°]")
+                if fft:
+                    ax.set_xlabel(r"Angular frequency [rd$^{-1}$]")
+                else:
+                    ax.set_xlabel("rotor angle [°]")
                             
         self.draw()
         return 
@@ -135,13 +142,16 @@ class MagneticPlotCanvas(FigureCanvas):
         T, magn_field = DATA.T[0], DATA.T[1:] 
         X, Y, Z = magn_field
                 
-        fig.suptitle(f"Rotor magnetic field", size=16)
+        fig.suptitle("Rotor magnetic field", size=16)
         if self.main.disp_fileName:
             fig.text(0.5, .92, f"from <{file_name}>", size=10, color="gray", horizontalalignment='center')
         
-        if xyz[0]: ax.plot(T, X, '-or', markersize=0.5, label='radial (X)')
-        if xyz[1]: ax.plot(T, Y, '-og', markersize=0.5, label='axial (Y)')
-        if xyz[2]: ax.plot(T, Z, '-ob', markersize=0.5, label='tang. (Z)')
+        if xyz[0]:
+            ax.plot(T, X, '-or', markersize=0.5, label='radial (X)')
+        if xyz[1]:
+            ax.plot(T, Y, '-og', markersize=0.5, label='axial (Y)')
+        if xyz[2]:
+            ax.plot(T, Z, '-ob', markersize=0.5, label='tang. (Z)')
         
         ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
         ax.set_ylabel("[mT]")
@@ -152,9 +162,12 @@ class MagneticPlotCanvas(FigureCanvas):
             sigmaX, sigmaY, sigmaZ = X.std(), Y.std(), Z.std()
             ymean = np.array(ax.get_ylim()).mean()
             yp2p  = np.ptp(np.array(ax.get_ylim()))
-            if xyz[0]: ax.text(1.06*T.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
-            if xyz[1]: ax.text(1.06*T.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
-            if xyz[2]: ax.text(1.06*T.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
+            if xyz[0]:
+                ax.text(1.06*T.max(), ymean, r"$\sigma_X$: " + f"{sigmaX:5.2e} mT", color='r')
+            if xyz[1]:
+                ax.text(1.06*T.max(), ymean - 0.06*yp2p, r"$\sigma_Y$: " + f"{sigmaY:5.2e} mT", color='g')
+            if xyz[2]:
+                ax.text(1.06*T.max(), ymean - 0.12*yp2p, r"$\sigma_Z$: " + f"{sigmaZ:5.2e} mT", color='b')
 
         ax.minorticks_on()
         ax.grid(which='major', color='xkcd:cool grey',  linestyle='-',  alpha=0.7)
@@ -183,14 +196,15 @@ class MagneticPlotCanvas(FigureCanvas):
         self.fig.clear()
         self.fig.subplots_adjust(top=0.9, bottom=0.065, left=0.06, right=0.89, hspace=0.2, wspace=0.2)
         
-        self.fig.suptitle(f"Rotor magnetic field", fontsize=16)
+        self.fig.suptitle("Rotor magnetic field", fontsize=16)
         if self.main.disp_fileName:
             self.fig.text(0.5, .92, f"from <{file_name}>", size=9, color="gray", horizontalalignment='center')        
         
         nb_plot   = sum(xyz)
         self.ax   = self.fig.subplots(nb_plot, 1, sharex=True)        
         fig, axes = self.fig, self.ax
-        if nb_plot == 1: axes = [axes]        
+        if nb_plot == 1:
+            axes = [axes]        
         
         list_axes  = [None, None, None]
         num_axe = 0
@@ -249,19 +263,26 @@ class MagneticPlotCanvas(FigureCanvas):
         self.ax = self.fig.subplots(nb_plot, 1, sharex=True, sharey=False)
         fig, axes = self.fig, self.ax
         
-        if nb_plot ==1 : axes = [axes]
+        if nb_plot ==1 :
+            axes = [axes]
 
         file_B_name = self.main.ROTOR_B_txt_file.name if self.main.ROTOR_B_txt_file else "No ROTOR_B file" 
         file_L_name = self.main.ROTOR_L_txt_file.name if self.main.ROTOR_L_txt_file else "No ROTOR_L file"
         file_S_name = self.main.SIMUL_txt_file.name if self.main.SIMUL_txt_file else "No SIMUL file"  
         
-        title = f'Magnetic field: '
+        full_title = 'Magnetic field: '
+        title = {'B':'', 'L':'', 'S':''}
         files = ""
         
         # Flags to know which data files are available:
         ROTOR_B = self.main.ROTOR_B_txt_file is not None
         ROTOR_L = self.main.ROTOR_L_txt_file is not None
         ROTOR_S = self.main.SIMUL_txt_file is not None
+        
+        # Flags to know which plots are checked:
+        ROTOR_B_sel = self.main.all_fields_tab.ROTOR_B_sel
+        ROTOR_L_sel = self.main.all_fields_tab.ROTOR_L_sel
+        ROTOR_S_sel = self.main.all_fields_tab.ROTOR_S_sel
 
         # Short names for the magnetc fileds of ROTOR Bdx, ROTOR Lille & SIMULAtion:        
         BX, BY, BZ = None, None, None
@@ -270,21 +291,38 @@ class MagneticPlotCanvas(FigureCanvas):
                 
         if ROTOR_B:  
             # Extract the data of the ROTOR_B corresponding to the selected Zpos:
-            Zpos_B = self.main.all_fields_tab.ROTOR_B_sel_Zpos
-            list_pos = self.main.rotor_bdx_tab.list_pos
-            title += f'ROTOR_B [Zpos={Zpos_B}mm] '
+            Zpos_B     = self.main.all_fields_tab.ROTOR_B_sel_Zpos
+            shift      = self.main.all_fields_tab.ROTOR_B_shift_angle
+            list_pos   = self.main.rotor_bdx_tab.list_pos
+            title['B'] = f'ROTOR_B [Zpos={Zpos_B}mm, shift:={shift}°] '
             files += f'<{file_B_name}> '
                 
             DATA = self.main.ROTOR_B_DATA
             DATA = self.main.ROTOR_B_extract_magnetic_field(DATA, list_pos, Zpos_B)
+            
+            # Apply shift angle on ROTOR_B data if required:
+            nb_angle = len(DATA)
+            new_DATA = DATA.copy()
+
+            if shift > 0:
+                new_DATA[:nb_angle - shift, 1:] = DATA[shift:, 1:]
+                new_DATA[nb_angle - shift:, 1:] = DATA[:shift, 1:]
+                
+            elif shift < 0:
+                shift = -shift
+                new_DATA[shift:, 1:] = DATA[:nb_angle - shift, 1:]
+                new_DATA[:shift, 1:] = DATA[nb_angle - shift:, 1:]
+                
+            DATA = new_DATA
+
             # transpose DATA to extract the different variables:
             angles_B, magn_field_B = DATA.T[0], DATA.T[1:]       
             BX, BY, BZ = magn_field_B
         
         if ROTOR_L:            
-            Zpos_L = self.main.all_fields_tab.ROTOR_L_sel_Zpos
-            shift  = self.main.all_fields_tab.ROTOR_L_sel_angle
-            title += f'ROTOR_L [Zpos={Zpos_L}mm, shift:={shift}°]'
+            Zpos_L     = self.main.all_fields_tab.ROTOR_L_sel_Zpos
+            shift      = self.main.all_fields_tab.ROTOR_L_shift_angle
+            title['L'] = f'ROTOR_L [Zpos={Zpos_L}mm, shift:={shift}°]'
             files += f'<{file_L_name}> '
             
             # The ROTOR_L data have already been read in the ROTOR_L tab:
@@ -302,8 +340,6 @@ class MagneticPlotCanvas(FigureCanvas):
             #if self.ROTOR_L_sel_Angle != 0:
             nb_angle = len(DATA)
             new_DATA = DATA.copy()
-            #new_DATA[:nb_angle - shift, 3:] = DATA[shift:, 3:]
-            #new_DATA[nb_angle - shift:, 3:] = DATA[:shift, 3:]
             if shift > 0:
                 new_DATA[:nb_angle - shift, 3:] = DATA[shift:, 3:]
                 new_DATA[nb_angle - shift:, 3:] = DATA[:shift, 3:]
@@ -312,15 +348,18 @@ class MagneticPlotCanvas(FigureCanvas):
                 new_DATA[shift:, 3:] = DATA[:nb_angle - shift, 3:]
                 new_DATA[:shift, 3:] = DATA[nb_angle - shift:, 3:]
             DATA = new_DATA
+            
+            # transpose DATA to extract the different variables:
             angles_L, mag_field_L = DATA.T[1], DATA.T[3:]
             R, T, A = mag_field_L * 1e3 # Lille rotor bench: Radial, Tangent, Axial are in Tesla
         
         if ROTOR_S:
-            list_dist = self.main.simul_tab.list_dist
-            dist      = self.main.all_fields_tab.ROTOR_S_sel_dist
-            nb_dist = len(list_dist)
-            
-            title += f' SIMUL [dist={dist}mm]'
+            list_dist  = self.main.simul_tab.list_dist
+            dist       = self.main.all_fields_tab.ROTOR_S_sel_dist
+            nb_dist    = len(list_dist)
+            shift      = self.main.all_fields_tab.ROTOR_S_shift_angle
+
+            title['S'] = f' SIMUL [dist={dist}mm, shift:={shift}°]'
             files += f'<{file_S_name}>'
             
             DATA = self.main.SIMUL_DATA
@@ -330,7 +369,22 @@ class MagneticPlotCanvas(FigureCanvas):
                 QMessageBox.warning(self, 'Warning', mess)
                 return -1
             DATA = self.main.ROTOR_B_extract_magnetic_field(DATA, list_dist, dist)
-                        
+
+            # Apply shift angle on ROTOR_B data if required:
+            nb_angle = len(DATA)
+            new_DATA = DATA.copy()
+
+            if shift > 0:
+                new_DATA[:nb_angle - shift, 1:] = DATA[shift:, 1:]
+                new_DATA[nb_angle - shift:, 1:] = DATA[:shift, 1:]
+                
+            elif shift < 0:
+                shift = -shift
+                new_DATA[shift:, 1:] = DATA[:nb_angle - shift, 1:]
+                new_DATA[:shift, 1:] = DATA[nb_angle - shift:, 1:]
+                
+            DATA = new_DATA
+                      
             # Transpose DATA to extract the different variables:
             angles_S, magn_field = DATA.T[0], DATA.T[1:]*1e3 # Simulated field is in Tesla
             
@@ -357,7 +411,11 @@ class MagneticPlotCanvas(FigureCanvas):
         colors_L = MagneticPlotCanvas.colors_L
         colors_S = MagneticPlotCanvas.colors_S
         
-        fig.suptitle(title, fontsize=15)
+        full_title  = title['B'] if ROTOR_B_sel else '' 
+        full_title += title['L'] if ROTOR_L_sel else ''
+        full_title += title['S'] if ROTOR_S_sel else ''
+        fig.suptitle(full_title, fontsize=15)
+        
         if self.main.disp_fileName:
             fig.text(0.5, .92, files, size=9, color="gray", horizontalalignment='center')
 
@@ -365,9 +423,11 @@ class MagneticPlotCanvas(FigureCanvas):
         for c, offset in zip(('X', 'Y', 'Z'), (1.165, 1.16, 1.165)):
             if self.main.all_fields_tab.XYZ[c]: 
                 ax = axes[n]
-                if ROTOR_B: ax.plot(angles_B, field_B[c], '-o', markersize=0.5, color=colors_B[c], label=f'ROTOR_B {lab_B[c]}')
-                if ROTOR_L: ax.plot(angles_L, field_L[c], '-o', markersize=0.5, color=colors_L[c], label=f'ROTOR_L {lab_L[c]}')
-                if ROTOR_S: 
+                if ROTOR_B and self.main.all_fields_tab.ROTOR_B_sel:
+                    ax.plot(angles_B, field_B[c], '-o', markersize=0.5, color=colors_B[c], label=f'ROTOR_B {lab_B[c]}')
+                if ROTOR_L and self.main.all_fields_tab.ROTOR_L_sel:
+                    ax.plot(angles_L, field_L[c], '-o', markersize=0.5, color=colors_L[c], label=f'ROTOR_L {lab_L[c]}')
+                if ROTOR_S and self.main.all_fields_tab.ROTOR_S_sel: 
                     if field_S[c] is not None:
                         ax.plot(angles_S, field_S[c], '-', markersize=0.5, color=colors_S[c], label=f'ROTOR_S {lab_S[c]}')
                     else:
@@ -398,7 +458,8 @@ class MagneticPlotCanvas(FigureCanvas):
                
         self.ax = self.fig.subplots(nb_dist, 1, sharex=True, sharey=True)
         fig, axes = self.fig, self.ax
-        if nb_dist ==1 : axes = [axes]
+        if nb_dist == 1:
+            axes = [axes]
         
         # short names for the data to plot:
         DATA = self.main.SIMUL_DATA
@@ -433,7 +494,8 @@ class MagneticPlotCanvas(FigureCanvas):
                 # The SIMULE file has the 3 components Br (X), Bt (Z) and Bz (Y) of the magnetic field:
                 X, Z, Y = magn_field[3*n:3*n+3]
                 
-            if xyz[0]: ax.plot(angles, X, '-o', markersize=0.5, color=colors_S['X'], label='radial (X)')
+            if xyz[0]:
+                ax.plot(angles, X, '-o', markersize=0.5, color=colors_S['X'], label='radial (X)')
             if xyz[1]: 
                 if Y is not None:
                     ax.plot(angles, Y, '-o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
@@ -441,7 +503,8 @@ class MagneticPlotCanvas(FigureCanvas):
                     ax.plot(np.NaN, np.NaN, '-o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
                     print(f"Warning: no axial (Y) component in the SIMUL data file <{self.main.SIMUL_txt_file.name}>.")
             
-            if xyz[2]:  ax.plot(angles, Z, '-o', markersize=0.5, color=colors_S['Z'], label='tang. (Z)')
+            if xyz[2]:
+                ax.plot(angles, Z, '-o', markersize=0.5, color=colors_S['Z'], label='tang. (Z)')
                 
             title = f"Simulated Magnetic Field for distance={int(dist):d} mm"
             ax.set_title(title, loc='left', fontsize=9)
@@ -476,7 +539,8 @@ class MagneticPlotCanvas(FigureCanvas):
         
         self.ax = self.fig.subplots(nb_plot, 1, sharex=True, sharey=False)
         fig, axes = self.fig, self.ax        
-        if nb_plot ==1 : axes = [axes]
+        if nb_plot == 1:
+            axes = [axes]
                 
         # The ROTOR_L data have already been read when the file was selected:
         DATA = self.main.ROTOR_L_DATA

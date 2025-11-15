@@ -2,13 +2,10 @@
 # Copyright 2024-2025 Jean-Luc.CHARLES@mailo.com
 #
 
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, QScrollArea, QGroupBox, QFileDialog, QMessageBox
-)
-from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QSize
-from pathlib import Path
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QRadioButton, 
+                             QScrollArea, QGroupBox, QFileDialog, QMessageBox)
 
+from pathlib import Path
 from tools import read_file_ROTOR_L, read_file_SIMUL_ROTOR, read_file_ROTOR
 
 class FilesTab(QWidget):
@@ -35,23 +32,12 @@ class FilesTab(QWidget):
 
         # ROTOR data directory
         V = QVBoxLayout()
-        H = QHBoxLayout()
         
         btn = QPushButton("Select ROTOR data directory")
         btn.setMinimumHeight(40)
         btn.setStyleSheet("background-color: #eee8aa;")  # Darker ivory
         btn.clicked.connect(self.select_ROTOR_B_dir)
-        H.addWidget(btn)
-        
-        btn = QPushButton(QIcon('ROTOR_bench/Processing/icon/rightDbleArrow-2.png'), '')
-        btn.setMinimumHeight(40)
-        btn.setFixedWidth(40)
-        btn.setIconSize(QSize(30,30))
-        btn.setToolTip('Copy the ROTOR_B directory path as the LILLE ROTOR directory')
-        btn.setStyleSheet("background-color: #ccffcc;")  # Light green
-        btn.clicked.connect(lambda: self.dupplicate_ROTOR_dir(source='ROTOR_B', target='LILLE'))
-        H.addWidget(btn)
-        V.addLayout(H)
+        V.addWidget(btn)
         
         self.ROTOR_B_file_list_widget = QGroupBox("ROTOR *.TXT files")
         self.ROTOR_B_file_list_layout = QVBoxLayout(self.ROTOR_B_file_list_widget)
@@ -64,23 +50,12 @@ class FilesTab(QWidget):
 
         # LILLE ROTOR data directory
         V = QVBoxLayout()
-        H = QHBoxLayout()
         
         self.button_L_data_dir = QPushButton("Select LILLE rotor bench directory")
         self.button_L_data_dir.setMinimumHeight(40)
         self.button_L_data_dir.setStyleSheet("background-color: #eee8aa;")  # Darker ivory
         self.button_L_data_dir.clicked.connect(self.select_ROTOR_L_dir)
-        H.addWidget(self.button_L_data_dir)
-        
-        btn = QPushButton(QIcon('ROTOR_bench/Processing/icon/rightDbleArrow-2.png'), '')
-        btn.setMinimumHeight(40)
-        btn.setFixedWidth(40)
-        btn.setIconSize(QSize(30,30))
-        btn.setToolTip('Copy the LILLE ROTOR directory path as the SIMULATION rotor directory')
-        btn.setStyleSheet("background-color: #ccffcc;")  # Light green
-        btn.clicked.connect(lambda: self.dupplicate_ROTOR_dir(source='LILLE', target='SIMUL'))
-        H.addWidget(btn)
-        V.addLayout(H)
+        V.addWidget(self.button_L_data_dir)
         
         self.ROTOR_L_file_list_widget = QGroupBox("LILLE rotor *.CSV files")
         self.ROTOR_L_file_list_layout = QVBoxLayout(self.ROTOR_L_file_list_widget)
@@ -111,42 +86,6 @@ class FilesTab(QWidget):
         
         self.button_S_data_dir.setEnabled(True)
         self.ROTOR_S_file_list_widget.setEnabled(True)
-
-
-    def dupplicate_ROTOR_dir(self, source, target):
-        '''
-        Dupplicate the data directory from ROTOR_B to LILLE or from LILLE to SIMUL.
-        '''
-        ROTOR_B_data_dir = self.main.ROTOR_B_data_dir
-        ROTOR_L_data_dir = self.main.ROTOR_L_data_dir
-                
-        if source == 'ROTOR_B' and target == 'LILLE':
-            if ROTOR_B_data_dir != Path('_'):
-                self.main.ROTOR_L_data_dir = ROTOR_B_data_dir
-                self.ROTOR_L_file_list_widget.setTitle(f'*.CSV in <{self.main.ROTOR_L_data_dir}>')
-                self.update_ROTOR_L_file_list()
-                
-                # Clear previous plots and reset states
-                self.main.rotor_bdx_tab.canvas.clear()
-                self.main.rotor_lille_tab.canvas.clear()
-                self.main.all_fields_tab.canvas.clear()
-                self.main.set_state('ROTOR_B_L_S', False)
-                self.main.ROTOR_L_txt_file = None
-            else:
-                message = f'You must first select the ROTOR data directory'
-                QMessageBox.warning(self, 'Warning', message)
-                
-        elif source == 'LILLE' and target == 'SIMUL':
-            if ROTOR_L_data_dir != Path('_'):
-                self.main.SIMUL_data_dir = ROTOR_L_data_dir
-                self.ROTOR_S_file_list_widget.setTitle(f'<{self.main.SIMUL_data_dir}>')
-                self.update_SIMUL_file_list()
-            else:
-                message = f'You must first select the LILLE ROTOR data directory'
-                QMessageBox.warning(self, 'Warning', message)
-        else:
-            message = f'Unknown from/to values: from={source}, to={target}'
-            QMessageBox.warning(self, 'Warning', message)
 
 
     def select_ROTOR_B_dir(self):

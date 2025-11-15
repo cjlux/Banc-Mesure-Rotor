@@ -24,10 +24,10 @@ class RotorSimulTab(QWidget):
         '''
         super().__init__()
         
-        self.main = main_window             # Reference to MainWindow for shared state and callbacks):
-        self.XYZ  = main_window.default_XYZ # Wether to plot the X,Y,Z components for ROTOR_B plots
+        self.main = main_window                     # Reference to MainWindow for shared state and callbacks):
+        self.XYZ  = main_window.default_XYZ.copy() # Wether to plot the X,Y,Z components for ROTOR_B plots
 
-        self.list_dist = []                 # List of distances found in the SIMUL data file
+        self.list_dist = []                         # List of distances found in the SIMUL data file
 
         VBox = QVBoxLayout()
         self.setLayout(VBox)
