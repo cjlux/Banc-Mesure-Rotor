@@ -17,7 +17,7 @@ class FilesTab(QWidget):
                  'ROTOR_B_file_list_widget', 'ROTOR_B_file_list_layout',
                  'ROTOR_L_file_list_widget', 'ROTOR_L_file_list_layout',
                  'ROTOR_S_file_list_widget', 'ROTOR_S_file_list_layout',
-                 'button_L_data_dir', 'button_S_data_dir')  
+                 'button_L_data_dir', 'button_S_data_dir',)
     
     def __init__(self, main_window):
         '''
@@ -39,7 +39,7 @@ class FilesTab(QWidget):
         btn.clicked.connect(self.select_ROTOR_B_dir)
         V.addWidget(btn)
         
-        self.ROTOR_B_file_list_widget = QGroupBox("ROTOR *.TXT files")
+        self.ROTOR_B_file_list_widget = QGroupBox("Bdx ROTOR <ROTOR_*.txt> or <FREE_*.txt> files")
         self.ROTOR_B_file_list_layout = QVBoxLayout(self.ROTOR_B_file_list_widget)
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -57,7 +57,7 @@ class FilesTab(QWidget):
         self.button_L_data_dir.clicked.connect(self.select_ROTOR_L_dir)
         V.addWidget(self.button_L_data_dir)
         
-        self.ROTOR_L_file_list_widget = QGroupBox("LILLE rotor *.CSV files")
+        self.ROTOR_L_file_list_widget = QGroupBox("LILLE rotor <*.csv> files")
         self.ROTOR_L_file_list_layout = QVBoxLayout(self.ROTOR_L_file_list_widget)
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -75,7 +75,7 @@ class FilesTab(QWidget):
         self.button_S_data_dir.clicked.connect(self.select_SIMUL_dir)
         V.addWidget(self.button_S_data_dir)
         
-        self.ROTOR_S_file_list_widget = QGroupBox("SIMULATION rotor *.TXT files")
+        self.ROTOR_S_file_list_widget = QGroupBox("SIMULATION rotor <Bsimul_*.txt> files")
         self.ROTOR_S_file_list_layout = QVBoxLayout(self.ROTOR_S_file_list_widget)
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
