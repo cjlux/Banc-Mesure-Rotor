@@ -11,7 +11,7 @@ import sys, os
 
 def colormap_ROTOR(fille_path, xyz=(1,1,1), show=True, figsize=None):
     
-    DATA, list_pos = read_file_ROTOR(fille_path)
+    DATA, list_pos, step_angle = read_file_ROTOR(fille_path)
     
     if DATA.shape[1] == 5:
         mode="ByAngle"

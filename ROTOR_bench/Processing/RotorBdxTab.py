@@ -30,6 +30,7 @@ class RotorBdxTab(QWidget):
         self.list_pos       = None           # List of Z positions for ROTOR Bdx found when reading data file
         self.canvas         = None           # The MagneticPlotCanvas for plotting
         self.toolbar_B      = None           # The NavigationToolbar for the canvas
+        self.step_angle     = None           # the step angle 
        
         # Main layout
         VBox = QVBoxLayout()

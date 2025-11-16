@@ -6,7 +6,7 @@ from pathlib import Path
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, QFileDialog, QMessageBox, QLabel)
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from magnetic_canvas import MagneticPlotCanvas
-from FastSpinBox import FastStepSpinBox
+from fast_SpinBox import FastStepSpinBox
 
 from tools import build_XYZ_name_with_tuple
 
@@ -38,31 +38,30 @@ class RotorLilleTab(QWidget):
         H = QHBoxLayout()
         H.addStretch()
 
-        self.main.dict_plot_widgets['ROTOR_L'] = []
+        self.main.dict_plot_widgets['LILLE'] = []
 
         btn = QPushButton('Plot ROTOR data')
         btn.setMinimumHeight(40)
         btn.setMinimumWidth(120)
         btn.setCheckable(False)
         btn.clicked.connect(self.plot_ROTOR)
-        self.main.dict_plot_widgets['ROTOR_L'].append(btn)
+        self.main.dict_plot_widgets['LILLE'].append(btn)
         btn.setEnabled(False)    
         H.addWidget(btn)
 
         # The SpinBox to choose the Zpos in the ROTOR_B_L data
-        lab = QLabel('Zpos (mm)')
-        self.ROTOR_L_Zpos = FastStepSpinBox()
+        lab = QLabel('Zpos')
+        self.ROTOR_L_Zpos = FastStepSpinBox(1, 10)
         sb = self.ROTOR_L_Zpos
         sb.setRange(-7, 144)
-        sb.setSingleStep(1)
-        sb.setFastStep(10)
         sb.setValue(self.ROTOR_L_sel_Zpos)
         sb.setEnabled(False)
         sb.setFixedHeight(25)
+        sb.setSuffix(' mm')
         sb.setToolTip('Select the Zpos to plot')
         sb.valueChanged.connect(lambda value: self.zpos_L_changed(value))
-        self.main.dict_plot_widgets['ROTOR_L'].append(lab)
-        self.main.dict_plot_widgets['ROTOR_L'].append(sb)
+        self.main.dict_plot_widgets['LILLE'].append(lab)
+        self.main.dict_plot_widgets['LILLE'].append(sb)
         H.addWidget(lab)
         H.addWidget(sb)
         
@@ -74,7 +73,7 @@ class RotorLilleTab(QWidget):
         btn.setCheckable(False)
         btn.clicked.connect(self.save_current_plot)
         H.addWidget(btn)
-        self.main.dict_plot_widgets['ROTOR_L'].append(btn)
+        self.main.dict_plot_widgets['LILLE'].append(btn)
         btn.setEnabled(False)    
         
         H.addStretch()
@@ -85,7 +84,7 @@ class RotorLilleTab(QWidget):
             btn.setChecked(self.XYZ[lab])
             btn.setStyleSheet(f'color: {color}')
             btn.stateChanged.connect(lambda state, label=lab: self.set_XYZ(state, label))
-            self.main.dict_plot_widgets['ROTOR_L'].append(btn)
+            self.main.dict_plot_widgets['LILLE'].append(btn)
             btn.setEnabled(False) 
             H.addWidget(btn)
         VBox.addLayout(H)
@@ -111,12 +110,13 @@ class RotorLilleTab(QWidget):
         '''
         Plot the ROTOR_L magnetic field using the selected file and options.
         '''
-        if self.main.ROTOR_L_txt_file is None : return
+        if self.main.ROTOR_L_txt_file is None:
+            return
                         
         # Check there is currently at least one component to plot
         xyz = tuple(self.XYZ.values())
         if sum(xyz) == 0:
-            message = f'You must select at least one component X,Y, or Z'
+            message = 'You must select at least one component X,Y, or Z'
             QMessageBox.warning(self, 'Warning', message)
             return
         
@@ -135,17 +135,19 @@ class RotorLilleTab(QWidget):
         The file name is based on the selected data file and the plot type.
         '''
         
-        if self.main.ROTOR_L_txt_file is None : return
+        if self.main.ROTOR_L_txt_file is None:
+            return
         
         fig       = self.canvas.figure
         png_dir   = Path(self.main.ROTOR_L_data_dir, 'PNG')
         file_name = self.main.ROTOR_L_txt_file.name
         
-        if not png_dir.exists(): png_dir.mkdir(exist_ok=True)
+        if not png_dir.exists():
+            png_dir.mkdir(exist_ok=True)
         
-        XYZ = build_XYZ_name_with_tuple(self.XYZ)
-        
-        fig_path = Path(png_dir, file_name.replace('.txt', f'_Lille_{XYZ}.png'))
+        XYZ    = build_XYZ_name_with_tuple(self.XYZ)
+        Zpos_L = self.ROTOR_L_sel_Zpos
+        fig_path = Path(png_dir, file_name.replace('.csv', f'_@{Zpos_L}mm_{XYZ}.png'))
 
         if fig:
             file_name, _ = QFileDialog.getSaveFileName(self, 

@@ -63,9 +63,11 @@ def read_file_ROTOR(file_path):
     # Example: <ROTOR_2024-07-09-13-59_WDIST-12_ROTSTEP-4.8_000_030_060_090_1of1.txt
     file_name = Path(file_path).name
     if file_name.startswith('ROTOR_'):
-        list_pos = file_name.replace('.txt', '').split('_')[4:-1]
+        list_pos   = file_name.replace('.txt', '').split('_')[4:-1]
+        step_angle = file_name.replace('.txt', '').split('_')[3].split('-')[1]
     else:
         list_pos = []
+        step_angle = '-1'
         
     # now read the sensor data lines:
     DATA = []
@@ -79,7 +81,7 @@ def read_file_ROTOR(file_path):
       DATA.append(data)
     
     DATA = np.array(DATA)
-    return DATA, list_pos
+    return DATA, list_pos, float(step_angle)
 
 def read_file_ROTOR_L(file_path):
     

@@ -275,7 +275,7 @@ class MagneticPlotCanvas(FigureCanvas):
         files = ""
         
         # Flags to know which data files are available:
-        ROTOR_B = self.main.ROTOR_B_txt_file is not None
+        ROTOR_B = self.main.ROTOR_B_txt_file is not None and self.main.ROTOR_B_txt_file.name.startswith('ROTOR')
         ROTOR_L = self.main.ROTOR_L_txt_file is not None
         ROTOR_S = self.main.SIMUL_txt_file is not None
         
@@ -294,7 +294,7 @@ class MagneticPlotCanvas(FigureCanvas):
             Zpos_B     = self.main.all_fields_tab.ROTOR_B_sel_Zpos
             shift      = self.main.all_fields_tab.ROTOR_B_shift_angle
             list_pos   = self.main.rotor_bdx_tab.list_pos
-            title['B'] = f'ROTOR_B [Zpos={Zpos_B}mm, shift:={shift}°] '
+            title['B'] = f'ROTOR_B [Zpos={Zpos_B}mm, shift:={self.main.rotor_bdx_tab.step_angle*shift:.2f}°] '
             files += f'<{file_B_name}> '
                 
             DATA = self.main.ROTOR_B_DATA
@@ -331,7 +331,8 @@ class MagneticPlotCanvas(FigureCanvas):
             try:
                 i_range = np.where(DATA.T[2] == int(Zpos_L))
                 DATA  = DATA[i_range]
-            except:
+            except Exception as e:
+                print(e)
                 message = f'Zpos: {Zpos_L} not found in the LILLE ROTOR data file.\nPlease select another value'
                 QMessageBox.warning(self, 'Warning', message)
                 return
@@ -429,9 +430,9 @@ class MagneticPlotCanvas(FigureCanvas):
                     ax.plot(angles_L, field_L[c], '-o', markersize=0.5, color=colors_L[c], label=f'ROTOR_L {lab_L[c]}')
                 if ROTOR_S and self.main.all_fields_tab.ROTOR_S_sel: 
                     if field_S[c] is not None:
-                        ax.plot(angles_S, field_S[c], '-', markersize=0.5, color=colors_S[c], label=f'ROTOR_S {lab_S[c]}')
+                        ax.plot(angles_S, field_S[c], '-', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
                     else:
-                        ax.plot(np.NaN, np.NaN, '-', markersize=0.5, color=colors_S[c], label=f'ROTOR_S {lab_S[c]}')
+                        ax.plot(np.NaN, np.NaN, '-', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
                         print(f"Warning: no {lab_S[c]} component in the SIMUL data file <{self.main.SIMUL_txt_file.name}>.")
                 ax.set_ylabel("[mT]")        
                 ax.legend(bbox_to_anchor=(offset, 1), loc="upper right")
@@ -549,7 +550,8 @@ class MagneticPlotCanvas(FigureCanvas):
         try:
             i_range = np.where(DATA.T[2] == int(Zpos_L))
             DATA  = DATA[i_range]
-        except:
+        except Exception as e:
+            print(e)
             message = f'Zpos: {Zpos_L} not found in the LILLE ROTOR data file.\nPlease select another value'
             QMessageBox.warning(self, 'Warning', message)
             return
@@ -557,7 +559,7 @@ class MagneticPlotCanvas(FigureCanvas):
         angles_L, mag_field_L = DATA.T[1], DATA.T[3:]
         R, T, A = mag_field_L * 1e3 # Lille rotor bench: Radial, Tangent, Axial are in Tesla
 
-        title = f'Magnetic field: ROTOR_L  (Zpos:{Zpos_L:03d}mm)'
+        title = f'Magnetic field: ROTOR_L [Zpos:{Zpos_L:03d}mm]'
         fig.suptitle(title, fontsize=15)
         message = f'<{file_L_name}>'
         if self.main.disp_fileName:

@@ -4,15 +4,16 @@
 
 try:
     from .tools import read_file_ROTOR, plot_magField_at_positions
-except:
+except Exception as e:
+    print(e)
     from tools import read_file_ROTOR, plot_magField_at_positions
 import numpy as np
-import sys, os
-from os.path import join
+import sys
+import os
 
 def plot_ROTOR(file_path, xyz=(1,1,1), figsize=None, show=True, fft=False):
     
-    DATA, list_pos = read_file_ROTOR(file_path)
+    DATA, list_pos, step_angle = read_file_ROTOR(file_path)
 
     if DATA.shape[1] == 5:
         mode="ByAngle"

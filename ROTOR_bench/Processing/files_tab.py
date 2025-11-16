@@ -160,7 +160,8 @@ class FilesTab(QWidget):
                     rb = QRadioButton(file_path.name)
                     rb.clicked.connect(lambda state, path=file_path, btn=rb: self.process_ROTOR_B_file(path, btn))
                     layout.addWidget(rb)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     def update_ROTOR_L_file_list(self):
@@ -183,7 +184,8 @@ class FilesTab(QWidget):
                     rb = QRadioButton(file_path.name)
                     rb.clicked.connect(lambda state, path=file_path, btn=rb: self.process_ROTOR_L_file(path, btn))
                     layout.addWidget(rb)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
 
@@ -210,7 +212,8 @@ class FilesTab(QWidget):
                     rb = QRadioButton(file_path.name)
                     rb.clicked.connect(lambda state, path=file_path, btn=rb: self.process_SIMUL_file(path, btn))
                     layout.addWidget(rb)
-        except:
+        except Exception as e:
+            print(e)
             pass
 
     def process_ROTOR_B_file(self, filepath, button):
@@ -222,13 +225,19 @@ class FilesTab(QWidget):
             button.setChecked(True)
             
         # If the file is already selected, do nothing
-        if self.main.ROTOR_B_txt_file == filepath: return
+        if self.main.ROTOR_B_txt_file == filepath:
+            return
         
         if filepath.name.startswith("FREE") or filepath.name.startswith("ROTOR"):
 
             self.main.ROTOR_B_txt_file = filepath
-            DATA, list_pos = read_file_ROTOR(filepath)
+            DATA, list_pos, step_angle = read_file_ROTOR(filepath)
             DATA = self.main.ROTOR_B_reshape_magnetic_field(DATA, list_pos)   
+            
+            # set the step angle
+            self.main.rotor_bdx_tab.step_angle = step_angle
+            self.main.all_fields_tab.ROTOR_B_shift.setSuffix(f' x{step_angle}°')
+            self.main.all_fields_tab.ROTOR_B_shift.setFastStep(10*step_angle)
             
             # Update the list of Z positions in the ROTOR_B tab
             self.main.rotor_bdx_tab.list_pos = list_pos
@@ -243,13 +252,19 @@ class FilesTab(QWidget):
                 self.main.rotor_bdx_tab.plot_FREE()
                 self.main.set_state('ROTOR', False)
                 self.main.set_state('FREE', True)
-                self.main.set_state('ROTOR_B_L_S', False)
+                #self.main.set_state('ROTOR_B_L_S', False)
+                self.main.all_fields_tab.ROTOR_B_checkBtn.setChecked(False)
+                self.main.all_fields_tab.ROTOR_B_checkBtn.setEnabled(False)
+
                 
             elif filepath.name.startswith("ROTOR"):
                 self.main.rotor_bdx_tab.plot_ROTOR(plot_superposed=True)
                 self.main.set_state('FREE', False)
                 self.main.set_state('ROTOR', True)
                 self.main.set_state('ROTOR_B_L_S', True)
+                self.main.set_state('ROTOR_B', True)
+                self.main.all_fields_tab.ROTOR_B_checkBtn.setChecked(True)
+                self.main.all_fields_tab.ROTOR_B_checkBtn.setEnabled(True)
         else:
             message = f'File name <{filepath}> does not start with\nROTOR_... or FREE_'
             QMessageBox.warning(self, 'Warning', message)
@@ -264,14 +279,16 @@ class FilesTab(QWidget):
             button.setChecked(True)
             
         # If the file is already selected, do nothing
-        if self.main.ROTOR_L_txt_file == filepath: return
+        if self.main.ROTOR_L_txt_file == filepath:
+            return
 
         # Plot the ROTOR_L data in the ROTOR_L tab        
         if filepath.name.lower().endswith('.csv'):
             button.setChecked(True)
             self.main.ROTOR_L_txt_file = filepath
-            self.main.set_state('ROTOR_L', True)
+            self.main.set_state('LILLE', True)
             self.main.set_state('ROTOR_B_L_S', True)
+            self.main.set_state('ROTOR_L', True)
             
             # Read the data when a file is selected
             DATA = read_file_ROTOR_L(self.main.ROTOR_L_txt_file)
@@ -280,9 +297,10 @@ class FilesTab(QWidget):
             
             # Run the plot method:
             self.main.rotor_lille_tab.plot_ROTOR(plot_superposed=True)
+            self.main.all_fields_tab.ROTOR_L_checkBtn.setChecked(True)
             self.main.tabs.setCurrentIndex(2)
         else:
-            message = f'Please select a Bsimu...txt file'
+            message = 'Please select a Bsimu...txt file'
             QMessageBox.warning(self, 'Warning', message)
 
 
@@ -291,17 +309,16 @@ class FilesTab(QWidget):
         Process the selected SIMULATION data file.
         '''
         # Fix the problem when there is only one file in the list
-        if self.ROTOR_S_file_list_layout.count() == 1: button.setChecked(True)
+        if self.ROTOR_S_file_list_layout.count() == 1:
+            button.setChecked(True)
             
         # If the file is already selected, do nothing
-        if self.main.SIMUL_txt_file == filepath: return
+        if self.main.SIMUL_txt_file == filepath:
+            return
                 
         if filepath.name.lower().startswith('bsimul_'):
-            button.setChecked(True)
             self.main.SIMUL_txt_file = filepath
-            self.main.set_state('SIMUL', True)
-            self.main.set_state('ROTOR_B_L_S', True)
-            
+
             # Read the data when a file is selected
             DATA, list_dist = read_file_SIMUL_ROTOR(self.main.SIMUL_txt_file)
             print(f'Found {list_dist=} in SIMUL file')
@@ -309,6 +326,11 @@ class FilesTab(QWidget):
                 message = f'File <{filepath.name}> is corrupted or has an invalid format'
                 QMessageBox.warning(self, 'Warning', message)
                 return
+
+            button.setChecked(True)
+            self.main.set_state('SIMUL', True)
+            self.main.set_state('ROTOR_B_L_S', True)
+            self.main.set_state('ROTOR_S', True)            
             
             # Update the list of distances in the SIMUL tab
             self.main.simul_tab.list_dist = list_dist
@@ -316,12 +338,16 @@ class FilesTab(QWidget):
             self.main.SIMUL_DATA = DATA
 
             ret = self.main.simul_tab.plot_SIMUL(plot_superposed=True)
+            self.main.all_fields_tab.ROTOR_S_checkBtn.setChecked(True)
             if ret == -1: 
                 self.main.simul_tab.canvas.clear()
                 self.main.SIMUL_txt_file = None
                 self.main.set_state('SIMUL', False)
+                self.main.set_state('ROTOR_S', False)
+                self.main.all_fields_tab.ROTOR_S_checkBtn.setChecked(False)
+            
             else:
                 self.main.tabs.setCurrentIndex(3)
         else:
-            message = f'Please select a Bsimu...txt file'
+            message = 'Please select a Bsimu...txt file'
             QMessageBox.warning(self, 'Warning', message)

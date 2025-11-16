@@ -31,8 +31,8 @@ def plot_CSV_ROTOR(CSV_num:int,
     
     print(f'{ROT_file=}, {CSV_file=}')
                     
-    ROTOR_DATA, list_pos = read_file_ROTOR(ROT_file)
-    CSVbench_DATA        = read_file_ROTOR_L(CSV_file)
+    ROTOR_DATA, list_pos, step_angle = read_file_ROTOR(ROT_file)
+    CSVbench_DATA = read_file_ROTOR_L(CSV_file)
     
     if ROTOR_DATA.shape[1] == 5:
         mode="ByAngle"

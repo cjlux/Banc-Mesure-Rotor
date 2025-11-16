@@ -325,7 +325,8 @@ class MainWindow(QMainWindow):
         try:
             newDATA[:, 1:1+nb_val] = DATA[:, 1+i_Zpos*nb_val:1+(i_Zpos+1)*nb_val]
             DATA = newDATA.copy()
-        except:
+        except Exception as e:
+            print(e)
             message = f'index of {Zpos:03d} not found in the list of Zpos:\n{list_pos}. Try another value'
             QMessageBox.warning(self, 'Warning', message)
                        

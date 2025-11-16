@@ -9,7 +9,7 @@ from magnetic_canvas import MagneticPlotCanvas
 from PyQt5.QtCore import Qt
 
 from tools import build_XYZ_name_with_tuple
-from FastSpinBox import FastStepSpinBox
+from fast_SpinBox import FastStepSpinBox
 
 
 class RotorSuperposedTab(QWidget):
@@ -43,6 +43,7 @@ class RotorSuperposedTab(QWidget):
         
         self.ROTOR_L_group_box   = None   # GroupBox for ROTOR_L controls
         self.ROTOR_L_checkBtn    = None   # Whether the ROTOR_L must be displayed or not
+        self.ROTOR_L_shift       = None   # the shift angle widget
         self.ROTOR_L_sel_Zpos    = 0      # the selected Z position in the ROTOR_L file
         self.ROTOR_L_shift_angle = 0      # the selected angle in the ROTOR_L file
         self.ROTOR_L_sel         = 1      # the flag associated to the ROTOR_L_checkBtn check button 
@@ -50,10 +51,19 @@ class RotorSuperposedTab(QWidget):
         self.ROTOR_S_group_box   = None   # GroupBox for the SIMULATION    
         self.ROTOR_S_checkBtn    = None   # Whether the SIMUL must be displayed or not
         self.ROTOR_S_dist_combo  = None   # ComboBox to select the distance for the SIMUL data
+        self.ROTOR_S_shift       = None   # the shift angle widget
         self.ROTOR_S_sel_dist    = 0      # The selected distance for SIMUL data
         self.ROTOR_S_shift_angle = 0      # the shift angle for the ROTOR_B file
         self.ROTOR_S_sel         = 1      # the flag associated to the ROTOR_S_checkBtn check button 
 
+
+        self.setup_UI()
+        self.set_B_L_S('BLS', False, replot=False)
+        
+    def setup_UI(self):
+        '''
+        Setup the UI components for the RotorSuperposedTab.
+        '''
         VBox = QVBoxLayout()
         self.setLayout(VBox)                
 
@@ -61,6 +71,9 @@ class RotorSuperposedTab(QWidget):
         H.addStretch()
         
         self.main.dict_plot_widgets['ROTOR_B_L_S'] = []
+        self.main.dict_plot_widgets['ROTOR_B'] = []
+        self.main.dict_plot_widgets['ROTOR_L'] = []
+        self.main.dict_plot_widgets['ROTOR_S'] = []
 
         # The Button to plot the ROTOR_B data        
         btn = QPushButton('Replot')
@@ -79,21 +92,22 @@ class RotorSuperposedTab(QWidget):
         ROTOR_B_layout = QHBoxLayout()
         self.ROTOR_B_group_box.setLayout(ROTOR_B_layout)
         H.addWidget(self.ROTOR_B_group_box)
-        self.ROTOR_B_group_box.setFixedHeight(45)
+        self.ROTOR_B_group_box.setFixedHeight(44)
         self.ROTOR_B_group_box.setStyleSheet("QGroupBox { background-color: #FFFAEE; }")
 
-        # Add Zpos selection
-        check = QCheckBox('ROTOR Bdx')
+        # Add checkbox to enable/disable ROTOR_B data plotting
+        self.ROTOR_B_checkBtn = QCheckBox('ROTOR Bdx')
+        check = self.ROTOR_B_checkBtn
         check.setLayoutDirection(Qt.RightToLeft)
-        check.setChecked(True)
-        check.stateChanged.connect(lambda state, label='B': self.set_B_L_S(state, label))
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(check)
+        check.setChecked(False)
+        check.setEnabled(False)
+        check.stateChanged.connect(lambda state: self.set_B_L_S('B', state))
+        self.main.dict_plot_widgets['ROTOR_B'].append(check)
         ROTOR_B_layout.addWidget(check)
-        self.ROTOR_B_checkBtn = check
         ROTOR_B_layout.addStretch()
         
+        # The ComboBox to choose the Zpos in the ROTOR_Bdx data
         lab = QLabel(' Zpos:')
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
         ROTOR_B_layout.addWidget(lab)
         self.ROTOR_B_Zpos_combo =  QComboBox()
         cb = self.ROTOR_B_Zpos_combo
@@ -101,29 +115,30 @@ class RotorSuperposedTab(QWidget):
         cb.setEditable(False)
         cb.setMaxVisibleItems(50)
         cb.setMaxCount(50)
+        cb.setFixedSize(80, 20)
         cb.currentIndexChanged.connect(self.zpos_B_selected)
         #cb.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         cb.setToolTip('Select the Zpos to plot')
         #cb.setStyleSheet('QComboBox { background-color: white; }')
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(cb)
+        self.main.dict_plot_widgets['ROTOR_B'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_B'].append(cb)
         ROTOR_B_layout.addWidget(cb)
         
         # The SpinBox to choose the angle shift in the ROTOR_B_L data
-        lab = QLabel('shift (°)')
+        lab = QLabel('shift')
         ROTOR_B_layout.addWidget(lab)
-        self.ROTOR_B_shift = FastStepSpinBox()
+        self.ROTOR_B_shift = FastStepSpinBox(1, 10)
         sb = self.ROTOR_B_shift
         sb.setRange(-180, 180)
-        sb.setSingleStep(1)
-        sb.setFastStep(10)
         sb.setValue(0)
         sb.setEnabled(False)
-        sb.setFixedHeight(25)
-        sb.setToolTip('Select the angle shift to apply to the plot of ROTOR Bdx')
+        sb.setFixedHeight(20)
+        sb.setSuffix(' °')
+        sb.setToolTip('Select the shift angle to apply to the plot of ROTOR Bdx')
         sb.valueChanged.connect(lambda value: self.angle_shift_changed('B', value))
         ROTOR_B_layout.addWidget(sb)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(sb)
+        self.main.dict_plot_widgets['ROTOR_B'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_B'].append(sb)
         
         #
         # The GroupBox for the ROTOR_L data
@@ -135,49 +150,49 @@ class RotorSuperposedTab(QWidget):
         H.addWidget(self.ROTOR_L_group_box)
         self.ROTOR_L_group_box.setFixedHeight(45)
 
-        check = QCheckBox('ROTOR Lille')
+        # Add checkbox to enable/disable ROTOR_L data plotting
+        self.ROTOR_L_checkBtn = QCheckBox('ROTOR Lille')
+        check = self.ROTOR_L_checkBtn
         check.setLayoutDirection(Qt.RightToLeft)
-        check.setChecked(True)
-        check.stateChanged.connect(lambda state, label='L': self.set_B_L_S(state, label))
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(check)
+        check.setChecked(False)
+        check.setEnabled(False)
+        check.stateChanged.connect(lambda state, label='L': self.set_B_L_S(label, state))
+        self.main.dict_plot_widgets['ROTOR_L'].append(check)
         ROTOR_L_layout.addWidget(check)
-        self.ROTOR_L_checkBtn = check
         ROTOR_L_layout.addStretch()
         
         # The SpinBox to choose the Zpos in the ROTOR_B_L data
-        lab = QLabel('Zpos (mm)')
+        lab = QLabel('Zpos')
         ROTOR_L_layout.addWidget(lab)
         
-        self.ROTOR_L_Zpos = FastStepSpinBox()
+        self.ROTOR_L_Zpos = FastStepSpinBox(1, 10)
         sb = self.ROTOR_L_Zpos
         sb.setRange(-7, 144)
-        sb.setSingleStep(1)
-        sb.setFastStep(10)
         sb.setValue(self.ROTOR_L_sel_Zpos)
         sb.setEnabled(False)
-        sb.setFixedHeight(25)
+        sb.setFixedHeight(20)
+        sb.setSuffix(' mm')
         sb.setToolTip('Select the Zpos to plot')
         sb.valueChanged.connect(lambda value: self.zpos_L_changed(value))
         ROTOR_L_layout.addWidget(sb)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(sb)
+        self.main.dict_plot_widgets['ROTOR_L'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_L'].append(sb)
         
         # The SpinBox to choose the angle shift in the ROTOR_B_L data
-        lab = QLabel('shift (°)')
+        lab = QLabel('shift')
         ROTOR_L_layout.addWidget(lab)
-        self.ROTOR_L_shift = FastStepSpinBox()
-        sb = self.ROTOR_B_shift
+        self.ROTOR_L_shift = FastStepSpinBox(1, 10)
+        sb = self.ROTOR_L_shift
         sb.setRange(-180, 180)
-        sb.setSingleStep(1)
-        sb.setFastStep(10)
         sb.setValue(0)
         sb.setEnabled(False)
-        sb.setFixedHeight(25)
+        sb.setFixedHeight(20)
+        sb.setSuffix(' °')
         sb.setToolTip('Select the angle shift to apply to the plot of ROTOR_L')
         sb.valueChanged.connect(lambda value: self.angle_shift_changed('L', value))
         ROTOR_L_layout.addWidget(sb)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(sb)
+        self.main.dict_plot_widgets['ROTOR_L'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_L'].append(sb)
 
         #
         # The GroupBox pour the ROTOR simulation data
@@ -189,48 +204,50 @@ class RotorSuperposedTab(QWidget):
         H.addWidget(self.ROTOR_S_group_box)
         self.ROTOR_S_group_box.setFixedHeight(45)
 
-        check = QCheckBox('ROTOR SIMU')
+        # Add checkbox to enable/disable ROTOR_S data plotting
+        self.ROTOR_S_checkBtn = QCheckBox('ROTOR SIMU')
+        check = self.ROTOR_S_checkBtn
         check.setLayoutDirection(Qt.RightToLeft)
-        check.setChecked(True)
-        check.stateChanged.connect(lambda state, label='S': self.set_B_L_S(state, label))
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(check)
+        check.setChecked(False)
+        check.setEnabled(False)
+        check.stateChanged.connect(lambda state: self.set_B_L_S('S', state))
+        self.main.dict_plot_widgets['ROTOR_S'].append(check)
         ROTOR_S_layout.addWidget(check)
-        self.ROTOR_S_checkBtn = check
         ROTOR_S_layout.addStretch()
         
+        # The ComboBox to choose the distance in the ROTOR_S data
         lab = QLabel(' dist:')
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
         ROTOR_S_layout.addWidget(lab)
-        
         self.ROTOR_S_dist_combo =  QComboBox()
         cb = self.ROTOR_S_dist_combo
         cb.setEnabled(False)
         cb.setEditable(False)
         cb.setMaxVisibleItems(50)
         cb.setMaxCount(50)
+        cb.setFixedSize(80, 20)
         cb.currentIndexChanged.connect(self.dist_S_selected)
         #cb.setSizeAdjustPolicy(QComboBox.AdjustToContents)
         cb.setToolTip('Select the distance')
         #cb.setStyleSheet('QComboBox { background-color: white; }')
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(cb)
+        self.main.dict_plot_widgets['ROTOR_S'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_S'].append(cb)
         ROTOR_S_layout.addWidget(cb)
 
         # The SpinBox to choose the angle shift in the ROTOR_S data
-        lab = QLabel('shift (°)')
+        lab = QLabel('shift')
         ROTOR_S_layout.addWidget(lab)
-        self.ROTOR_S_shift = FastStepSpinBox()
+        self.ROTOR_S_shift = FastStepSpinBox(1, 10)
         sb = self.ROTOR_S_shift 
         sb.setRange(-180, 180)
-        sb.setSingleStep(1)
-        sb.setFastStep(10)
         sb.setValue(0)
         sb.setEnabled(False)
-        sb.setFixedHeight(25)
+        sb.setFixedHeight(20)
+        sb.setSuffix(' °')
         sb.setToolTip('Select the angle shift to apply to the plot of simulated ROTOR')
         sb.valueChanged.connect(lambda value: self.angle_shift_changed('S', value))
         ROTOR_S_layout.addWidget(sb)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(lab)
-        self.main.dict_plot_widgets['ROTOR_B_L_S'].append(sb)
+        self.main.dict_plot_widgets['ROTOR_S'].append(lab)
+        self.main.dict_plot_widgets['ROTOR_S'].append(sb)
 
         H.addStretch()
         
@@ -255,7 +272,7 @@ class RotorSuperposedTab(QWidget):
             self.main.dict_plot_widgets['ROTOR_B_L_S'].append(btn)
         VBox.addLayout(H)
         
-        self.canvas  = MagneticPlotCanvas(main_window)
+        self.canvas  = MagneticPlotCanvas(self.main)
         self.toolbar = NavigationToolbar(self.canvas, self)
         VBox.addWidget(self.canvas)
         VBox.addWidget(self.toolbar)
@@ -267,27 +284,31 @@ class RotorSuperposedTab(QWidget):
         if self.main.curr_plt_info_B_L_S['func']:
             self.main.curr_plt_info_B_L_S['func']()
         
-    def set_B_L_S(self, state, label):
+    def set_B_L_S(self, label, state, replot=True):
         '''
         Set whether to display ROTOR_B, ROTOR_L or SIMUL data and replots the data.
         '''
-        if label == 'B':
+        if 'B' in label:
             self.ROTOR_B_sel = state//2
             self.ROTOR_B_Zpos_combo.setEnabled(self.ROTOR_B_sel)
             self.ROTOR_B_shift.setEnabled(self.ROTOR_B_sel)
             
-        elif label == 'L':
+        if 'L' in label:
             self.ROTOR_L_sel = state//2
             self.ROTOR_L_Zpos.setEnabled(self.ROTOR_L_sel==1)
             self.ROTOR_L_shift.setEnabled(self.ROTOR_L_sel)
             
-        elif label == 'S':
+        if 'S' in label:
             self.ROTOR_S_sel = state//2
             self.ROTOR_S_dist_combo.setEnabled(self.ROTOR_S_sel==1)
             self.ROTOR_S_shift.setEnabled(self.ROTOR_S_sel)
         
-        if self.main.curr_plt_info_B_L_S['func']:
-            self.main.curr_plt_info_B_L_S['func']()
+        if replot:
+            try:
+                if self.main.curr_plt_info_B_L_S['func']:
+                    self.main.curr_plt_info_B_L_S['func']()
+            except Exception as e:
+                print(e)
         
     def update_zpos_combo(self):
         '''
@@ -300,7 +321,7 @@ class RotorSuperposedTab(QWidget):
         if self.main.rotor_bdx_tab.list_pos:
             done = False
             for zpos in self.main.rotor_bdx_tab.list_pos:
-                self.ROTOR_B_Zpos_combo.addItem(zpos)
+                self.ROTOR_B_Zpos_combo.addItem(zpos + ' mm')
                 if not done:
                     # Select the first Zpos by default
                     value = int(zpos)
@@ -319,7 +340,7 @@ class RotorSuperposedTab(QWidget):
         if self.main.simul_tab.list_dist:
             done = False
             for dist in self.main.simul_tab.list_dist:
-                self.ROTOR_S_dist_combo.addItem(dist)
+                self.ROTOR_S_dist_combo.addItem(dist + ' mm')
                 if not done:
                     # Select the first dist by default
                     value = int(dist)
@@ -335,7 +356,7 @@ class RotorSuperposedTab(QWidget):
         if selected_zpos == '':
             return
         
-        self.ROTOR_B_sel_Zpos = int(selected_zpos)
+        self.ROTOR_B_sel_Zpos = int(selected_zpos.split()[0])
         # JLC_Debug: print(f"Selected ROTOR_B Zpos: {self.ROTOR_B_sel_Zpos}")
                 
         self.plot_ROTOR_fields()
@@ -377,14 +398,14 @@ class RotorSuperposedTab(QWidget):
         if selected_dist == '':
             return
         
-        self.ROTOR_S_sel_dist = int(selected_dist)
+        self.ROTOR_S_sel_dist = int(selected_dist.split()[0])
         # JLC_Debug: print(f"Selected ROTOR_S distance: {self.ROTOR_S_sel_Dist}")
         
         self.plot_ROTOR_fields()   
         
     def plot_ROTOR_fields(self):        
         '''
-        To plot a superposition af ROTOR_B,  ROTOR_L and ROTOR_S data versurs rotot angle.
+        To plot a superposition af ROTOR_B,  ROTOR_L and ROTOR_S data versus rotot angle.
         '''
         
         if self.main.ROTOR_B_txt_file is None:
@@ -409,7 +430,7 @@ class RotorSuperposedTab(QWidget):
         # plot the data
         self.canvas.plot_ROTOR_B_L_S_for_Zpos()
         self.main.curr_plt_info_B_L_S['func']  = self.plot_ROTOR_fields
-        self.main.curr_plt_info_B_L_S['param'] = 'plot_B_L_S'
+        #self.main.curr_plt_info_B_L_S['param'] = 'plot_B_L_S'
 
         return 
     
@@ -431,15 +452,16 @@ class RotorSuperposedTab(QWidget):
         Zpos_L  = self.ROTOR_L_sel_Zpos
         shift_L = self.ROTOR_L_shift_angle
         shift_B = self.ROTOR_B_shift_angle
+        shift_S = self.ROTOR_S_shift_angle
         
         file_name = "Superposed_"
-        if self.main.ROTOR_B_txt_file is not None:
-            file_name  += f'{self.main.ROTOR_B_txt_file.name}@Zpos-{Zpos_B}mm___'
-        if self.main.ROTOR_L_txt_file is not None:
-            file_name += f'{self.main.ROTOR_L_txt_file.name}@Zpos-{Zpos_L}mm_shift-{shift_L}__'
-        if self.main.SIMUL_txt_file is not None:
-            file_name += f'{self.main.SIMUL_txt_file.name}@dist-{self.ROTOR_S_sel_dist}mm__'
-        file_name += f'XYZ-{XYZ}.png'
+        if self.main.ROTOR_B_txt_file is not None and self.ROTOR_B_checkBtn.isChecked():
+            file_name  += f'{self.main.ROTOR_B_txt_file.name}@{Zpos_B}mm-{shift_B}°__'
+        if self.main.ROTOR_L_txt_file is not None and self.ROTOR_L_checkBtn.isChecked():
+            file_name += f'{self.main.ROTOR_L_txt_file.name}@{Zpos_L}mm_{shift_L}°__'
+        if self.main.SIMUL_txt_file is not None and self.ROTOR_S_checkBtn.isChecked():
+            file_name += f'{self.main.SIMUL_txt_file.name}@{self.ROTOR_S_sel_dist}mm_{shift_S}°'
+        file_name += f'__{XYZ}.png'
         fig_path = Path(png_dir, file_name)
 
         if fig:
