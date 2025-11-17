@@ -26,7 +26,7 @@ class FastStepSpinBox(QSpinBox):
         modifiers = QApplication.keyboardModifiers()
         # Use fast step if Shift is held, otherwise default
         step = self.fast_step if modifiers & Qt.ShiftModifier else self.default_step
-        self.setSingleStep(step)
+        self.setSingleStep(int(step))
         super().stepBy(steps)
 
 class FastStepDoubleSpinBox(QDoubleSpinBox):

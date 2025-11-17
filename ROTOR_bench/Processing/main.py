@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
                  'ROTOR_L_data_dir', 'ROTOR_L_txt_file', 'ROTOR_L_DATA',
                  'SIMUL_data_dir', 'SIMUL_txt_file', 'SIMUL_DATA',
                  'curr_plt_info_B', 'curr_plt_info_L', 'curr_plt_info_S', 'curr_plt_info_B_L_S',
-                 'disp_fileName', 'dict_fileName_btn',
+                 'disp_fileName', 'dict_fileName_btn', 'dict_legend_btn', 
                  'tabs', 'file_tab', 'rotor_bdx_tab', 'rotor_lille_tab', 'simul_tab', 'all_fields_tab')     
     
     def __init__(self):
@@ -61,8 +61,12 @@ class MainWindow(QMainWindow):
         self.curr_plt_info_S       = {}        # Dictionary of infos on the current plot for the SIMUL tab
         self.curr_plt_info_B_L_S   = {}        # Dictionary of infos on the current plot for the ROTOR siperposition tab
 
-        self.disp_fileName         = True      # Flag: whether to display the file name in the plot title
         self.dict_fileName_btn     = None      # The checkbox button in the Options menu to display or not file names in plots
+        self.disp_fileName         = True      # Flag: whether to display the file name in the plot title
+        
+        self.legend_inside_plot    = None      # Flag: whether to put legend inside plot or outside plot
+        self.dict_legend_btn       = None      # The checkbox button in the Options menu to put legend inside/outside plots
+        
         
         self.setWindowTitle("ROTOR bench data plot")
 
@@ -90,6 +94,7 @@ class MainWindow(QMainWindow):
         self.create_menu_bar()
 
         self.dict_fileName_btn.setChecked(self.disp_fileName)
+        self.dict_legend_btn.setChecked(self.legend_inside_plot)
 
         # Select the first tab by default
         self.tabs.setCurrentIndex(0)        
@@ -116,6 +121,16 @@ class MainWindow(QMainWindow):
         btn.toggled.connect(self.on_radio_btn_disp_filename)
         disp_filename_action.setDefaultWidget(btn)
         options_menu.addAction(disp_filename_action)
+
+        # show legend insoide/outside plots
+        legend_inside_plot_action = QWidgetAction(self)
+        btn = QCheckBox("Show legends inside plots")
+        self.dict_legend_btn = btn
+        btn.setChecked(self.legend_inside_plot)
+        btn.setStyleSheet("QCheckBox { padding-left: 5px; }")
+        btn.toggled.connect(self.on_radio_btn_legend_inside_plot)
+        legend_inside_plot_action.setDefaultWidget(btn)
+        options_menu.addAction(legend_inside_plot_action)
 
         # Submenu for components to plot by default
         components_menu = options_menu.addMenu("Components to plot by default")
@@ -257,6 +272,17 @@ class MainWindow(QMainWindow):
             print("Show file names in plot titles: Disabled")
             self.disp_fileName = False
 
+    def on_radio_btn_legend_inside_plot(self, checked):
+        '''
+        Slot to handle the toggling of the button.
+        '''
+        if checked:
+            print("Show legends inside plots: Enabled")
+            self.legend_inside_plot = True
+        else:
+            print("Show legends inside plots: Disabled")
+            self.legend_inside_plot = False 
+            
     def on_disp_XYZ_component(self, w, X=None, Y=None, Z=None):
         '''
         Slot to handle the toggling of the button.
@@ -385,6 +411,7 @@ class MainWindow(QMainWindow):
         '''
         options = {
             "disp_fileName": self.disp_fileName,
+            "legend_inside_plots": self.legend_inside_plot,
             "default_XYZ": self.default_XYZ.copy(),
             "colors_B": MagneticPlotCanvas.colors_B.copy(),
             "colors_L": MagneticPlotCanvas.colors_L.copy(),
@@ -406,6 +433,7 @@ class MainWindow(QMainWindow):
             with open(self.saved_options_file, "r") as f:
                 options = json.load(f)
             self.disp_fileName = options.get("disp_fileName", True)
+            self.legend_inside_plot = options.get("legend_inside_plots", False) 
             self.default_XYZ   = options.get("default_XYZ", {'X': 1, 'Y': 0, 'Z': 1})
             # Load colors if present
             if "colors_B" in options:

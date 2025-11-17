@@ -43,7 +43,7 @@ class RotorBdxTab(QWidget):
         self.main.dict_plot_widgets['ROTOR'] = []
         self.main.dict_plot_widgets['FREE']  = []
 
-        labels    = ('Plot ROTOR data', 'Plot ROTOR PSD', 'Plot ROTOR ColorMap', 'Plot FREE data')
+        labels    = ('Replot ROTOR', 'Plot ROTOR PSD', 'Plot ROTOR ColorMap', 'Plot FREE data')
         callbacks = (self.plot_ROTOR, None, None, self.plot_FREE)
         for label, callback in zip(labels, callbacks):
             btn = QPushButton(label)
