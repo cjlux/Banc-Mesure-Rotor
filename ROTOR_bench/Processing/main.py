@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QApplication, QTabWidget, QMainWindow, QCheckBox,
                              QMessageBox, QAction, QWidgetAction, QColorDialog, QMenu, QWidget, QHBoxLayout)
 from PyQt5.QtWidgets import QLabel, QPushButton
 from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QComboBox
 
 from files_tab import FilesTab
 from RotorBdxTab import RotorBdxTab
@@ -190,6 +191,50 @@ class MainWindow(QMainWindow):
 
         options_menu.addMenu(color_menu)
 
+        # Submenu for line style selection (per-component, per-source)
+        linestyle_menu = QMenu("Magnetic field line type", self)
+
+        def add_linestyle_action(label, canvas_attr, comp):
+            widget_action = QWidgetAction(self)
+            label_widget = QLabel(label)
+            label_widget.setMinimumWidth(160)
+
+            combo = QComboBox()
+            styles = [("Solid", "-"), ("Dashed", "--"), ("DashDot", "-."), ("Dotted", ":")]
+            for text, val in styles:
+                combo.addItem(text, val)
+
+            # determine current style (fallback to first)
+            try:
+                current_style = getattr(MagneticPlotCanvas, canvas_attr)[comp]
+            except Exception:
+                current_style = styles[0][1]
+            idx = next((i for i, (_, v) in enumerate(styles) if v == current_style), 0)
+            combo.setCurrentIndex(idx)
+
+            def on_style_changed(index):
+                style = combo.itemData(index)
+                getattr(MagneticPlotCanvas, canvas_attr)[comp] = style
+                self.redraw_all_canvases()
+
+            combo.currentIndexChanged.connect(on_style_changed)
+
+            hbox = QHBoxLayout()
+            hbox.addWidget(label_widget)
+            hbox.addWidget(combo)
+            hbox.setContentsMargins(0, 0, 0, 0)
+            widget = QWidget()
+            widget.setLayout(hbox)
+            widget_action.setDefaultWidget(widget)
+            linestyle_menu.addAction(widget_action)
+
+        # ROTOR Bdx line types
+        add_linestyle_action("ROTOR B line style", 'line_styles', "B")
+        add_linestyle_action("ROTOR_L line style", 'line_styles', "L")
+        add_linestyle_action("SIMULATION line_style", 'line_styles', "S")
+
+        options_menu.addMenu(linestyle_menu)
+
         # "Save options" action
         save_options_action = QAction("Save options", self)
         save_options_action.triggered.connect(self.save_options_to_json)
@@ -343,7 +388,8 @@ class MainWindow(QMainWindow):
             "default_XYZ": self.default_XYZ.copy(),
             "colors_B": MagneticPlotCanvas.colors_B.copy(),
             "colors_L": MagneticPlotCanvas.colors_L.copy(),
-            "colors_S": MagneticPlotCanvas.colors_S.copy()
+            "colors_S": MagneticPlotCanvas.colors_S.copy(),
+            "line_styles": MagneticPlotCanvas.line_styles.copy()
         }
         try:
             with open(self.saved_options_file, "w") as f:
@@ -368,6 +414,9 @@ class MainWindow(QMainWindow):
                 MagneticPlotCanvas.colors_L.update(options["colors_L"])
             if "colors_S" in options:
                 MagneticPlotCanvas.colors_S.update(options["colors_S"])
+            # Load line styles if present
+            if "line_styles" in options:
+                MagneticPlotCanvas.line_styles.update(options["line_styles"])
         except Exception:
             pass  # Ignore if file doesn't exist or is invalid
 

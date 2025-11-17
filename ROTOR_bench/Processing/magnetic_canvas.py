@@ -16,7 +16,10 @@ class MagneticPlotCanvas(FigureCanvas):
     colors_B = {'X':'firebrick',  'Y':'green',      'Z': 'darkblue'}
     colors_L = {'X':'red',        'Y':'limegreen',  'Z': 'royalblue'}
     colors_S = {'X':'lightsalmon','Y':'yellowgreen','Z': 'skyblue'}
-    
+
+    # New: default line style dictionaries for each source
+    line_styles = {'B': '-', 'L': '-.', 'S': ':'}
+
     def __init__(self, main, parent=None):
         '''
             Initialize the MagneticPlotCanvas with a reference to the main window.  
@@ -90,12 +93,13 @@ class MagneticPlotCanvas(FigureCanvas):
                         baseline.set_color('grey')
                         baseline.set_linewidth(0.5)
             else:
+                # use linestyle dictionaries and explicit markers
                 if xyz[0]:
-                    ax.plot(angles, X, '-o', color=colors['X'], markersize=0.5, label='radial (X)')
+                    ax.plot(angles, X, marker='o', color=colors['X'], markersize=0.5, label='radial (X)')
                 if xyz[1]:
-                    ax.plot(angles, Y, '-o', color=colors['Y'], markersize=0.5, label='axial (Y)')
+                    ax.plot(angles, Y, marker='o', color=colors['Y'], markersize=0.5, label='axial (Y)')
                 if xyz[2]:
-                    ax.plot(angles, Z, '-o', color=colors['Z'], markersize=0.5, label='tang. (Z)')
+                    ax.plot(angles, Z, marker='o', color=colors['Z'], markersize=0.5, label='tang. (Z)')
                 
             title += f"Magnetic field at Z position #{n+1}: {int(Zpos):3d} mm"
             ax.set_title(title, loc='left', fontsize=9)
@@ -146,12 +150,14 @@ class MagneticPlotCanvas(FigureCanvas):
         if self.main.disp_fileName:
             fig.text(0.5, .92, f"from <{file_name}>", size=10, color="gray", horizontalalignment='center')
         
+        colors = MagneticPlotCanvas.colors_B
+
         if xyz[0]:
-            ax.plot(T, X, '-or', markersize=0.5, label='radial (X)')
+            ax.plot(T, X, marker='o', color=colors['X'], markersize=0.5, label='radial (X)')
         if xyz[1]:
-            ax.plot(T, Y, '-og', markersize=0.5, label='axial (Y)')
+            ax.plot(T, Y, marker='o', color=colors['Y'], markersize=0.5, label='axial (Y)')
         if xyz[2]:
-            ax.plot(T, Z, '-ob', markersize=0.5, label='tang. (Z)')
+            ax.plot(T, Z, marker='o', color=colors['Z'], markersize=0.5, label='tang. (Z)')
         
         ax.legend(bbox_to_anchor=(1.12, 1), loc="upper right")
         ax.set_ylabel("[mT]")
@@ -408,9 +414,14 @@ class MagneticPlotCanvas(FigureCanvas):
         field_B  = {'X': BX,          'Y':BY,           'Z':BZ}
         field_L  = {'X': R,           'Y':A,            'Z':T}
         field_S  = {'X': SX,          'Y':SY,           'Z':SZ}
+        
         colors_B = MagneticPlotCanvas.colors_B
         colors_L = MagneticPlotCanvas.colors_L
         colors_S = MagneticPlotCanvas.colors_S
+        
+        line_style_B = MagneticPlotCanvas.line_styles['B']
+        line_style_L = MagneticPlotCanvas.line_styles['L']
+        line_style_S = MagneticPlotCanvas.line_styles['S']
         
         full_title  = title['B'] if ROTOR_B_sel else '' 
         full_title += title['L'] if ROTOR_L_sel else ''
@@ -425,14 +436,14 @@ class MagneticPlotCanvas(FigureCanvas):
             if self.main.all_fields_tab.XYZ[c]: 
                 ax = axes[n]
                 if ROTOR_B and self.main.all_fields_tab.ROTOR_B_sel:
-                    ax.plot(angles_B, field_B[c], '-o', markersize=0.5, color=colors_B[c], label=f'ROTOR_B {lab_B[c]}')
+                    ax.plot(angles_B, field_B[c], linestyle=line_style_B, marker='o', markersize=0.5, color=colors_B[c], label=f'ROTOR_B {lab_B[c]}')
                 if ROTOR_L and self.main.all_fields_tab.ROTOR_L_sel:
-                    ax.plot(angles_L, field_L[c], '-o', markersize=0.5, color=colors_L[c], label=f'ROTOR_L {lab_L[c]}')
+                    ax.plot(angles_L, field_L[c], linestyle=line_style_L, marker='o', markersize=0.5, color=colors_L[c], label=f'ROTOR_L {lab_L[c]}')
                 if ROTOR_S and self.main.all_fields_tab.ROTOR_S_sel: 
                     if field_S[c] is not None:
-                        ax.plot(angles_S, field_S[c], '-', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
+                        ax.plot(angles_S, field_S[c], linestyle=line_style_S, marker='o', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
                     else:
-                        ax.plot(np.NaN, np.NaN, '-', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
+                        ax.plot(np.NaN, np.NaN, marker='o', markersize=0.5, color=colors_S[c], label=f'SIMUL {lab_S[c]}')
                         print(f"Warning: no {lab_S[c]} component in the SIMUL data file <{self.main.SIMUL_txt_file.name}>.")
                 ax.set_ylabel("[mT]")        
                 ax.legend(bbox_to_anchor=(offset, 1), loc="upper right")
@@ -496,16 +507,16 @@ class MagneticPlotCanvas(FigureCanvas):
                 X, Z, Y = magn_field[3*n:3*n+3]
                 
             if xyz[0]:
-                ax.plot(angles, X, '-o', markersize=0.5, color=colors_S['X'], label='radial (X)')
+                ax.plot(angles, X, marker='o', markersize=0.5, color=colors_S['X'], label='radial (X)')
             if xyz[1]: 
                 if Y is not None:
-                    ax.plot(angles, Y, '-o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
+                    ax.plot(angles, Y, marker='o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
                 else:
-                    ax.plot(np.NaN, np.NaN, '-o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
+                    ax.plot(np.NaN, np.NaN, marker='o', markersize=0.5, color=colors_S['Y'], label='axial (Y)')
                     print(f"Warning: no axial (Y) component in the SIMUL data file <{self.main.SIMUL_txt_file.name}>.")
             
             if xyz[2]:
-                ax.plot(angles, Z, '-o', markersize=0.5, color=colors_S['Z'], label='tang. (Z)')
+                ax.plot(angles, Z, marker='o', markersize=0.5, color=colors_S['Z'], label='tang. (Z)')
                 
             title = f"Simulated Magnetic Field for distance={int(dist):d} mm"
             ax.set_title(title, loc='left', fontsize=9)
@@ -573,7 +584,7 @@ class MagneticPlotCanvas(FigureCanvas):
         for c, offset in zip(('X', 'Y', 'Z'), (1.165, 1.16, 1.165)):
             if self.main.rotor_lille_tab.XYZ[c]: 
                 ax = axes[n]
-                ax.plot(angles_L, field_L[c], '-o', markersize=0.5, color=colors[c], label=f'ROTOR_L {lab_L[c]}')
+                ax.plot(angles_L, field_L[c], marker='o', markersize=0.5, color=colors[c], label=f'ROTOR_L {lab_L[c]}')
                 ax.set_ylabel("[mT]")        
                 ax.legend(bbox_to_anchor=(offset, 1), loc="upper right")
                 ax.minorticks_on()
