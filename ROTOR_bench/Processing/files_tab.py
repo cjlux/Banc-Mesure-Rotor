@@ -208,7 +208,7 @@ class FilesTab(QWidget):
 
         try:
             for file_path in sorted(data_dir.iterdir()):
-                if file_path.name.lower().startswith("bsimul_r") and file_path.name.lower().endswith(".txt"):
+                if file_path.name.lower().startswith("bsimul") and file_path.name.lower().endswith(".txt"):
                     rb = QRadioButton(file_path.name)
                     rb.clicked.connect(lambda state, path=file_path, btn=rb: self.process_SIMUL_file(path, btn))
                     layout.addWidget(rb)
