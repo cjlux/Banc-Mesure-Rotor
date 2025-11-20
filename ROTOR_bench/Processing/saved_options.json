@@ -1,0 +1,29 @@
+{
+    "disp_fileName": false,
+    "legend_inside_plots": true,
+    "default_XYZ": {
+        "X": 1,
+        "Y": 0,
+        "Z": 1
+    },
+    "colors_B": {
+        "X": "#aa0000",
+        "Y": "#005500",
+        "Z": "#00007f"
+    },
+    "colors_L": {
+        "X": "#ff557f",
+        "Y": "#55aa00",
+        "Z": "#0055ff"
+    },
+    "colors_S": {
+        "X": "#ff00ff",
+        "Y": "#00ff7f",
+        "Z": "#aaaaff"
+    },
+    "line_styles": {
+        "B": "-",
+        "L": "-",
+        "S": "--"
+    }
+}
